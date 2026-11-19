@@ -161,7 +161,7 @@ OGRFeature *OGRS57Layer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57Layer::TestCapability(const char *pszCap) const
+bool OGRS57Layer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

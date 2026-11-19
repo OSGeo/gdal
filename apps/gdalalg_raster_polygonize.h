@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_POLYGONIZE_INCLUDED
 #define GDALALG_RASTER_POLYGONIZE_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

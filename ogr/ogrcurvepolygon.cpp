@@ -588,7 +588,7 @@ OGRCurvePolygon::CurvePolyToPoly(double dfMaxAngleStepSizeDegrees,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
 {
     if (bLookForNonLinear)
     {
@@ -633,7 +633,7 @@ void OGRCurvePolygon::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Equals(const OGRGeometry *poOther) const
+bool OGRCurvePolygon::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -754,12 +754,12 @@ bool OGRCurvePolygon::setCoordinateDimension(int nNewDimension)
     return oCC.setCoordinateDimension(this, nNewDimension);
 }
 
-bool OGRCurvePolygon::set3D(OGRBoolean bIs3D)
+bool OGRCurvePolygon::set3D(bool bIs3D)
 {
     return oCC.set3D(this, bIs3D);
 }
 
-bool OGRCurvePolygon::setMeasured(OGRBoolean bIsMeasured)
+bool OGRCurvePolygon::setMeasured(bool bIsMeasured)
 {
     return oCC.setMeasured(this, bIsMeasured);
 }
@@ -777,7 +777,7 @@ void OGRCurvePolygon::assignSpatialReference(const OGRSpatialReference *poSR)
 /*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::IsEmpty() const
+bool OGRCurvePolygon::IsEmpty() const
 {
     return oCC.IsEmpty();
 }
@@ -810,13 +810,13 @@ void OGRCurvePolygon::swapXY()
 /*                           ContainsPoint()                            */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::ContainsPoint(const OGRPoint *p) const
+bool OGRCurvePolygon::ContainsPoint(const OGRPoint *p) const
 {
     if (getExteriorRingCurve() != nullptr && getNumInteriorRings() == 0)
     {
         const int nRet = getExteriorRingCurve()->ContainsPoint(p);
         if (nRet >= 0)
-            return nRet;
+            return CPL_TO_BOOL(nRet);
     }
 
     return OGRGeometry::Contains(p);
@@ -826,13 +826,13 @@ OGRBoolean OGRCurvePolygon::ContainsPoint(const OGRPoint *p) const
 /*                          IntersectsPoint()                           */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::IntersectsPoint(const OGRPoint *p) const
+bool OGRCurvePolygon::IntersectsPoint(const OGRPoint *p) const
 {
     if (getExteriorRingCurve() != nullptr && getNumInteriorRings() == 0)
     {
         const int nRet = getExteriorRingCurve()->IntersectsPoint(p);
         if (nRet >= 0)
-            return nRet;
+            return CPL_TO_BOOL(nRet);
     }
 
     return OGRGeometry::Intersects(p);
@@ -842,7 +842,7 @@ OGRBoolean OGRCurvePolygon::IntersectsPoint(const OGRPoint *p) const
 /*                              Contains()                              */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
+bool OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&
@@ -858,7 +858,7 @@ OGRBoolean OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
 /*                             Intersects()                             */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Intersects(const OGRGeometry *poOtherGeom) const
+bool OGRCurvePolygon::Intersects(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&

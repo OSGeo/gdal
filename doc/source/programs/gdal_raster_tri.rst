@@ -1,5 +1,7 @@
 .. _gdal_raster_tri:
 
+.. program:: gdal_raster_tri
+
 ================================================================================
 ``gdal raster tri``
 ================================================================================
@@ -79,6 +81,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

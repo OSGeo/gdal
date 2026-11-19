@@ -201,7 +201,15 @@ HFAEntry *HFAEntry::BuildEntryFromMIFObject(HFAEntry *poContainer,
     }
 
     GInt32 nMIFObjectSize = 0;
-    // We rudely look before the field data to get at the pointer/size info.
+    // We look before the field data to get at the pointer/size info.
+    const GByte *pabyEntryData = poContainer->GetData();
+    CPLAssert(reinterpret_cast<const GByte *>(pszField) - pabyEntryData >= 0);
+    if (reinterpret_cast<const GByte *>(pszField) - pabyEntryData < 8)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid %s entry",
+                 osFieldName.c_str());
+        return nullptr;
+    }
     memcpy(&nMIFObjectSize, pszField - 8, 4);
     HFAStandard(4, &nMIFObjectSize);
     if (nMIFObjectSize <= 0)

@@ -571,8 +571,8 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL *hLocalHandle = curl_easy_init();
 
-    struct curl_slist *headers =
-        VSICurlSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List());
+    struct curl_slist *headers = static_cast<struct curl_slist *>(
+        CPLHTTPSetOptions(hLocalHandle, m_pszURL, m_aosHTTPOptions.List()));
 
     VSICURLStreamingInitWriteFuncStructStreaming(&sWriteFuncHeaderData);
 
@@ -1009,8 +1009,8 @@ void VSICurlStreamingHandle::DownloadInThread()
 {
     CURL *hCurlHandle = curl_easy_init();
 
-    struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List());
+    struct curl_slist *headers = static_cast<struct curl_slist *>(
+        CPLHTTPSetOptions(hCurlHandle, m_pszURL, m_aosHTTPOptions.List()));
     headers = GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
 
@@ -1061,7 +1061,7 @@ void VSICurlStreamingHandle::DownloadInThread()
     {
         // For autotest purposes only !
         const char *pszSimulatedCurlError = CPLGetConfigOption(
-            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR", nullptr);
+            "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR", nullptr);
         if (pszSimulatedCurlError)
             snprintf(m_szCurlErrBuf, sizeof(m_szCurlErrBuf), "%s",
                      pszSimulatedCurlError);

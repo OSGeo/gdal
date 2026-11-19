@@ -1,5 +1,7 @@
 .. _gdal_vector_set_geom_type:
 
+.. program:: gdal_vector_set_geom_type
+
 ================================================================================
 ``gdal vector set-geom-type``
 ================================================================================
@@ -39,6 +41,18 @@ The following groups of options can be combined together:
 Program-Specific Options
 ------------------------
 
+.. option:: --auto
+
+   .. versionadded:: 3.14
+
+   Automatically determine the geometry type by inspecting all input feature geometries. The most
+   restrictive geometry type will be selected. For example, if there is a mix of
+   polygons and multipolygons, the result will be multipolygons. If a common
+   geometry type cannot be determined, the generic Geometry type will be selected.
+
+   This option is mutually exclusive with :option:`--multi`, :option:`--single`,
+   :option:`--linear`, :option:`--curve`, :option:`--dim` and :option:`--geometry-type`.
+
 .. option:: --curve
 
    Force geometries to curve geometry types. e.g. ``LINESTRING`` ==> ``COMPOUNDCURVE``
@@ -77,7 +91,7 @@ Program-Specific Options
    Force geometries to linear/non-curve geometry types, approximating arcs with
    linear segments. The linear approximation can be controlled with configuration
    options :config:`OGR_ARC_STEPSIZE` and :config:`OGR_ARC_MAX_GAP`
-   (specified using :option:`--config`).
+   (specified using :option:`vector_common_options --config`).
    e.g. ``COMPOUNDCURVE`` ==> ``LINESTRING``.
    This option is mutually exclusive with :option:`--curve`.
 
@@ -107,6 +121,7 @@ Program-Specific Options
 
 Standard Options
 ----------------
+
 
 .. collapse:: Details
 
@@ -142,19 +157,32 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
-   :title: Convert a shapefile mixing polygons and multipolygons to a GeoPackage with multipolygons.
+   :title: Convert a shapefile mixing polygons and multipolygons to a GeoPackage with multipolygons
+   :id: gdal-vector-set-geom-type-multi
 
    .. code-block:: bash
 
         $ gdal vector set-geom-type --geometry-type=MULTIPOLYGON in.shp out.gpkg --overwrite
 
 .. example::
-   :title: Convert a GeoPackage with curve geometries to a Shapefile (that does not support them).
+   :title: Convert a GeoPackage with curve geometries to a Shapefile (that does not support them)
 
    .. code-block:: bash
 
         $ gdal vector set-geom-type --linear in.gpkg out.shp --overwrite
+
+.. example::
+   :title: Convert a CSV file that contains only a single type of geometry into a properly typed GeoPackage
+
+   .. code-block:: bash
+
+        $ gdal vector set-geom-type --auto in.csv out.gpkg

@@ -155,3 +155,8 @@ input source and a method source and generates the output of the operation in th
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
     Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

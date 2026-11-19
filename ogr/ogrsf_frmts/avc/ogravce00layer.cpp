@@ -252,7 +252,7 @@ OGRFeature *OGRAVCE00Layer::GetNextFeature()
 /************************************************************************/
 
 #if 0
-int OGRAVCE00Layer::TestCapability( const char * pszCap )
+bool OGRAVCE00Layer::TestCapability( const char * pszCap )
 
 {
     if( eSectionType == AVCFileARC && EQUAL(pszCap,OLCRandomRead) )

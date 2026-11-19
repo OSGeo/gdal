@@ -30,7 +30,7 @@ pytestmark = pytest.mark.require_driver("MBTILES")
 @pytest.fixture(scope="module")
 def server():
 
-    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
 
     if port == 0:
         pytest.skip()
@@ -51,7 +51,7 @@ def server():
 @pytest.mark.require_driver("JPEG")
 def test_mbtiles_2():
 
-    ds = gdal.OpenEx("data/mbtiles/world_l1.mbtiles", open_options=["USE_BOUNDS=NO"])
+    ds = gdal.Open("data/mbtiles/world_l1.mbtiles", open_options=["USE_BOUNDS=NO"])
     assert ds is not None
 
     assert ds.RasterCount == 4, "expected 3 bands"
@@ -257,7 +257,7 @@ def test_mbtiles_5():
     gdaltest.mbtiles_drv.CreateCopy("/vsimem/mbtiles_5.mbtiles", src_ds)
     src_ds = None
 
-    ds = gdal.OpenEx("/vsimem/mbtiles_5.mbtiles", open_options=["BAND_COUNT=2"])
+    ds = gdal.Open("/vsimem/mbtiles_5.mbtiles", open_options=["BAND_COUNT=2"])
     assert ds.RasterXSize == 19 and ds.RasterYSize == 19
     assert ds.RasterCount == 2
     got_gt = ds.GetGeoTransform()
@@ -300,7 +300,7 @@ def test_mbtiles_5():
 
 
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_6():
+def test_mbtiles_6(tmp_path):
 
     # Test options
     src_ds = gdal.Open("data/byte.tif")
@@ -312,10 +312,12 @@ def test_mbtiles_6():
     options += ["TYPE=baselayer"]
     options += ["VERSION=version"]
     options += ["WRITE_BOUNDS=no"]
-    gdaltest.mbtiles_drv.CreateCopy("tmp/mbtiles_6.mbtiles", src_ds, options=options)
+    gdaltest.mbtiles_drv.CreateCopy(
+        str(tmp_path / "mbtiles_6.mbtiles"), src_ds, options=options
+    )
     src_ds = None
 
-    ds = gdal.Open("tmp/mbtiles_6.mbtiles")
+    ds = gdal.Open(tmp_path / "mbtiles_6.mbtiles")
     got_cs = ds.GetRasterBand(1).Checksum()
     assert got_cs != 0
     got_md = ds.GetMetadata()
@@ -331,8 +333,6 @@ def test_mbtiles_6():
     }
     assert got_md == expected_md
     ds = None
-
-    gdal.Unlink("tmp/mbtiles_6.mbtiles")
 
 
 ###############################################################################

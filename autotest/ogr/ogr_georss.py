@@ -22,6 +22,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GeoRSS")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
@@ -125,7 +126,7 @@ def test_ogr_georss_1_atom_ns():
 
 
 ###############################################################################
-# Test writing a Atom 1.0 document (doesn't need read support)
+# Test writing an Atom 1.0 document (doesn't need read support)
 
 
 def test_ogr_georss_1bis(tmp_path):

@@ -14,7 +14,7 @@ PDS4 formatted imagery data.
 
 PDS4 files are compose of a .xml (label) file which references a raw
 imagery file. The driver also supports imagery stored in a separate
-uncompressed GeoTIFF file with a strip organization compatible of a raw
+uncompressed GeoTIFF file with a strip organization compatible with a raw
 imagery file.
 
 The driver also reads and write georeferencing and coordinate system
@@ -23,13 +23,16 @@ information as well as selected other header metadata.
 A mask band is attached to each source band. The value of this mask band
 is 0 when the pixel value is one of the missing constants.
 
-Implementation of this driver was supported by the United States
+Initial implementation of this driver was supported by the United States
 Geological Survey.
 
 PDS4 is part of a family of related formats including PDS and ISIS3.
 
 The PDS4 driver supports reading and writing ASCII fixed-with, binary fixed-with
 and delimited(CSV) tables as OGR vector layers.
+
+Starting with GDAL 3.14, browse products using PNG or GeoTIFF/COG images are also
+supported in read-only mode.
 
 Driver capabilities
 -------------------
@@ -137,6 +140,7 @@ The following dataset creation options are available:
          which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
          is not specified, the source dataset INTERLEAVE will be automatically taken
          into account.
+         See :ref:`raster_data_model_interleave_mode` for more details.
 
    -  .. co:: USE_SRC_LABEL
          :choices: YES, NO
@@ -175,7 +179,7 @@ The following dataset creation options are available:
          If set to YES, and used
          in a gdal_translate / CreateCopy() context where the source dataset is
          a ENVI, GeoTIFF, ISIS3, VICAR, FITS or PDS3 dataset, whose layout is
-         compatible of a raw binary format, as supported by PDS4, then only the
+         compatible with a raw binary format, as supported by PDS4, then only the
          label XML file will be generated, and it will reference the raw binary
          file of the source dataset. The IMAGE_FILENAME, IMAGE_FORMAT and
          INTERLEAVE creation options are ignored in that situation.

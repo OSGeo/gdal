@@ -88,11 +88,8 @@ bool KML::parse()
         if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of KML file failed : %s at line %d, "
-                     "column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+                     "XML parsing of KML file failed: %s",
+                     OGRExpatGetParseError(oParser));
             bError = true;
             break;
         }
@@ -186,12 +183,9 @@ void KML::checkValidity()
                  (strstr(aBuf.data(), "<Document") &&
                   strstr(aBuf.data(), "/kml/2."))))
             {
-                CPLError(
-                    CE_Failure, CPLE_AppDefined,
-                    "XML parsing of KML file failed : %s at line %d, column %d",
-                    XML_ErrorString(XML_GetErrorCode(oParser)),
-                    static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                    static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "XML parsing of KML file failed: %s",
+                         OGRExpatGetParseError(oParser));
             }
 
             validity = KML_VALIDITY_INVALID;
@@ -584,37 +578,9 @@ void KML::print(unsigned short nNum)
 bool KML::isHandled(std::string const &elem) const
 {
     return isLeaf(elem) || isFeature(elem) || isFeatureContainer(elem) ||
-           isContainer(elem) || isRest(elem);
-}
-
-bool KML::isLeaf(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isFeature(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isFeatureContainer(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isContainer(std::string const & /* elem */) const
-{
-    return false;
-}
-
-bool KML::isRest(std::string const & /* elem */) const
-{
-    return false;
-}
-
-void KML::findLayers(KMLNode * /* poNode */, int /* bKeepEmptyContainers */)
-{
-    // idle
+           isContainer(elem) || isRest(elem) || elem == "Schema" ||
+           elem == "SimpleField" || elem == "SchemaData" ||
+           elem == "SimpleData" || elem == "ExtendedData";
 }
 
 bool KML::hasOnlyEmpty() const

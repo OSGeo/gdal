@@ -1,5 +1,7 @@
 .. _gdal_vsi_move:
 
+.. program:: gdal_vsi_move
+
 ================================================================================
 ``gdal vsi move``
 ================================================================================
@@ -35,6 +37,11 @@ This is implemented by :cpp:func:`VSIMove`.
 
 This is an analog of the UNIX ``mv`` command, and ``gdal vsi mv`` is an
 alias for ``gdal vsi move``.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

@@ -25,6 +25,7 @@
 #include "cpl_quad_tree.h"
 #include "cpl_vsi.h"
 #include "gdal_alg.h"
+#include "gdal_mem.h"
 #include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_utils.h"

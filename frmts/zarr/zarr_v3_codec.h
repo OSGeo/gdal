@@ -60,11 +60,10 @@ class ZarrV3Codec CPL_NON_FINAL
     virtual IOType GetInputType() const = 0;
     virtual IOType GetOutputType() const = 0;
 
-    virtual bool
-    InitFromConfiguration(const CPLJSONObject &configuration,
-                          const ZarrArrayMetadata &oInputArrayMetadata,
-                          ZarrArrayMetadata &oOutputArrayMetadata,
-                          bool bEmitWarnings) = 0;
+    virtual bool InitFromConfiguration(
+        const std::string &osArrayName, const CPLJSONObject &configuration,
+        const ZarrArrayMetadata &oInputArrayMetadata,
+        ZarrArrayMetadata &oOutputArrayMetadata, bool bEmitWarnings) = 0;
 
     virtual std::unique_ptr<ZarrV3Codec> Clone() const = 0;
 
@@ -162,7 +161,8 @@ class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
 
     static CPLJSONObject GetConfiguration(int nLevel);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -186,7 +186,8 @@ class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
                                           const char *shuffle, int typesize,
                                           int blocksize);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -208,7 +209,8 @@ class ZarrV3CodecZstd final : public ZarrV3CodecAbstractCompressor
 
     static CPLJSONObject GetConfiguration(int level, bool checksum);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -242,7 +244,8 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 
     static CPLJSONObject GetConfiguration(bool bLittle);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -254,11 +257,59 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 
     bool IsNoOp() const override
     {
+        // Byte-oriented string types have no endianness concept
+        if (m_oInputArrayMetadata.oElt.nativeType ==
+            DtypeElt::NativeType::STRING_ASCII)
+            return true;
         if constexpr (CPL_IS_LSB)
             return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
         else
             return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
     }
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+};
+
+/************************************************************************/
+/*                         ZarrV3CodecVLenUTF8                          */
+/************************************************************************/
+
+/** Implements the vlen-utf8 array-to-bytes codec for variable-length
+ *  UTF-8 strings (zarr-extensions).
+ *
+ *  Binary format (little-endian):
+ *    [u32 item_count] [u32 len_0][bytes_0] [u32 len_1][bytes_1] ...
+ *
+ *  Decode produces a flat buffer of nElements * nativeSize bytes where
+ *  each slot is a null-padded string. Read-only for now.
+ */
+class ZarrV3CodecVLenUTF8 final : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "vlen-utf8";
+
+    ZarrV3CodecVLenUTF8();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
 
     std::unique_ptr<ZarrV3Codec> Clone() const override;
 
@@ -305,7 +356,8 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
 
     static CPLJSONObject GetConfiguration(const std::vector<int> &anOrder);
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -383,7 +435,8 @@ class ZarrV3CodecCRC32C final : public ZarrV3Codec
         return IOType::BYTES;
     }
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -432,7 +485,8 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
         return IOType::BYTES;
     }
 
-    bool InitFromConfiguration(const CPLJSONObject &configuration,
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
                                const ZarrArrayMetadata &oInputArrayMetadata,
                                ZarrArrayMetadata &oOutputArrayMetadata,
                                bool bEmitWarnings) override;
@@ -449,6 +503,17 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
                        ZarrByteVectorQuickResize &abyDst,
                        std::vector<size_t> &anStartIdx,
                        std::vector<size_t> &anCount) override;
+
+    /** Batch-read multiple inner chunks from the same shard via two
+     *  ReadMultiRange() passes (index entries, then data), then decode.
+     *  pszFilename is used as a cache key for the shard index; pass nullptr
+     *  to bypass the cache.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile, const char *pszFilename,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
 
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
@@ -477,7 +542,8 @@ class ZarrV3CodecSequence
     // This method is not thread safe due to cloning a JSON object
     std::unique_ptr<ZarrV3CodecSequence> Clone() const;
 
-    bool InitFromJson(const CPLJSONObject &oCodecs,
+    bool InitFromJson(const std::string &osArrayName,
+                      const CPLJSONObject &oCodecs,
                       ZarrArrayMetadata &oOutputArrayMetadata);
 
     const CPLJSONObject &GetJSon() const
@@ -508,8 +574,60 @@ class ZarrV3CodecSequence
                        const std::vector<size_t> &anStartIdx,
                        const std::vector<size_t> &anCount);
 
+    /** Batch-read multiple inner chunks via ReadMultiRange().
+     *  Delegates to the sharding codec if present, otherwise falls back
+     *  to sequential DecodePartial() calls.
+     *  pszFilename is forwarded to the sharding codec for index caching.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile, const char *pszFilename,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
+
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;
+};
+
+/************************************************************************/
+/*                          ZarrV3CodecPcodec                           */
+/************************************************************************/
+
+/** Non-standard "pcodec" (a.k.a. "pco") from https://github.com/pcodec/pcodec
+ *
+ * Also see https://numcodecs.readthedocs.io/en/stable/compression/pcodec.html
+ */
+class ZarrV3CodecPcodec /* final */ : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "numcodecs.pcodec";
+
+    explicit ZarrV3CodecPcodec();
+    ~ZarrV3CodecPcodec() override;
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
 };
 
 #endif

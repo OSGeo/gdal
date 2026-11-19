@@ -2,6 +2,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>${CSHARP_APPLICATION_VERSION}</TargetFramework>
+        <langversion>10.0</langversion>
         <RuntimeIdentifier>${CSHARP_RID}</RuntimeIdentifier>
         <SelfContained>true</SelfContained>
         <CheckEolTargetFramework>false</CheckEolTargetFramework>

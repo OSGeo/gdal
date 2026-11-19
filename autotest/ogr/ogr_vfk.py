@@ -240,7 +240,7 @@ def test_ogr_vfk_9(vfk_ds):
     dsn = vfk_ds.GetDescription()
     vfk_ds.Close()
 
-    vfk_ds = gdal.OpenEx(dsn, open_options=["SUPPRESS_GEOMETRY=YES"])
+    vfk_ds = gdal.Open(dsn, open_options=["SUPPRESS_GEOMETRY=YES"])
 
     vfk_layer_par = vfk_ds.GetLayerByName("PAR")
 
@@ -265,7 +265,7 @@ def test_ogr_vfk_10(vfk_ds):
     dsn = vfk_ds.GetDescription()
     vfk_ds.Close()
 
-    vfk_ds = gdal.OpenEx(dsn, open_options=["FILE_FIELD=YES"])
+    vfk_ds = gdal.Open(dsn, open_options=["FILE_FIELD=YES"])
 
     vfk_layer_par = vfk_ds.GetLayerByName("PAR")
 
@@ -324,3 +324,22 @@ def test_ogr_vfk_12(vfk_ds):
     ), "did not get expected geometry type."
 
     assert geom.GetPointCount() == 92, "did not get expected number of points."
+
+
+###############################################################################
+# Read the first feature from layer 'BUD', check geometry type
+
+
+@pytest.mark.require_geos
+def test_ogr_vfk_14(vfk_ds):
+
+    vfk_layer_bud = vfk_ds.GetLayerByName("BUD")
+
+    vfk_layer_bud.ResetReading()
+
+    feat = vfk_layer_bud.GetNextFeature()
+
+    geom = feat.GetGeometryRef()
+    assert (
+        geom.GetGeometryType() == ogr.wkbMultiPolygon
+    ), "did not get expected geometry type."

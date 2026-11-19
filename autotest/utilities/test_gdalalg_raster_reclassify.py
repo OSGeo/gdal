@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import re
+
 import gdaltest
 import pytest
 
@@ -43,9 +45,9 @@ def test_gdalalg_raster_reclassify_basic_1(
     reclassify["output"] = outfile
 
     if mapping_format == "text":
-        reclassify[
-            "mapping"
-        ] = "165 = 120; (-inf, 0) = 140; (0, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
+        reclassify["mapping"] = (
+            "165 = 120; (-inf, 0) = 140; (0, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
+        )
     else:
         gdal.FileFromMemBuffer(
             tmp_vsimem / "mapping.txt",
@@ -224,6 +226,65 @@ def test_gdalalg_raster_reclassify_multiple_bands(reclassify, tmp_vsimem):
             assert np.all(dst_val[np.where(src_val >= 128)] == 1)
 
 
+@pytest.mark.parametrize(
+    "dt",
+    (gdal.GDT_Float16, gdal.GDT_Float32, gdal.GDT_Float64),
+    ids=gdal.GetDataTypeName,
+)
+def test_gdalalg_raster_reclassify_match_nan(reclassify, dt):
+
+    gdaltest.importorskip_gdal_array()
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, eType=dt)
+    src_ds.GetRasterBand(1).Fill(float("nan"))
+
+    reclassify["input"] = src_ds
+    reclassify["output-format"] = "MEM"
+    reclassify["mapping"] = "nan=75"
+
+    assert reclassify.Run()
+
+    dst_ds = reclassify.Output()
+    assert dst_ds.ReadAsArray()[0, 0] == 75
+
+
+@pytest.mark.parametrize("keep_color_table", (True, False))
+def test_gdalalg_raster_reclassify_keep_color_table(
+    reclassify, tmp_vsimem, keep_color_table
+):
+
+    test_ct_data = [
+        (255, 0, 0, 255),
+        (0, 255, 0, 128),
+        (0, 0, 255, 0),
+        (255, 255, 255, 0),
+    ]
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ct = gdal.ColorTable()
+    for i, color in enumerate(test_ct_data):
+        src_ct.SetColorEntry(i, color)
+    src_ds.GetRasterBand(1).SetColorTable(src_ct)
+
+    reclassify["input"] = src_ds
+    reclassify["mapping"] = "DEFAULT=PASS_THROUGH"
+    reclassify["output-format"] = "stream"
+    reclassify["keep-color-table"] = keep_color_table
+
+    assert reclassify.Run()
+
+    dst_ds = reclassify.Output()
+
+    dst_ct = dst_ds.GetRasterBand(1).GetColorTable()
+
+    if keep_color_table:
+        assert dst_ct.GetCount() == len(test_ct_data)
+        for i, color in enumerate(test_ct_data):
+            assert dst_ct.GetColorEntry(i) == color
+    else:
+        assert dst_ct is None
+
+
 def test_gdalalg_raster_reclassify_empty_mapping(reclassify, tmp_vsimem):
 
     infile = "../gcore/data/byte.tif"
@@ -235,6 +296,37 @@ def test_gdalalg_raster_reclassify_empty_mapping(reclassify, tmp_vsimem):
 
     with pytest.raises(
         RuntimeError, match="Encountered value .* with no specified mapping"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_no_mapping_matches_input_pixel(
+    reclassify, tmp_vsimem
+):
+
+    reclassify["input"] = "../gcore/data/byte.tif"
+    reclassify["output"] = tmp_vsimem / "out.tif"
+    reclassify["mapping"] = "[0, 128]=1;[156, 255]=2"
+
+    with pytest.raises(
+        RuntimeError, match="Encountered value 132 with no specified mapping"
+    ):
+        reclassify.Run()
+
+
+def test_gdalalg_raster_reclassify_multiple_mappings_match_input_pixel(
+    reclassify, tmp_vsimem
+):
+
+    reclassify["input"] = "../gcore/data/byte.tif"
+    reclassify["output"] = tmp_vsimem / "out.tif"
+    reclassify["mapping"] = "[0, 132]=1;[132, 255]=2"
+
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "Interval from 0 to 132 (mapped to 1) overlaps with interval from 132 to 255 (mapped to 2)"
+        ),
     ):
         reclassify.Run()
 

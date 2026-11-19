@@ -25,6 +25,7 @@ from osgeo import gdal, ogr, osr
 pytestmark = pytest.mark.require_driver("Parquet")
 
 GEOPARQUET_1_1_0_JSON_SCHEMA = "data/parquet/schema_1_1_0.json"
+GEOPARQUET_2_0_0_JSON_SCHEMA = "data/parquet/schema_2_0_0.json"
 
 
 ###############################################################################
@@ -33,6 +34,9 @@ GEOPARQUET_1_1_0_JSON_SCHEMA = "data/parquet/schema_1_1_0.json"
 
 def _has_validate():
     import sys
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
 
     from test_py_scripts import samples_path
 
@@ -57,14 +61,14 @@ def _has_validate():
     return True
 
 
-def _validate(filename, check_data=False):
+def _validate(filename, check_data=False, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA):
     if not _has_validate():
         return
 
     import validate_geoparquet
 
     ret = validate_geoparquet.check(
-        filename, check_data=check_data, local_schema=GEOPARQUET_1_1_0_JSON_SCHEMA
+        filename, check_data=check_data, local_schema=local_schema
     )
     assert not ret
 
@@ -137,7 +141,7 @@ def _check_test_parquet(
     fid_reliable_after_spatial_filtering=True,
 ):
     with gdaltest.config_option("OGR_PARQUET_BATCH_SIZE", "2"):
-        ds = gdal.OpenEx(filename)
+        ds = gdal.Open(filename)
     assert ds is not None, "cannot open dataset"
     assert ds.TestCapability("foo") == 0
     assert ds.GetLayerCount() == 1, "bad layer count"
@@ -150,7 +154,7 @@ def _check_test_parquet(
     assert lyr_defn.GetGeomFieldDefn(0).GetName() == "geometry"
     srs = lyr_defn.GetGeomFieldDefn(0).GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     if expect_layer_geom_type:
         assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
     # import pprint
@@ -631,10 +635,10 @@ def test_ogr_parquet_test_ogrsf_all_geoms_with_arrow_dataset():
     [(False, None, None, True), (False, None, None, "ONLY"), (True, 2, "fid", False)],
 )
 def test_ogr_parquet_write_from_another_dataset(
-    use_vsi, row_group_size, fid, use_parquet_geo_types
+    tmp_path, use_vsi, row_group_size, fid, use_parquet_geo_types
 ):
 
-    outfilename = "/vsimem/out.parquet" if use_vsi else "tmp/out.parquet"
+    outfilename = "/vsimem/out.parquet" if use_vsi else str(tmp_path / "out.parquet")
     layerCreationOptions = []
     if row_group_size:
         layerCreationOptions.append("ROW_GROUP_SIZE=" + str(row_group_size))
@@ -658,7 +662,7 @@ def test_ogr_parquet_write_from_another_dataset(
             layerCreationOptions=layerCreationOptions,
         )
 
-        ds = gdal.OpenEx(outfilename)
+        ds = gdal.Open(outfilename)
         lyr = ds.GetLayer(0)
         assert lyr.GetDataset().GetDescription() == ds.GetDescription()
 
@@ -780,7 +784,7 @@ def test_ogr_parquet_write_edge_cases():
     with pytest.raises(Exception):
         ds.CreateLayer("out2", srs=srs, geom_type=ogr.wkbPoint)
     ds = None
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetNextFeature() is None
@@ -814,7 +818,7 @@ def test_ogr_parquet_write_edge_cases():
     with pytest.raises(Exception):
         lyr.CreateGeomField(ogr.GeomFieldDefn("baz", ogr.wkbPoint))
     ds = None
-    ds = gdal.OpenEx(outfilename)
+    ds = gdal.Open(outfilename)
     assert ds is not None
     lyr = ds.GetLayer(0)
     assert lyr.GetNextFeature() is not None
@@ -918,7 +922,7 @@ def test_ogr_parquet_coordinate_epoch(epsg_code):
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert int(srs.GetAuthorityCode(None)) == epsg_code
+    assert int(srs.GetAuthorityCode()) == epsg_code
     assert srs.GetCoordinateEpoch() == 2022.3
     lyr = None
     ds = None
@@ -955,7 +959,7 @@ def test_ogr_parquet_missing_crs_member():
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     lyr = None
     ds = None
 
@@ -1009,7 +1013,7 @@ def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs)
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == expected_crs
+    assert srs.GetAuthorityCode() == expected_crs
     lyr = None
     ds = None
 
@@ -1416,7 +1420,7 @@ def test_ogr_parquet_creator():
         ds.CreateLayer("test")
         ds = None
 
-        ds = gdal.OpenEx(outfilename)
+        ds = gdal.Open(outfilename)
         lyr = ds.GetLayer(0)
         assert lyr.GetMetadataItem("CREATOR", "_PARQUET_").startswith("GDAL ")
         ds = None
@@ -1425,7 +1429,7 @@ def test_ogr_parquet_creator():
         ds.CreateLayer("test", options=["CREATOR=my_creator"])
         ds = None
 
-        ds = gdal.OpenEx(outfilename)
+        ds = gdal.Open(outfilename)
         lyr = ds.GetLayer(0)
         assert lyr.GetMetadataItem("CREATOR", "_PARQUET_") == "my_creator"
         ds = None
@@ -1452,7 +1456,7 @@ def test_ogr_parquet_multiple_geom_columns():
         ) == ogr.OGRERR_NONE
         ds = None
 
-        ds = gdal.OpenEx(outfilename)
+        ds = gdal.Open(outfilename)
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert lyr_defn.GetGeomFieldCount() == 2
@@ -1945,7 +1949,7 @@ def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert int(srs.GetAuthorityCode(None)) == 32631
+    assert int(srs.GetAuthorityCode()) == 32631
     lyr = None
     ds = None
 
@@ -2631,7 +2635,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
         )
     table = pa.Table.from_batches(batches)
     table.validate(full=True)
-    for (col, full_col) in zip(table, full_table):
+    for col, full_col in zip(table, full_table):
         assert col[0] == full_col[1]
         assert col[1] == full_col[3]
 
@@ -2692,6 +2696,21 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
     assert batches[1].field("uint8")[0].as_py() == 5
     assert float(batches[0].field("decimal128")[0].as_py()) == -1234.567
     assert float(batches[1].field("decimal128")[0].as_py()) == -1234.567
+
+
+###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_nanoarrow():
+
+    na = pytest.importorskip("nanoarrow")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("boolean = 0")
+    na_stream = na.ArrayStream(lyr)
+    batch = next(na_stream.__iter__())
+    assert len(batch) == 1
 
 
 ###############################################################################
@@ -2964,7 +2983,7 @@ def test_ogr_parquet_check_geom_column_schema_metadata():
 
 ###############################################################################
 # Check that we recognize the geometry field just from the presence of
-# a ARROW:extension:name == ogc.wkb column on it
+# an ARROW:extension:name == ogc.wkb column on it
 
 
 def test_ogr_parquet_recognize_geo_from_arrow_extension_name():
@@ -3035,12 +3054,12 @@ def test_ogr_parquet_recognize_geo_from_geom_possible_names(geom_col_name, is_wk
         assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
         ds = None
 
-        ds = gdal.OpenEx(outfilename, open_options=["GEOM_POSSIBLE_NAMES=bar"])
+        ds = gdal.Open(outfilename, open_options=["GEOM_POSSIBLE_NAMES=bar"])
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbNone
         ds = None
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             outfilename,
             open_options=[
                 f"GEOM_POSSIBLE_NAMES=foo,{geom_col_name},bar",
@@ -3050,7 +3069,7 @@ def test_ogr_parquet_recognize_geo_from_geom_possible_names(geom_col_name, is_wk
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == geom_col_name
         assert lyr.GetGeomType() == ogr.wkbUnknown
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         ds = None
 
     finally:
@@ -3295,6 +3314,27 @@ def test_ogr_parquet_list_binary():
     assert f["list_binary"] == [""]
     f = lyr.GetNextFeature()
     assert f["list_binary"] == ["foo", "bar", "base64:AQ=="]
+
+
+###############################################################################
+#
+
+
+def test_ogr_parquet_largelist():
+
+    # File generated by autotest/generate_parquet_test_file.py::generate_parquet_largelist()
+
+    ds = ogr.Open("data/parquet/largelistint.parquet")
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["largelist"] == [1]
+
+    ds = gdal.Open(
+        "data/parquet/largelistint.parquet", open_options=["LISTS_AS_STRING_JSON=YES"]
+    )
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["largelist"] == "[1]"
 
 
 ###############################################################################
@@ -3693,7 +3733,7 @@ def test_ogr_parquet_write_from_wkb_large_binary(tmp_vsimem):
 @pytest.mark.parametrize("where", [None, "boolean = 0"])
 def test_ogr_parquet_write_to_mem(tmp_vsimem, where):
 
-    src_ds = gdal.OpenEx("data/parquet/test.parquet")
+    src_ds = gdal.Open("data/parquet/test.parquet")
     ds = gdal.VectorTranslate("", src_ds, format="MEM", where=where)
     lyr = ds.GetLayer(0)
     if where is None:
@@ -4406,7 +4446,7 @@ def test_ogr_parquet_arrow_stream_numpy_datetime_as_string(tmp_vsimem):
     gdaltest.importorskip_gdal_array()
     pytest.importorskip("numpy")
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/parquet/test.parquet", gdal.OF_VECTOR, allowed_drivers=["Parquet"]
     ) as ds:
         lyr = ds.GetLayer(0)
@@ -4448,9 +4488,9 @@ def test_ogr_parquet_write_use_geo_type(tmp_vsimem):
         )
         lyr.SetMetadataItem("EDGES", "SPHERICAL")
 
-    with gdal.OpenEx(tmp_vsimem / "out.parquet") as ds:
+    with gdal.Open(tmp_vsimem / "out.parquet") as ds:
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
 
     with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
@@ -4460,9 +4500,9 @@ def test_ogr_parquet_write_use_geo_type(tmp_vsimem):
             options=["USE_PARQUET_GEO_TYPES=ONLY"],
         )
 
-    with gdal.OpenEx(tmp_vsimem / "out.parquet") as ds:
+    with gdal.Open(tmp_vsimem / "out.parquet") as ds:
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
         assert lyr.GetMetadataItem("EDGES") is None
 
 
@@ -4550,6 +4590,137 @@ def test_ogr_parquet_test_ogrsf_parquet_geometry():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_write_geoparquet_2_0_error(tmp_vsimem):
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        with pytest.raises(
+            Exception,
+            match="GEOPARQUET_VERSION = 2.0 is not compatible with USE_PARQUET_GEO_TYPES = NO",
+        ):
+            ds.CreateLayer(
+                "test",
+                srs=osr.SpatialReference(epsg=4326),
+                options=["GEOPARQUET_VERSION=2.0", "USE_PARQUET_GEO_TYPES=NO"],
+            )
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_write_geoparquet_2_0_epsg_4326(tmp_vsimem):
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.CreateLayer(
+            "test",
+            srs=osr.SpatialReference(epsg=4326),
+            options=["GEOPARQUET_VERSION=2.0"],
+        )
+        lyr.SetMetadataItem("EDGES", "SPHERICAL")
+
+    _validate(tmp_vsimem / "out.parquet", local_schema=GEOPARQUET_2_0_0_JSON_SCHEMA)
+
+    with gdal.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
+        assert lyr.GetMetadataItem("EDGES") == "SPHERICAL"
+
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is not None
+        j = json.loads(geo)
+        assert j is not None
+        assert "version" in j
+        assert j["version"] == "2.0.0"
+        assert "primary_column" in j
+        assert j["primary_column"] == "geometry"
+        assert "columns" in j
+        assert "geometry" in j["columns"]
+        assert "encoding" in j["columns"]["geometry"]
+        assert "crs" not in j["columns"]["geometry"]
+        assert j["columns"]["geometry"]["encoding"] == "WKB"
+        assert "covering" not in j["columns"]["geometry"]
+
+        assert lyr.GetMetadataItem("geometry", "_PARQUET_GEO_CRS_") == ""
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_write_geoparquet_2_0_epsg_32631(tmp_vsimem):
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        ds.CreateLayer(
+            "test",
+            srs=osr.SpatialReference(epsg=32631),
+            options=["GEOPARQUET_VERSION=2.0"],
+        )
+
+    _validate(tmp_vsimem / "out.parquet", local_schema=GEOPARQUET_2_0_0_JSON_SCHEMA)
+
+    with gdal.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
+        assert lyr.GetMetadataItem("EDGES") is None
+
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is not None
+        j = json.loads(geo)
+        assert j is not None
+        assert "version" in j
+        assert j["version"] == "2.0.0"
+        assert "crs" in j["columns"]["geometry"]
+
+        assert '"type":"ProjectedCRS"' in lyr.GetMetadataItem(
+            "geometry", "_PARQUET_GEO_CRS_"
+        )
+
+
+###############################################################################
+
+
+@pytest.mark.skipif(
+    not _parquet_has_geo_types(),
+    reason="requires libarrow >= 21",
+)
+def test_ogr_parquet_write_geoparquet_2_0_no_crs(tmp_vsimem):
+
+    with gdal.GetDriverByName("Parquet").CreateVector(tmp_vsimem / "out.parquet") as ds:
+        ds.CreateLayer(
+            "test",
+            options=["GEOPARQUET_VERSION=2.0"],
+        )
+
+    _validate(tmp_vsimem / "out.parquet", local_schema=GEOPARQUET_2_0_0_JSON_SCHEMA)
+
+    with gdal.Open(tmp_vsimem / "out.parquet") as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetSpatialRef() is None
+
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is not None
+        j = json.loads(geo)
+        assert j is not None
+        assert "version" in j
+        assert j["version"] == "2.0.0"
+        assert j["columns"]["geometry"]["crs"] is None
+
+        assert lyr.GetMetadataItem("geometry", "_PARQUET_GEO_CRS_") == "srid:0"
+
+
+###############################################################################
+
+
 def test_ogr_parquet_update(tmp_path):
 
     with gdal.GetDriverByName("PARQUET").CreateVector(tmp_path / "test.parquet") as ds:
@@ -4570,7 +4741,7 @@ def test_ogr_parquet_update(tmp_path):
         assert lyr.GetFIDColumn() == ""
         assert lyr.GetGeometryColumn() == "geometry"
         assert lyr.GetGeomType() == ogr.wkbPoint
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
         assert lyr.TestCapability(ogr.OLCSequentialWrite)
         assert lyr.TestCapability(ogr.OLCRandomWrite)
         assert lyr.TestCapability(ogr.OLCCreateField)
@@ -4587,7 +4758,7 @@ def test_ogr_parquet_update(tmp_path):
         assert lyr.GetFIDColumn() == ""
         assert lyr.GetGeometryColumn() == "geometry"
         assert lyr.GetGeomType() == ogr.wkbPoint
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
         assert lyr.GetFeatureCount() == 2
         f = lyr.GetNextFeature()
         assert f["str"] == "foo"
@@ -4650,7 +4821,7 @@ def test_ogr_parquet_update_with_creation_options_implicit(tmp_path):
         assert lyr.GetFIDColumn() == "my_fid"
         assert lyr.GetGeometryColumn() == "my_geom"
         assert lyr.GetGeomType() == ogr.wkbPoint
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
         f = ogr.Feature(lyr.GetLayerDefn())
         f["str"] = "bar"
         f["int"] = 456
@@ -4665,7 +4836,7 @@ def test_ogr_parquet_update_with_creation_options_implicit(tmp_path):
         assert lyr.GetFIDColumn() == "my_fid"
         assert lyr.GetGeometryColumn() == "my_geom"
         assert lyr.GetGeomType() == ogr.wkbPoint
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
         assert lyr.GetFeatureCount() == 2
         f = lyr.GetNextFeature()
         assert f["str"] == "foo"
@@ -4759,7 +4930,7 @@ def test_ogr_parquet_arrow_stream_list_of_struct_ignored_fields():
 
 def test_ogr_parquet_lists_as_string_json():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/parquet/test.parquet", open_options=["LISTS_AS_STRING_JSON=YES"]
     )
     lyr = ds.GetLayer(0)
@@ -5001,3 +5172,30 @@ def test_ogr_parquet_create_metadata_file_alg_incompatible_schemas(tmp_vsimem):
             input=[tmp_vsimem / "one.parquet", tmp_vsimem / "two.parquet"],
             output=tmp_vsimem / "_metadata",
         )
+
+
+###############################################################################
+# See https://github.com/OSGeo/gdal/issues/14320
+
+
+def test_ogr_parquet_read_geoparquet_1_1_no_explicit_crs_but_geoarrow_wkb_declared():
+
+    ds = ogr.Open(
+        "data/parquet/geoparquet_1_1_no_explicit_crs_but_geoarrow_wkb_declared.parquet"
+    )
+    lyr = ds.GetLayer(0)
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14610
+# Case where a column with a nested column "type" appears before a top-level
+# column "type"
+
+
+def test_ogr_parquet_read_gh_14610():
+
+    ds = ogr.Open("data/parquet/gh_14610.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["OGR_GEOMETRY"])
+    assert lyr.GetNextFeature()

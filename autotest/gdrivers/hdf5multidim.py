@@ -23,7 +23,7 @@ pytestmark = pytest.mark.require_driver("HDF5")
 
 def test_hdf5_multidim_basic():
 
-    ds = gdal.OpenEx("data/hdf5/u8be.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/u8be.h5", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -108,7 +108,7 @@ def test_hdf5_multidim_basic():
 
 def test_hdf5_multidim_var_alldatatypes():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
     assert rg
@@ -216,7 +216,7 @@ def test_hdf5_multidim_var_alldatatypes():
 
 def test_hdf5_multidim_read_array():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     # 0D
@@ -364,7 +364,7 @@ def test_hdf5_multidim_read_array():
 
 def test_hdf5_multidim_read_stride():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     var = rg.OpenMDArray("ubyte_z2_y2_x2_var")
@@ -375,7 +375,7 @@ def test_hdf5_multidim_read_stride():
 
 def test_hdf5_multidim_attr_alldatatypes():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     attrs = rg.GetAttributes()
@@ -479,7 +479,7 @@ def test_hdf5_multidim_attr_alldatatypes():
 
 def test_hdf5_multidim_nodata_unit():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     ar = rg.OpenMDArray("pcp")
@@ -509,7 +509,7 @@ def test_hdf5_multidim_read_missing_value_of_different_type():
 
     # create()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/hdf5/FillValue_of_different_type.h5",
         gdal.OF_MULTIDIM_RASTER,
     )
@@ -521,6 +521,28 @@ def test_hdf5_multidim_read_missing_value_of_different_type():
         == gdal.GDT_Float64
     )
     assert var.GetNoDataValue() == -9999.0
+
+
+###############################################################################
+# Test reading attributes with 2 or more dimensions
+
+
+def test_hdf5_multidim_read_attr_nd():
+    def create():
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/attr_nd.h5", "w")
+        f.attrs["attr"] = np.arange(24, dtype="int32").reshape(2, 3, 4)
+        f.close()
+
+    # create()
+
+    ds = gdal.Open("data/hdf5/attr_nd.h5", gdal.OF_MULTIDIM_RASTER)
+    attr = ds.GetRootGroup().GetAttribute("attr")
+    assert attr.GetDimensionsSize() == [2, 3, 4]
+    assert attr.Read() == tuple(range(24))
 
 
 ###############################################################################
@@ -538,7 +560,7 @@ def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
 
     # create()
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/hdf5/FillValue_of_different_type_not_in_range.h5",
         gdal.OF_MULTIDIM_RASTER,
     )
@@ -570,14 +592,14 @@ def test_hdf5_multidim_recursive_groups():
     # group['ext_link_to_self_root'] = h5py.ExternalLink("hdf5/recursive_groups.h5", "/")
     # f.close()
 
-    ds = gdal.OpenEx("data/hdf5/recursive_groups.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/recursive_groups.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     assert rg.GetGroupNames() == ["subgroup"]
 
 
 def test_hdf5_netcdf_dimensions():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     assert rg.GetAttribute("CDI")
@@ -621,7 +643,7 @@ def test_hdf5_netcdf_dimensions():
 
 def test_hdf5_multidim_netcdf_dimensions_complex_case():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/alldatatypes.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     dims = rg.GetDimensions()
     assert len(dims) == 6
@@ -690,14 +712,14 @@ def test_hdf5_multidim_netcdf_dimensions_complex_case():
 
 def test_hdf5_multidim_dimension_labels_with_null():
 
-    ds = gdal.OpenEx("data/hdf5/dimension_labels_with_null.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/dimension_labels_with_null.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
 
     ar = rg.OpenMDArray("data")
     attr = ar.GetAttribute("DIMENSION_LABELS")
     assert attr.ReadAsStringArray() == ["", "", "x"]
 
-    ds = gdal.OpenEx("data/hdf5/dimension_labels_with_null.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/dimension_labels_with_null.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("data")
     dims = ar.GetDimensions()
@@ -709,12 +731,12 @@ def test_hdf5_multidim_dimension_labels_with_null():
 
 def test_hdf5_multidim_family_driver():
 
-    assert gdal.OpenEx("data/hdf5/test_family_0.h5", gdal.OF_MULTIDIM_RASTER)
+    assert gdal.Open("data/hdf5/test_family_0.h5", gdal.OF_MULTIDIM_RASTER)
 
 
 def test_hdf5_multidim_read_transposed():
 
-    ds = gdal.OpenEx("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("HDF5:data/netcdf/trmm-nc4.nc", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("pcp")
     dims = ar.GetDimensions()
@@ -736,7 +758,7 @@ def test_hdf5_multidim_read_transposed():
 
 def test_hdf5_multimdim_eos_grid_geo_projection():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/hdf5/dummy_HDFEOS_with_geo_projection.h5", gdal.OF_MULTIDIM_RASTER
     )
     ar = ds.GetRootGroup().OpenMDArrayFromFullname(
@@ -778,7 +800,7 @@ def test_hdf5_multimdim_eos_grid_geo_projection():
 
 def test_hdf5_multimdim_eos_grid_utm_projection():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/hdf5/dummy_HDFEOS_with_utm_projection.h5", gdal.OF_MULTIDIM_RASTER
     )
     ar = ds.GetRootGroup().OpenMDArrayFromFullname(
@@ -797,7 +819,7 @@ def test_hdf5_multimdim_eos_grid_utm_projection():
 
 def test_hdf5_multidim_eos_swath_no_explicit_dimension_map():
 
-    ds = gdal.OpenEx("data/hdf5/dummy_HDFEOS_swath.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_swath.h5", gdal.OF_MULTIDIM_RASTER)
     ar = ds.GetRootGroup().OpenMDArrayFromFullname(
         "/HDFEOS/SWATHS/MySwath/Data Fields/MyDataField"
     )
@@ -830,7 +852,7 @@ def test_hdf5_multidim_eos_swath_no_explicit_dimension_map():
 
 def test_hdf5_multidim_block_size_structural_info():
 
-    ds = gdal.OpenEx("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
     block_size = var.GetBlockSize()
@@ -842,18 +864,22 @@ def test_hdf5_multidim_block_size_structural_info():
 # Test GetRawBlockInfo()
 
 
-def test_hdf5_multidim_getrawblockinfo_chunked():
+@pytest.mark.require_driver("use_optim", [True, False])
+def test_hdf5_multidim_getrawblockinfo_chunked(use_optim):
 
     if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
         pytest.skip("libhdf5 < 1.10.5")
 
-    ds = gdal.OpenEx("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/deflate.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
     block_size = var.GetBlockSize()
     assert block_size == [1, 2]
     y_size = var.GetDimensions()[0].GetSize()
     x_size = var.GetDimensions()[1].GetSize()
+
+    if not use_optim:
+        var.GetRawBlockInfo([1, 0])
 
     info = var.GetRawBlockInfo([0, 0])
     assert info.GetOffset() == 13908
@@ -899,7 +925,7 @@ def test_hdf5_multidim_getrawblockinfo_chunked():
 
 def test_hdf5_multidim_getrawblockinfo():
 
-    ds = gdal.OpenEx("data/hdf5/u8be.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/u8be.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("TestArray")
     info = var.GetRawBlockInfo([0, 0])
@@ -918,7 +944,7 @@ def test_hdf5_multidim_getrawblockinfo():
 
 def test_hdf5_multidim_getrawblockinfo_little_endian():
 
-    ds = gdal.OpenEx("data/hdf5/float32_little_endian.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/float32_little_endian.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("test")
     info = var.GetRawBlockInfo([0, 0])
@@ -931,11 +957,56 @@ def test_hdf5_multidim_getrawblockinfo_little_endian():
 
 def test_hdf5_multidim_getrawblockinfo_big_endian():
 
-    ds = gdal.OpenEx("data/hdf5/float32_big_endian.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/float32_big_endian.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("test")
     info = var.GetRawBlockInfo([0, 0])
     assert info.GetInfo() == ["ENDIANNESS=BIG"]
+
+
+###############################################################################
+# Test GetRawBlockInfo() on file with missing chunk(s)
+
+
+def test_hdf5_multidim_getrawblockinfo_sparse():
+
+    if not gdal.GetDriverByName("HDF5").GetMetadataItem("HAVE_H5Dget_chunk_info"):
+        pytest.skip("libhdf5 < 1.10.5")
+
+    fname = "data/hdf5/sparse_2d.h5"
+
+    # Create the test file sparse_2d.h5
+    if False:
+        import h5py
+        import numpy as np
+
+        with h5py.File(fname, "w") as f:
+            dset = f.create_dataset("test", shape=(21, 16), chunks=(3, 4), dtype="i4")
+            dset[6:8, 8:10] = np.array([[1, 2], [3, 4]])
+            dset[17:19, 2:4] = np.array([[5, 6], [7, 8]])
+
+    ds = gdal.OpenEx(fname, gdal.OF_MULTIDIM_RASTER)
+    var = ds.GetRootGroup().OpenMDArray("test")
+    info = var.GetRawBlockInfo([2, 2])
+
+    with open(fname, "rb") as f:
+        f.seek(info.GetOffset())
+        dat = f.read(info.GetSize())
+
+        assert memoryview(dat).cast("i").tolist() == [
+            1,
+            2,
+            0,
+            0,
+            3,
+            4,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
 
 
 ###############################################################################
@@ -944,7 +1015,7 @@ def test_hdf5_multidim_getrawblockinfo_big_endian():
 
 def test_hdf5_multidim_read_cfloat16():
 
-    ds = gdal.OpenEx("data/hdf5/complex.h5", gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("data/hdf5/complex.h5", gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("f16")
     assert var.GetDataType().GetNumericDataType() == gdal.GDT_CFloat32
@@ -1008,7 +1079,7 @@ def test_hdf5_multidim_read_cfloat16():
 
 def test_hdf5_multimdim_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/hdf5/dummy_HDFEOS_IIRS_Grid_IMG_2D_issue_1294.h5", gdal.OF_MULTIDIM_RASTER
     )
     ar = ds.GetRootGroup().OpenMDArrayFromFullname(
@@ -1034,3 +1105,24 @@ def test_hdf5_multimdim_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
     assert struct.unpack("d" * 4, xdim_var.Read())[0:2] == pytest.approx(
         (-972956.7047086251, -694969.0747918751)
     )
+
+
+##############################################################################
+# Test opening a HDF5EOS grid file whose arrays have a DIMENSION_LIST
+# https://github.com/OSGeo/gdal/issues/14287
+
+
+@pytest.mark.require_curl()
+@pytest.mark.network
+def test_hdf5_multimdim_eos_grid_dimension_list():
+
+    ds = gdal.Open(
+        "/vsigzip//vsicurl/https://github.com/user-attachments/files/26440412/VNP19A2.A2024156.h28v06.002.2025276043605.h5.gz",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/GRIDS/grid750m/Data Fields/Optical_Depth_047"
+    )
+    srs = ar.GetSpatialRef()
+    assert srs
+    assert srs.GetDataAxisToSRSAxisMapping() == [3, 2]

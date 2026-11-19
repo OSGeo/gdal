@@ -16,6 +16,7 @@ cmake ${GDAL_SOURCE_DIR:=..} \
   -DEMBED_RESOURCE_FILES=ON \
   -DCMAKE_INSTALL_PREFIX=/usr \
   -DGDAL_USE_CURL=OFF \
+  -DGDAL_USE_PCODEC=ON \
   -DWERROR_DEV_FLAG="-Werror=dev"
 make -j$(nproc)
 make -j$(nproc) install DESTDIR=/tmp/install-gdal

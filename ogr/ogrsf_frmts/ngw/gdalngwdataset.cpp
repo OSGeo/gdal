@@ -177,7 +177,7 @@ void OGRNGWDataset::FetchPermissions()
 /*
  * TestCapability()
  */
-int OGRNGWDataset::TestCapability(const char *pszCap) const
+bool OGRNGWDataset::TestCapability(const char *pszCap) const
 {
     const_cast<OGRNGWDataset *>(this)->FetchPermissions();
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -738,12 +738,12 @@ void OGRNGWDataset::AddRaster(const CPLJSONObject &oRasterJsonObj)
     GDALDataset::SetMetadataItem(CPLSPrintf("SUBDATASET_%d_NAME", nRasters + 1),
                                  CPLSPrintf("NGW:%s/resource/%s", osUrl.c_str(),
                                             osOutResourceId.c_str()),
-                                 "SUBDATASETS");
+                                 GDAL_MDD_SUBDATASETS);
     GDALDataset::SetMetadataItem(CPLSPrintf("SUBDATASET_%d_DESC", nRasters + 1),
                                  CPLSPrintf("%s (%s)",
                                             osOutResourceName.c_str(),
                                             osResourceType.c_str()),
-                                 "SUBDATASETS");
+                                 GDAL_MDD_SUBDATASETS);
     nRasters++;
 }
 
@@ -792,7 +792,7 @@ OGRLayer *OGRNGWDataset::ICreateLayer(const char *pszNameIn,
 
     OGRSpatialReference *poSRSClone = poSpatialRef->Clone();
     poSRSClone->AutoIdentifyEPSG();
-    const char *pszEPSG = poSRSClone->GetAuthorityCode(nullptr);
+    const char *pszEPSG = poSRSClone->GetAuthorityCode();
     int nEPSG = -1;
     if (pszEPSG != nullptr)
     {

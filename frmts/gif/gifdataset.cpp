@@ -82,6 +82,7 @@ class GIFDataset final : public GIFAbstractDataset
     ~GIFDataset() override;
 
     static GDALDataset *Open(GDALOpenInfo *);
+    static GDALPamDataset *OpenPAM(GDALOpenInfo *);
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
@@ -157,6 +158,11 @@ GIFDataset::GIFDataset()
 /************************************************************************/
 
 GDALDataset *GIFDataset::Open(GDALOpenInfo *poOpenInfo)
+{
+    return OpenPAM(poOpenInfo);
+}
+
+GDALPamDataset *GIFDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 {
     if (!GIFDriverIdentify(poOpenInfo))
@@ -625,9 +631,11 @@ GDALDataset *GIFDataset::CreateCopy(const char *pszFilename,
 
     // If writing to stdout, we can't reopen it, so return
     // a fake dataset to make the caller happy.
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    poDS = static_cast<GDALPamDataset *>(GDALOpen(pszFilename, GA_ReadOnly));
-    CPLPopErrorHandler();
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+        poDS = OpenPAM(&oOpenInfo);
+    }
     if (poDS)
     {
         poDS->CloneInfo(poSrcDS, GCIF_PAM_DEFAULT);

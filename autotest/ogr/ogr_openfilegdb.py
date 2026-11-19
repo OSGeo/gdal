@@ -240,7 +240,7 @@ def ogr_openfilegdb_make_test_data():
             feat.SetField("real", 4.56)
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
-            feat.SetField("binary", b"\x00\xFF\x7F")
+            feat.SetField("binary", b"\x00\xff\x7f")
             feat.SetField("xml", "<foo></foo>")
             feat.SetField("binary2", b"\x12\x34\x56")
             lyr.CreateFeature(feat)
@@ -396,9 +396,9 @@ def test_ogr_openfilegdb_1(gdb_source):
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
-    assert gdal.OpenEx(filename, gdal.OF_RASTER) is None
+    assert gdal.Open(filename, gdal.OF_RASTER) is None
 
-    assert gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
+    assert gdal.Open(filename, gdal.OF_RASTER | gdal.OF_VECTOR) is not None
 
     ds = ogr.Open(filename)
 
@@ -681,10 +681,10 @@ def test_ogr_openfilegdb_4():
     for test in tests:
 
         if len(test) == 2:
-            (where_clause, fids) = test
+            where_clause, fids = test
             expected_attr_index_use = 2
         else:
-            (where_clause, fids, expected_attr_index_use) = test
+            where_clause, fids, expected_attr_index_use = test
 
         lyr.SetAttributeFilter(where_clause)
         sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
@@ -714,10 +714,10 @@ def test_ogr_openfilegdb_4():
     for test in tests:
 
         if len(test) == 2:
-            (where_clause, fids) = test
+            where_clause, fids = test
             expected_attr_index_use = 2
         else:
-            (where_clause, fids, expected_attr_index_use) = test
+            where_clause, fids, expected_attr_index_use = test
 
         lyr.SetAttributeFilter(where_clause)
         sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
@@ -746,7 +746,7 @@ def test_ogr_openfilegdb_4():
         ("real > 1 AND real < 2", 0, None),
         ("real < 0", 0, None),
     ]
-    for (where_clause, count, start) in tests:
+    for where_clause, count, start in tests:
 
         lyr.SetAttributeFilter(where_clause)
         assert lyr.GetFeatureCount() == count, (where_clause, count)
@@ -956,7 +956,7 @@ def test_ogr_openfilegdb_7():
         ("select * from point where float > 0 order by id", None, None, 0),
     ]
 
-    for (sql, feat_count, first_fid, expected_optimized) in tests:
+    for sql, feat_count, first_fid, expected_optimized in tests:
         if expected_optimized is None:
             gdal.PushErrorHandler("CPLQuietErrorHandler")
         sql_lyr = ds.ExecuteSQL(sql)
@@ -1081,7 +1081,7 @@ def fuzz(filename, offset):
 
 
 def unfuzz(backup):
-    (filename, offset, v) = backup
+    filename, offset, v = backup
     with open(filename, "rb+") as f:
         f.seek(offset, 0)
         f.write(chr(v).encode("ISO-8859-1"))
@@ -1175,7 +1175,7 @@ def test_ogr_openfilegdb_10(testopenfilegdb, tmp_path):
 
     else:
 
-        for (filename, offsets) in [
+        for filename, offsets in [
             (
                 tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
                 [
@@ -1237,7 +1237,7 @@ def test_ogr_openfilegdb_10(testopenfilegdb, tmp_path):
                     ds = None
                 unfuzz(backup)
 
-        for (filename, offsets) in [
+        for filename, offsets in [
             (
                 tmp_path / "testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
                 [
@@ -1542,6 +1542,33 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 
 
 ###############################################################################
+# Test spatial filtering on a Web Mercator layer and its .spx index.
+# PROJ >= 9.7.1 gives it a lat/long base CRS, and the filter then used
+# minY=0 and maxY=0.
+# See https://github.com/OSGeo/gdal/issues/15337
+
+
+@pytest.mark.parametrize("use_spatial_index", ["YES", "NO"])
+def test_ogr_openfilegdb_spx_spatial_filter_web_mercator(use_spatial_index):
+
+    with gdaltest.config_option("OPENFILEGDB_USE_SPATIAL_INDEX", use_spatial_index):
+        ds = ogr.Open("data/filegdb/test_web_mercator_spatial_index.gdb.zip")
+
+        # Use one layer per query, as only the first spatial filter
+        # on a layer is clamped
+        lyr = ds.GetLayerByName("north")
+        lyr.SetSpatialFilterRect(-8836500, 5410000, -8835500, 5411000)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+        # Southern hemisphere filter
+        lyr = ds.GetLayerByName("south")
+        lyr.SetSpatialFilterRect(999500, -4000500, 1000500, -3999500)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+
+###############################################################################
 # Test reading a broken .spx that has an index depth of 1 instead of 2
 # Simulates scenario of SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
 # from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
@@ -1585,6 +1612,42 @@ def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
     ds = None
 
     gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test that a stale attribute index (with entries for deleted features) is
+# ignored with a warning, and not an error
+# See https://github.com/OSGeo/gdal/issues/15505
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_openfilegdb_read_stale_attribute_index(tmp_vsimem):
+
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_read_stale_attribute_index.gdb"
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    for i in range(1, 4):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = f"v{i}"
+        lyr.CreateFeature(f)
+    ds.ExecuteSQL("CREATE INDEX idx_str ON test(str)")
+    ds = None
+
+    # GDAL updates the index when deleting features, so restore the index
+    # from before the deletion
+    atx = str(dirname / "a00000009.idx_str.atx")
+    gdal.CopyFile(atx, atx + ".bak")
+    ds = ogr.Open(dirname, update=1)
+    ds.GetLayer(0).DeleteFeature(1)
+    ds = None
+    gdal.CopyFile(atx + ".bak", atx)
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_raised(gdal.CE_Warning, "is out of date"):
+        lyr.SetAttributeFilter("str = 'v2'")
+    assert [f.GetFID() for f in lyr] == [2]
 
 
 ###############################################################################
@@ -1863,7 +1926,7 @@ def test_ogr_openfilegdb_utc_datetime():
 
 
 ###############################################################################
-# Test that field alias are correctly read and mapped to OGR field alternativ
+# Test that field alias are correctly read and mapped to OGR field alternative
 # names
 
 
@@ -1982,7 +2045,7 @@ def _check_domains(ds):
 
 def test_ogr_openfilegdb_read_domains():
 
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     _check_domains(ds)
 
 
@@ -2021,7 +2084,7 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb(tmp_path):
 
     ds = None
 
-    ds = gdal.OpenEx(out_dir, allowed_drivers=["OpenFileGDB"])
+    ds = gdal.Open(out_dir, allowed_drivers=["OpenFileGDB"])
     assert ds.GetFieldDomain("unused_domain") is None
     domain = ds.GetFieldDomain("SpeedLimit")
     assert domain.GetDescription() == "desc"
@@ -2062,7 +2125,7 @@ def test_ogr_openfilegdb_read_layer_hierarchy():
             "fd2_lyr", srs=srs3, geom_type=ogr.wkbPoint, options=["FEATURE_DATASET=fd2"]
         )
 
-    ds = gdal.OpenEx("data/filegdb/featuredataset.gdb")
+    ds = gdal.Open("data/filegdb/featuredataset.gdb")
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["fd1", "fd2"]
@@ -2116,7 +2179,7 @@ def test_ogr_openfilegdb_list_all_tables_v10():
         assert name not in layer_names
 
     # Test LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/testopenfilegdb.gdb.zip",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2181,7 +2244,7 @@ def test_ogr_openfilegdb_list_all_tables_v9():
         assert name not in layer_names
 
     # Test LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/testopenfilegdb93.gdb.zip",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2244,7 +2307,7 @@ def test_ogr_openfilegdb_non_spatial_table_outside_gdb_items():
     assert layer_names == {"aquaduct", "flat_table1", "flat_table2"}
 
     # Test with the LIST_ALL_TABLES=YES open option
-    ds_all_table = gdal.OpenEx(
+    ds_all_table = gdal.Open(
         "data/filegdb/table_outside_gdbitems.gdb",
         gdal.OF_VECTOR,
         open_options=["LIST_ALL_TABLES=YES"],
@@ -2314,7 +2377,7 @@ def test_ogr_openfilegdb_inconsistent_crs_feature_dataset_and_feature_table():
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
 
 
 ###############################################################################
@@ -2354,11 +2417,11 @@ def test_ogr_openfilegdb_shape_length_shape_area_as_default_in_field_defn():
 
 def test_ogr_openfilegdb_read_relationships():
     # no relationships
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
+    ds = gdal.Open("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
     assert set(ds.GetRelationshipNames()) == {
         "composite_many_to_many",
         "composite_one_to_many",
@@ -2865,7 +2928,7 @@ def test_ogr_openfilegdb_read_from_http():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -2886,7 +2949,7 @@ def test_ogr_openfilegdb_read_from_http():
             response,
         )
         with webserver.install_http_handler(handler):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 "http://localhost:%d/foo" % webserver_port,
                 allowed_drivers=["OpenFileGDB", "HTTP"],
             )
@@ -2917,7 +2980,7 @@ def test_ogr_openfilegdb_read_from_http():
                 response,
             )
             with webserver.install_http_handler(handler):
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "http://localhost:%d/foo" % webserver_port,
                     allowed_drivers=["GeoJSON", "OpenFileGDB", "HTTP"],
                 )
@@ -2967,3 +3030,24 @@ def test_ogr_openfilegdb_vsizip_random_zip_name_and_no_gdb_subdir():
 
     with ogr.Open("/vsizip/data/filegdb/testopenfilegdb.zip") as ds:
         assert ds.GetLayerCount() == 37
+
+
+###############################################################################
+# Test opening a table where fields are not editable, but have a default value
+# (as found in ArcGIS Utility Network geodatabases, e.g. ASSOCIATIONSTATUS)
+
+
+def test_ogr_openfilegdb_non_editable_field_with_default_value():
+
+    with ogr.Open("/vsizip/data/filegdb/openfilegdb_nonEditable_default.gdb.zip") as ds:
+        lyr = ds.GetLayerByName("test")
+        assert lyr.GetFeatureCount() == 3
+        assert [
+            lyr.GetLayerDefn().GetFieldDefn(i).GetName()
+            for i in range(lyr.GetLayerDefn().GetFieldCount())
+        ] == ["ASSOCIATIONSTATUS", "ISSUBNETWORKCONTROLLER"]
+        assert [(f["ASSOCIATIONSTATUS"], f["ISSUBNETWORKCONTROLLER"]) for f in lyr] == [
+            (1, 0),
+            (2, 1),
+            (3, 0),
+        ]

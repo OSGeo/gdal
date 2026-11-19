@@ -264,7 +264,7 @@ OGRFeature *OGRCARTOLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRCARTOLayer::TestCapability(const char *pszCap) const
+bool OGRCARTOLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

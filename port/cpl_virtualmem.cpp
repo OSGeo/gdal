@@ -1624,7 +1624,7 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
             reinterpret_cast<void *>(the_ucontext->uc_mcontext.gregs[REG_DI]);
 
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
-        fprintfstderr("fault=%p rsi=%p rsi=%p\n", msg.pFaultAddr, rsi, rdi);
+        fprintfstderr("fault=%p rsi=%p rdi=%p\n", msg.pFaultAddr, rsi, rdi);
 #endif
         if (msg.pFaultAddr == rsi)
         {
@@ -2254,7 +2254,7 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(
     ctxt->pDataToFree = nullptr;
     ctxt->nSize = static_cast<size_t>(nSize);
     ctxt->nPageSize = pVMemBase->nPageSize;
-    ctxt->bSingleThreadUsage = CPL_TO_BOOL(pVMemBase->bSingleThreadUsage);
+    ctxt->bSingleThreadUsage = pVMemBase->bSingleThreadUsage;
     ctxt->pfnFreeUserData = pfnFreeUserData;
     ctxt->pCbkUserData = pCbkUserData;
 

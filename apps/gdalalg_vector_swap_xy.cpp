@@ -53,7 +53,7 @@ class GDALVectorSwapXYAlgorithmLayer final
                       bool bForce) override
     {
         OGRErr eErr = m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
-        if (eErr == CE_None)
+        if (eErr == CE_None && IsSelectedGeomField(iGeomField))
         {
             std::swap(psExtent->MinX, psExtent->MinY);
             std::swap(psExtent->MaxX, psExtent->MaxY);

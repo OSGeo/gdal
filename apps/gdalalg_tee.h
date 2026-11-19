@@ -120,6 +120,8 @@ GDALTeeStepAlgorithmBase<BaseStepAlgorithm,
                         GDALPipelineStepAlgorithm::ConstructorOptions()
                             .SetAddDefaultArguments(false))
 {
+    this->AddInputDatasetArg(&this->m_inputDataset, 0, true).SetHidden();
+
     this->AddArg("tee-pipeline", 0, _("Nested pipeline"), &m_pipelines,
                  nDatasetType)
         .SetPositional()
@@ -201,11 +203,14 @@ bool GDALTeeStepAlgorithmBase<BaseStepAlgorithm, nDatasetType>::RunStep(
         for (int i = 0; i < static_cast<int>(aosAttributeFilters.size()); ++i)
         {
             auto poLayer = poSrcDS->GetLayer(i);
-            poLayer->SetAttributeFilter(aosAttributeFilters[i].empty()
-                                            ? aosAttributeFilters[i].c_str()
-                                            : nullptr);
-            poLayer->SetSpatialFilter(apoSpatialFilters[i].get());
-            poLayer->ResetReading();
+            if (poLayer)
+            {
+                poLayer->SetAttributeFilter(aosAttributeFilters[i].empty()
+                                                ? aosAttributeFilters[i].c_str()
+                                                : nullptr);
+                poLayer->SetSpatialFilter(apoSpatialFilters[i].get());
+                poLayer->ResetReading();
+            }
         }
 
         if (!ret)

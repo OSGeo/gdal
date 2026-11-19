@@ -256,10 +256,11 @@ static int OGRFeatureFetcherFixFieldIndex(const OGRFeatureDefn *poFDefn,
 /*                         OGRFeatureFetcher()                          */
 /************************************************************************/
 
-static swq_expr_node *OGRFeatureFetcher(swq_expr_node *op, void *pFeatureIn)
+static swq_expr_node *OGRFeatureFetcher(swq_expr_node *op,
+                                        const void *pFeatureIn)
 
 {
-    OGRFeature *poFeature = static_cast<OGRFeature *>(pFeatureIn);
+    const OGRFeature *poFeature = static_cast<const OGRFeature *>(pFeatureIn);
 
     if (op->field_type == SWQ_GEOMETRY)
     {
@@ -308,7 +309,7 @@ static swq_expr_node *OGRFeatureFetcher(swq_expr_node *op, void *pFeatureIn)
 /*                              Evaluate()                              */
 /************************************************************************/
 
-int OGRFeatureQuery::Evaluate(OGRFeature *poFeature)
+int OGRFeatureQuery::Evaluate(const OGRFeature *poFeature)
 
 {
     if (pSWQExpr == nullptr)

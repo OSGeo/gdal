@@ -1,5 +1,7 @@
 .. _gdal_dataset_check:
 
+.. program:: gdal_dataset_check
+
 ================================================================================
 ``gdal dataset check``
 ================================================================================
@@ -37,6 +39,11 @@ Options
 .. option:: --input <FILENAME>
 
     Input vector, raster or multidimensional dataset. Required.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

@@ -119,7 +119,7 @@ PDFWritableVectorDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int PDFWritableVectorDataset::TestCapability(const char *pszCap) const
+bool PDFWritableVectorDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -218,16 +218,16 @@ CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)
     }
 
     GDALGeoTransform gt;
-    gt[0] = sGlobalExtent.MinX;
-    gt[1] = (sGlobalExtent.MaxX - sGlobalExtent.MinX) / nWidth;
-    gt[2] = 0;
-    gt[3] = sGlobalExtent.MaxY;
-    gt[4] = 0;
-    gt[5] = -(sGlobalExtent.MaxY - sGlobalExtent.MinY) / nHeight;
+    gt.xorig = sGlobalExtent.MinX;
+    gt.xscale = (sGlobalExtent.MaxX - sGlobalExtent.MinX) / nWidth;
+    gt.xrot = 0;
+    gt.yorig = sGlobalExtent.MaxY;
+    gt.yrot = 0;
+    gt.yscale = -(sGlobalExtent.MaxY - sGlobalExtent.MinY) / nHeight;
 
     // Do again a check against 0, because the above divisions might
     // transform a difference close to 0, to plain 0.
-    if (gt[1] == 0 || gt[5] == 0)
+    if (gt.xscale == 0 || gt.yscale == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot compute spatial extent of features");
@@ -332,7 +332,7 @@ CPLErr PDFWritableVectorDataset::FlushCache(bool /* bAtClosing*/)
     VSILFILE *fp = VSIFOpenL(GetDescription(), "wb");
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.",
                  GetDescription());
         return CE_Failure;
     }

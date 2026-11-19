@@ -194,8 +194,7 @@ def test_osr_xml_2():
 def test_osr_xml_export_failure():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCRS["Africa_Albers_Equal_Area_Conic",
+    srs.ImportFromWkt("""PROJCRS["Africa_Albers_Equal_Area_Conic",
     BASEGEOGCRS["WGS 84",
         DATUM["World Geodetic System 1984",
             ELLIPSOID["WGS 84",6378137,298.257223563,
@@ -232,8 +231,7 @@ def test_osr_xml_export_failure():
         AXIS["northing",north,
             ORDER[2],
             LENGTHUNIT["metre",1,
-                ID["EPSG",9001]]]]"""
-    )
+                ID["EPSG",9001]]]]""")
 
     with pytest.raises(
         Exception, match="Unhandled projection method Albers_Conic_Equal_Area"

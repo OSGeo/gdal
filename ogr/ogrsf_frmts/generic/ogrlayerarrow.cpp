@@ -31,6 +31,8 @@
 #include <limits>
 #include <utility>
 #include <set>
+#include <string_view>
+#include <type_traits>
 
 constexpr const char *MD_GDAL_OGR_TYPE = "GDAL:OGR:type";
 constexpr const char *MD_GDAL_OGR_ALTERNATIVE_NAME =
@@ -61,6 +63,8 @@ constexpr char ARROW_LETTER_LARGE_BINARY = 'Z';
 constexpr char ARROW_LETTER_DECIMAL = 'd';
 constexpr char ARROW_2ND_LETTER_LIST = 'l';
 constexpr char ARROW_2ND_LETTER_LARGE_LIST = 'L';
+
+constexpr int N_VALUES_PER_STRING_VIEW = 4;
 
 static inline bool IsStructure(const char *format)
 {
@@ -172,6 +176,12 @@ static inline bool IsFloat64(const char *format)
 static inline bool IsString(const char *format)
 {
     return format[0] == ARROW_LETTER_STRING && format[1] == 0;
+}
+
+static inline bool IsStringView(const char *format)
+{
+    return format[0] == 'v' && format[1] == ARROW_LETTER_STRING &&
+           format[2] == 0;
 }
 
 static inline bool IsLargeString(const char *format)
@@ -2648,7 +2658,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
     struct ArrowArrayStream stream;
     if( !poLayer->GetArrowStream(&stream, nullptr))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;
@@ -2859,14 +2869,14 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
     if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGR_L_GetArrowStream() failed\n");
+                 "OGR_L_GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;
     if( stream.get_schema(&stream, &schema) == 0 )
     {
         // Do something useful
-        schema.release(schema);
+        schema.release(&schema);
     }
     while( true )
     {
@@ -2986,6 +2996,72 @@ OGRParseArrowMetadata(const char *pabyMetadata)
     }
 
     return oMetadata;
+}
+
+/************************************************************************/
+/*                       GetStringAsStringView()                        */
+/************************************************************************/
+
+template <typename OffsetType>
+static std::string_view GetStringAsStringView(const struct ArrowArray *array,
+                                              const size_t nIdx)
+{
+    const OffsetType *panOffsets =
+        static_cast<const OffsetType *>(array->buffers[1]) +
+        static_cast<size_t>(array->offset) + nIdx;
+    const char *pchStr = reinterpret_cast<const char *>(array->buffers[2]);
+    if constexpr (std::is_same_v<OffsetType, uint64_t>)
+    {
+        if (panOffsets[1] - panOffsets[0] >
+            std::numeric_limits<size_t>::max() - 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large string");
+            return std::string_view();
+        }
+    }
+    return std::string_view(pchStr + static_cast<size_t>(panOffsets[0]),
+                            static_cast<size_t>(panOffsets[1] - panOffsets[0]));
+}
+
+/************************************************************************/
+/*                           GetStringView()                            */
+/************************************************************************/
+
+static std::string_view GetStringView(const struct ArrowArray *array,
+                                      const size_t nIdx)
+{
+    // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+    const uint32_t *panStringView =
+        static_cast<const uint32_t *>(array->buffers[1]) +
+        (static_cast<size_t>(array->offset) + nIdx) * N_VALUES_PER_STRING_VIEW;
+    constexpr int IDX_LENGTH = 0;
+    constexpr int IDX_PREFIX_OR_DATA = 1;
+    constexpr int IDX_BUFFER_IDX = 2;
+    constexpr int IDX_OFFSET = 3;
+    const uint32_t nLength = panStringView[IDX_LENGTH];
+    const char *pchPrefixOrStr =
+        reinterpret_cast<const char *>(panStringView + IDX_PREFIX_OR_DATA);
+    if (nLength <= 12)
+    {
+        return std::string_view(pchPrefixOrStr, nLength);
+    }
+    else
+    {
+        const uint32_t nBufferIdx = panStringView[IDX_BUFFER_IDX];
+        const uint32_t nOffset = panStringView[IDX_OFFSET];
+        constexpr int BASE_BUFFER_IDX = 2;
+        CPLAssert(BASE_BUFFER_IDX + nBufferIdx < array->n_buffers);
+        std::string_view s(static_cast<const char *>(
+                               array->buffers[BASE_BUFFER_IDX + nBufferIdx]) +
+                               nOffset,
+                           nLength);
+#ifdef DEBUG
+        // cppcheck-suppress unreadVariable
+        constexpr int PREFIX_LENGTH = 4;
+        CPLAssert(memcmp(s.data(), pchPrefixOrStr, PREFIX_LENGTH) == 0);
+#endif
+        return s;
+    }
 }
 
 /************************************************************************/
@@ -3320,20 +3396,21 @@ static void CompactValidityBuffer(
     const struct ArrowSchema *, struct ArrowArray *array, size_t iStart,
     const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
 {
+    if (array->null_count <= 0)
+    {
+        return;
+    }
+
     // Invalidate null_count as the same validity buffer may be used when
     // scrolling batches, and this creates confusion if we try to set it
     // to different values among the batches
-    if (array->null_count <= 0)
-    {
-        array->null_count = -1;
-        return;
-    }
     array->null_count = -1;
 
     CPLAssert(static_cast<size_t>(array->length) >=
               iStart + abyValidityFromFilters.size());
     uint8_t *pabyValidity =
         static_cast<uint8_t *>(const_cast<void *>(array->buffers[0]));
+    CPLAssert(pabyValidity);
     const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     size_t j = iStart + nOffset;
@@ -3468,6 +3545,46 @@ static void CompactStringOrBinaryArray(
         }
     }
     panOffsets[j] = nCurOffset;
+
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
+}
+
+/************************************************************************/
+/*                       CompactStringViewArray()                       */
+/************************************************************************/
+
+static void CompactStringViewArray(
+    const struct ArrowSchema *schema, struct ArrowArray *array, size_t iStart,
+    const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
+{
+    CPLAssert(array->n_children == 0);
+    CPLAssert(array->n_buffers >= 2);
+    const size_t nLength = abyValidityFromFilters.size();
+    CPLAssert(static_cast<size_t>(array->length) >= iStart + nLength);
+
+    // We only compact the string view buffer, not the string content buffers.
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+    uint32_t *panStringView =
+        static_cast<uint32_t *>(const_cast<void *>(array->buffers[1])) +
+        nOffset * N_VALUES_PER_STRING_VIEW;
+    for (size_t i = 0, j = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            if (j < i)
+            {
+                memmove(panStringView + (j + iStart) * N_VALUES_PER_STRING_VIEW,
+                        panStringView + (i + iStart) * N_VALUES_PER_STRING_VIEW,
+                        sizeof(panStringView[0]) * N_VALUES_PER_STRING_VIEW);
+            }
+            ++j;
+        }
+    }
 
     if (schema->flags & ARROW_FLAG_NULLABLE)
         CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
@@ -3841,6 +3958,11 @@ static bool CompactArray(const struct ArrowSchema *schema,
         CompactStringOrBinaryArray<uint64_t>(
             schema, array, iStart, abyValidityFromFilters, nNewLength);
     }
+    else if (IsStringView(format))
+    {
+        CompactStringViewArray(schema, array, iStart, abyValidityFromFilters,
+                               nNewLength);
+    }
     else if (IsFixedWidthBinary(format))
     {
         const int nWidth = GetFixedWithBinary(format);
@@ -4060,15 +4182,12 @@ inline static void FillFieldListFromHalfFloat(
         static_cast<const ListOffsetType *>(array->buffers[1]) +
         nOffsettedIndex;
     std::vector<double> aValues;
-    const auto *paValues =
-        static_cast<const uint16_t *>(childArray->buffers[1]);
+    const auto *phfValues =
+        static_cast<const GFloat16 *>(childArray->buffers[1]);
     for (size_t i = static_cast<size_t>(panOffsets[0]);
          i < static_cast<size_t>(panOffsets[1]); ++i)
     {
-        const auto nFloat16AsUInt32 = CPLHalfToFloat(paValues[i]);
-        float f;
-        memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-        aValues.push_back(static_cast<double>(f));
+        aValues.push_back(static_cast<double>(phfValues[i]));
     }
     oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
                       aValues.data());
@@ -4089,17 +4208,32 @@ inline static void FillFieldListFromString(const struct ArrowArray *array,
         static_cast<const ListOffsetType *>(array->buffers[1]) +
         nOffsettedIndex;
     CPLStringList aosVals;
-    const auto panSubOffsets =
-        static_cast<const StringOffsetType *>(childArray->buffers[1]);
-    const char *pszValues = static_cast<const char *>(childArray->buffers[2]);
-    std::string osTmp;
     for (size_t i = static_cast<size_t>(panOffsets[0]);
          i < static_cast<size_t>(panOffsets[1]); ++i)
     {
-        osTmp.assign(
-            pszValues + panSubOffsets[i],
-            static_cast<size_t>(panSubOffsets[i + 1] - panSubOffsets[i]));
-        aosVals.AddString(osTmp.c_str());
+        aosVals.push_back(
+            GetStringAsStringView<StringOffsetType>(childArray, i));
+    }
+    oFeature.SetField(iOGRFieldIdx, aosVals.List());
+}
+
+/************************************************************************/
+/*                    FillFieldListFromStringView()                     */
+/************************************************************************/
+
+template <typename ListOffsetType>
+inline static void FillFieldListFromStringView(
+    const struct ArrowArray *array, int iOGRFieldIdx, size_t nOffsettedIndex,
+    const struct ArrowArray *childArray, OGRFeature &oFeature)
+{
+    const auto panOffsets =
+        static_cast<const ListOffsetType *>(array->buffers[1]) +
+        nOffsettedIndex;
+    CPLStringList aosVals;
+    for (size_t i = static_cast<size_t>(panOffsets[0]);
+         i < static_cast<size_t>(panOffsets[1]); ++i)
+    {
+        aosVals.push_back(GetStringView(childArray, i));
     }
     oFeature.SetField(iOGRFieldIdx, aosVals.List());
 }
@@ -4135,17 +4269,27 @@ inline static void FillFieldFixedSizeListString(
     const int nItems, const struct ArrowArray *childArray, OGRFeature &oFeature)
 {
     CPLStringList aosVals;
-    const auto panSubOffsets =
-        static_cast<const StringOffsetType *>(childArray->buffers[1]) +
-        childArray->offset + nOffsettedIndex * nItems;
-    const char *pszValues = static_cast<const char *>(childArray->buffers[2]);
-    std::string osTmp;
     for (int i = 0; i < nItems; ++i)
     {
-        osTmp.assign(
-            pszValues + panSubOffsets[i],
-            static_cast<size_t>(panSubOffsets[i + 1] - panSubOffsets[i]));
-        aosVals.AddString(osTmp.c_str());
+        aosVals.push_back(GetStringAsStringView<StringOffsetType>(
+            childArray, nOffsettedIndex * nItems + i));
+    }
+    oFeature.SetField(iOGRFieldIdx, aosVals.List());
+}
+
+/************************************************************************/
+/*                  FillFieldFixedSizeListStringView()                  */
+/************************************************************************/
+
+inline static void FillFieldFixedSizeListStringView(
+    const struct ArrowArray *, int iOGRFieldIdx, size_t nOffsettedIndex,
+    const int nItems, const struct ArrowArray *childArray, OGRFeature &oFeature)
+{
+    CPLStringList aosVals;
+    for (int i = 0; i < nItems; ++i)
+    {
+        aosVals.push_back(
+            GetStringView(childArray, nOffsettedIndex * nItems + i));
     }
     oFeature.SetField(iOGRFieldIdx, aosVals.List());
 }
@@ -4200,23 +4344,6 @@ static double GetValueDecimal(const struct ArrowArray *array,
     const auto nVal =
         panValues[nIdxIn64BitWord + array->offset * nWidthIn64BitWord];
     return static_cast<double>(nVal) * std::pow(10.0, -nScale);
-}
-
-/************************************************************************/
-/*                             GetString()                              */
-/************************************************************************/
-
-template <class OffsetType>
-static std::string GetString(const struct ArrowArray *array, const size_t nIdx)
-{
-    const OffsetType *panOffsets =
-        static_cast<const OffsetType *>(array->buffers[1]) +
-        static_cast<size_t>(array->offset) + nIdx;
-    const char *pabyStr = static_cast<const char *>(array->buffers[2]);
-    std::string osStr;
-    osStr.assign(pabyStr + static_cast<size_t>(panOffsets[0]),
-                 static_cast<size_t>(panOffsets[1] - panOffsets[0]));
-    return osStr;
 }
 
 /************************************************************************/
@@ -4297,9 +4424,11 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
     else if (IsFloat64(schema->format))
         oArray.Add(GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
-        oArray.Add(GetString<uint32_t>(array, nIdx));
+        oArray.Add(GetStringAsStringView<uint32_t>(array, nIdx));
     else if (IsLargeString(schema->format))
-        oArray.Add(GetString<uint64_t>(array, nIdx));
+        oArray.Add(GetStringAsStringView<uint64_t>(array, nIdx));
+    else if (IsStringView(schema->format))
+        oArray.Add(GetStringView(array, nIdx));
     else if (IsBinary(schema->format))
         oArray.Add(GetBinaryAsBase64<uint32_t>(array, nIdx));
     else if (IsLargeBinary(schema->format))
@@ -4421,9 +4550,11 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
     else if (IsFloat64(schema->format))
         oDict.Add(osKey, GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
-        oDict.Add(osKey, GetString<uint32_t>(array, nIdx));
+        oDict.Add(osKey, GetStringAsStringView<uint32_t>(array, nIdx));
     else if (IsLargeString(schema->format))
-        oDict.Add(osKey, GetString<uint64_t>(array, nIdx));
+        oDict.Add(osKey, GetStringAsStringView<uint64_t>(array, nIdx));
+    else if (IsStringView(schema->format))
+        oDict.Add(osKey, GetStringView(array, nIdx));
     else if (IsBinary(schema->format))
         oDict.Add(osKey, GetBinaryAsBase64<uint32_t>(array, nIdx));
     else if (IsLargeBinary(schema->format))
@@ -4812,6 +4943,12 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                                                    nOffsettedIndex, nItems,
                                                    childArray, oFeature);
         }
+        else if (IsStringView(childFormat))
+        {
+            FillFieldFixedSizeListStringView(array, iOGRFieldIndex,
+                                             nOffsettedIndex, nItems,
+                                             childArray, oFeature);
+        }
     }
     else if (IsList(format) || IsLargeList(format))
     {
@@ -4971,6 +5108,18 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                     array, iOGRFieldIndex, nOffsettedIndex, childArray,
                     oFeature);
         }
+        else if (IsStringView(childFormat))
+        {
+            if (format[1] == ARROW_2ND_LETTER_LIST)
+                FillFieldListFromStringView<uint32_t>(array, iOGRFieldIndex,
+                                                      nOffsettedIndex,
+                                                      childArray, oFeature);
+            else
+                FillFieldListFromStringView<uint64_t>(array, iOGRFieldIndex,
+                                                      nOffsettedIndex,
+                                                      childArray, oFeature);
+        }
+
         else if (format[1] == ARROW_2ND_LETTER_LIST)
         {
             const size_t iFeature =
@@ -5338,6 +5487,21 @@ static size_t FillValidityArrayFromAttrQuery(
                           OFTString);
                 char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
                 memcpy(pszStr, pabyData + nOffset, nSize);
+                pszStr[nSize] = 0;
+                OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIndex);
+                if (IsValidField(psField))
+                    CPLFree(psField->String);
+                psField->String = pszStr;
+            }
+            else if (IsStringView(format))
+            {
+                // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+                CPLAssert(oFeature.GetFieldDefnRef(iOGRFieldIndex)->GetType() ==
+                          OFTString);
+                const auto strView = GetStringView(psArray, iRow);
+                const auto nSize = strView.size();
+                char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
+                memcpy(pszStr, strView.data(), nSize);
                 pszStr[nSize] = 0;
                 OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIndex);
                 if (IsValidField(psField))
@@ -5919,27 +6083,31 @@ const struct
     OGRFieldType eType;
     OGRFieldSubType eSubType;
 } gasArrowTypesToOGR[] = {
-    {"b", OFTInteger, OFSTBoolean}, {"c", OFTInteger, OFSTInt16},  // Int8
-    {"C", OFTInteger, OFSTInt16},                                  // UInt8
-    {"s", OFTInteger, OFSTInt16},                                  // Int16
-    {"S", OFTInteger, OFSTNone},                                   // UInt16
-    {"i", OFTInteger, OFSTNone},                                   // Int32
-    {"I", OFTInteger64, OFSTNone},                                 // UInt32
-    {"l", OFTInteger64, OFSTNone},                                 // Int64
-    {"L", OFTReal, OFSTNone},  // UInt64 (potentially lossy conversion if going through OGRFeature)
+    {"b", OFTInteger, OFSTBoolean},  // Boolean
+    {"c", OFTInteger, OFSTInt16},    // Int8
+    {"C", OFTInteger, OFSTInt16},    // UInt8
+    {"s", OFTInteger, OFSTInt16},    // Int16
+    {"S", OFTInteger, OFSTNone},     // UInt16
+    {"i", OFTInteger, OFSTNone},     // Int32
+    {"I", OFTInteger64, OFSTNone},   // UInt32
+    {"l", OFTInteger64, OFSTNone},   // Int64
+    {"L", OFTReal,
+     OFSTNone},  // UInt64 (potentially lossy conversion if going through OGRFeature)
     {"e", OFTReal, OFSTFloat32},  // float16
     {"f", OFTReal, OFSTFloat32},  // float32
     {"g", OFTReal, OFSTNone},     // float64
     {"z", OFTBinary, OFSTNone},   // binary
-    {"Z", OFTBinary, OFSTNone},  // large binary (will be limited to 32 bit length though if going through OGRFeature!)
-    {"u", OFTString, OFSTNone},  // string
-    {"U", OFTString, OFSTNone},  // large string
-    {"tdD", OFTDate, OFSTNone},  // date32[days]
-    {"tdm", OFTDate, OFSTNone},  // date64[milliseconds]
-    {"tts", OFTTime, OFSTNone},  // time32 [seconds]
-    {"ttm", OFTTime, OFSTNone},  // time32 [milliseconds]
-    {"ttu", OFTTime, OFSTNone},  // time64 [microseconds]
-    {"ttn", OFTTime, OFSTNone},  // time64 [nanoseconds]
+    {"Z", OFTBinary,
+     OFSTNone},  // large binary (will be limited to 32 bit length though if going through OGRFeature!)
+    {"u", OFTString, OFSTNone},   // string
+    {"U", OFTString, OFSTNone},   // large string
+    {"vu", OFTString, OFSTNone},  // string view
+    {"tdD", OFTDate, OFSTNone},   // date32[days]
+    {"tdm", OFTDate, OFSTNone},   // date64[milliseconds]
+    {"tts", OFTTime, OFSTNone},   // time32 [seconds]
+    {"ttm", OFTTime, OFSTNone},   // time32 [milliseconds]
+    {"ttu", OFTTime, OFSTNone},   // time64 [microseconds]
+    {"ttn", OFTTime, OFSTNone},   // time64 [nanoseconds]
 };
 
 const struct
@@ -5998,7 +6166,8 @@ static bool IsSupportForJSONObj(const struct ArrowSchema *schema)
         }
     }
 
-    if (IsBinary(format) || IsLargeBinary(format) || IsFixedWidthBinary(format))
+    if (IsBinary(format) || IsLargeBinary(format) ||
+        IsFixedWidthBinary(format) || IsStringView(format))
         return true;
 
     if (IsDecimal(format))
@@ -6083,6 +6252,8 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                 return true;
             }
         }
+        if (IsStringView(childFormat))
+            return true;
 
         if (IsDecimal(childFormat))
         {
@@ -6508,6 +6679,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             {
                 return AddField(sType.eType, sType.eSubType, 0, 0);
             }
+        }
+
+        if (IsStringView(childFormat))
+        {
+            return AddField(OFTStringList, OFSTNone, 0, 0);
         }
 
         if (IsDecimal(childFormat))
@@ -7015,6 +7191,31 @@ static bool BuildOGRFieldInfo(
                     }
                 }
 
+                if (!bTypeOK && IsStringView(childFormat))
+                {
+                    sInfo.eNominalFieldType = OFTStringList;
+                    if (eOGRType == sInfo.eNominalFieldType)
+                    {
+                        bTypeOK = true;
+                    }
+                    else if (eOGRType == OFTString)
+                    {
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For field %s, OGR field type is %s "
+                                 "whereas "
+                                 "Arrow type implies %s",
+                                 sInfo.osName.c_str(),
+                                 OGR_GetFieldTypeName(eOGRType),
+                                 OGR_GetFieldTypeName(OFTStringList));
+                        return false;
+                    }
+                }
+
                 if (!bTypeOK && IsDecimal(childFormat))
                 {
                     if (!ParseDecimalFormat(childFormat, sInfo.nPrecision,
@@ -7315,18 +7516,29 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         iFeature = static_cast<size_t>(nDictIdx);
     }
 
+    constexpr size_t SZ_NUL_TERMINATOR = 1;
     if (IsString(format))
     {
         const auto *panOffsets =
             static_cast<const uint32_t *>(array->buffers[1]) + array->offset;
-        return 1 + (panOffsets[iFeature + 1] - panOffsets[iFeature]);
+        return (panOffsets[iFeature + 1] - panOffsets[iFeature]) +
+               SZ_NUL_TERMINATOR;
     }
     else if (IsLargeString(format))
     {
         const auto *panOffsets =
             static_cast<const uint64_t *>(array->buffers[1]) + array->offset;
-        return 1 + static_cast<size_t>(panOffsets[iFeature + 1] -
-                                       panOffsets[iFeature]);
+        return static_cast<size_t>(panOffsets[iFeature + 1] -
+                                   panOffsets[iFeature]) +
+               SZ_NUL_TERMINATOR;
+    }
+    else if (IsStringView(format))
+    {
+        const auto *panStringView =
+            static_cast<const uint32_t *>(array->buffers[1]) +
+            array->offset * N_VALUES_PER_STRING_VIEW;
+        return panStringView[iFeature * N_VALUES_PER_STRING_VIEW] +
+               SZ_NUL_TERMINATOR;
     }
     return 0;
 }
@@ -7370,8 +7582,31 @@ FillFieldString(const struct ArrowArray *array, int iOGRFieldIdx,
     }
     else
     {
-        const std::string osTmp(pszStr, nLen);
-        oFeature.SetField(iOGRFieldIdx, osTmp.c_str());
+        oFeature.SetField(iOGRFieldIdx, std::string_view(pszStr, nLen));
+    }
+}
+
+/************************************************************************/
+/*                        FillFieldStringView()                         */
+/************************************************************************/
+
+inline static void
+FillFieldStringView(const struct ArrowArray *array, int iOGRFieldIdx,
+                    size_t iFeature, int iArrowIdx,
+                    const std::vector<FieldInfo> &asFieldInfo,
+                    std::string &osWorkingBuffer, OGRFeature &oFeature)
+{
+    const auto sv = GetStringView(array, iFeature);
+    if (asFieldInfo[iArrowIdx].bUseStringOptim)
+    {
+        oFeature.SetFieldSameTypeUnsafe(
+            iOGRFieldIdx, &osWorkingBuffer[0] + osWorkingBuffer.size());
+        osWorkingBuffer.append(sv);
+        osWorkingBuffer.push_back(0);  // append null character
+    }
+    else
+    {
+        oFeature.SetField(iOGRFieldIdx, sv);
     }
 }
 
@@ -7690,6 +7925,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
     {
         FillFieldString<uint64_t>(array, iOGRFieldIdx, iFeature, iArrowIdx,
                                   asFieldInfo, osWorkingBuffer, oFeature);
+        return true;
+    }
+    else if (IsStringView(format))
+    {
+        FillFieldStringView(array, iOGRFieldIdx, iFeature, iArrowIdx,
+                            asFieldInfo, osWorkingBuffer, oFeature);
         return true;
     }
     else if (IsBinary(format))
@@ -8023,29 +8264,23 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     }
 
-    OGRFeatureDefn oLayerDefnTmp(poLayerDefn->GetName());
-
-    struct LayerDefnTmpRefReleaser
+    struct FeatureDefnReleaser
     {
-        OGRFeatureDefn &m_oDefn;
-
-        explicit LayerDefnTmpRefReleaser(OGRFeatureDefn &oDefn) : m_oDefn(oDefn)
+        void operator()(OGRFeatureDefn *poFDefn)
         {
-            m_oDefn.Reference();
-        }
-
-        ~LayerDefnTmpRefReleaser()
-        {
-            m_oDefn.Dereference();
+            if (poFDefn)
+                poFDefn->Release();
         }
     };
 
-    LayerDefnTmpRefReleaser oLayerDefnTmpRefReleaser(oLayerDefnTmp);
+    std::unique_ptr<OGRFeatureDefn, FeatureDefnReleaser> poLayerDefnTmp(
+        std::make_unique<OGRFeatureDefn>(poLayerDefn->GetName()).release());
+    poLayerDefnTmp->Reference();
 
     std::vector<int> anIdentityFieldMap;
     if (bFallbackTypesUsed)
     {
-        oLayerDefnTmp.SetGeomType(wkbNone);
+        poLayerDefnTmp->SetGeomType(wkbNone);
         for (int i = 0; i < poLayerDefn->GetFieldCount(); ++i)
         {
             anIdentityFieldMap.push_back(i);
@@ -8059,11 +8294,11 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             if (oIter != oMapOGRFieldIndexToFieldInfoIndex.end())
                 asFieldInfo[oIter->second].eSetFeatureFieldType =
                     asFieldInfo[oIter->second].eNominalFieldType;
-            oLayerDefnTmp.AddFieldDefn(&oFieldDefn);
+            poLayerDefnTmp->AddFieldDefn(&oFieldDefn);
         }
         for (int i = 0; i < poLayerDefn->GetGeomFieldCount(); ++i)
         {
-            oLayerDefnTmp.AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
+            poLayerDefnTmp->AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
         }
     }
     else
@@ -8102,7 +8337,8 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     };
 
-    OGRFeature oFeature(bFallbackTypesUsed ? &oLayerDefnTmp : poLayerDefn);
+    OGRFeature oFeature(bFallbackTypesUsed ? poLayerDefnTmp.get()
+                                           : poLayerDefn);
     FeatureCleaner oCleaner(oFeature, abUseStringOptim);
     OGRFeature oFeatureTarget(poLayerDefn);
     OGRFeature *const poFeatureTarget =
@@ -8169,7 +8405,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                     }
                     bool bLossyConversion = false;
                     const auto eSrcType =
-                        oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
+                        poLayerDefnTmp->GetFieldDefnUnsafe(i)->GetType();
                     const auto eDstType =
                         poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
 
@@ -8220,7 +8456,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                                  "For feature " CPL_FRMT_GIB
                                  ", value of field %s cannot not preserved",
                                  oFeatureTarget.GetFID(),
-                                 oLayerDefnTmp.GetFieldDefn(i)->GetNameRef());
+                                 poLayerDefnTmp->GetFieldDefn(i)->GetNameRef());
                         if (bTransactionOK)
                             RollbackTransaction();
                         return false;

@@ -21,10 +21,17 @@ from osgeo import ogr, osr
 
 pytestmark = pytest.mark.require_driver("Selafin")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
     with gdaltest.disable_exceptions():
+        yield
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "ogr_selafin"):
         yield
 
 

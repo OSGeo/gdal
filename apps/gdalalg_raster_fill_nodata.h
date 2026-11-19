@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_FILL_NODATA_INCLUDED
 #define GDALALG_RASTER_FILL_NODATA_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinenonnativelystreamingalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -67,4 +67,4 @@ class GDALRasterFillNodataAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_FILLNODATA_INCLUDED */
+#endif /* GDALALG_RASTER_FILL_NODATA_INCLUDED */

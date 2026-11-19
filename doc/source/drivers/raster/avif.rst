@@ -109,15 +109,15 @@ The following creation options are supported:
       Whether to write XMP metadata present in source file.
 
 -  .. co:: NBITS
-      :choices: 8, 10, 12
+      :choices: 8, 10, 12, 16
 
-      Bit depth.
+      Bit depth. 16 only supported with libavif >= 1.4 and GDAL >= 3.13
 
 -  .. co:: YUV_SUBSAMPLING
       :choices: 444, 422, 420
       :default: 444
 
-      Type of `chroma subsampling <https://en.wikipedia.org/wiki/Chroma_subsampling>`
+      Type of `chroma subsampling <https://en.wikipedia.org/wiki/Chroma_subsampling>`__
       to apply to YUV channels for RGB or RGBA images (it is ignored for single
       band of single band + alpha images)
       4:4:4 corresponds to full horizontal and vertical resolution for chrominance

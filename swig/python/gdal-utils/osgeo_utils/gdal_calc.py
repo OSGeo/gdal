@@ -471,7 +471,6 @@ def Calc(
     # find total x and y blocks to be read
     nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
     nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
-    myBufSize = myBlockSize[0] * myBlockSize[1]
 
     if debug:
         print(f"using blocksize {myBlockSize[0]} x {myBlockSize[1]}")
@@ -527,7 +526,6 @@ def Calc(
 
             # reset buffer size for start of Y loop
             nYValid = myBlockSize[1]
-            myBufSize = nXValid * nYValid
 
             # loop through Y lines
             for Y in range(0, nYBlocks):
@@ -538,7 +536,6 @@ def Calc(
                 # change the block size of the final piece
                 if Y == nYBlocks - 1:
                     nYValid = DimensionsCheck[1] - Y * myBlockSize[1]
-                    myBufSize = nXValid * nYValid
 
                 # find Y offset
                 myY = Y * myBlockSize[1]
@@ -609,8 +606,7 @@ def Calc(
                         if myNDVs is None:
                             # this is the first band that has NDV set. we initializes myNDVs to a zero buffer
                             # as we didn't see any NDV value yet.
-                            myNDVs = numpy.zeros(myBufSize)
-                            myNDVs.shape = (nYValid, nXValid)
+                            myNDVs = numpy.zeros((nYValid, nXValid))
                         myNDVs = 1 * numpy.logical_or(myNDVs == 1, myval == myNDV[i])
 
                     # add an array of values for this block to the eval namespace

@@ -28,7 +28,7 @@
 #ifdef HAVE_LIBDEFLATE
 #include "libdeflate.h"
 #else
-#include "zlib.h"
+#include "cpl_zlib_header.h"  // to avoid warnings when including zlib.h
 #endif
 
 #ifdef HAVE_LZMA
@@ -47,6 +47,7 @@
 #pragma clang diagnostic pop
 #endif
 
+#include <algorithm>
 #include <limits>
 #include <mutex>
 #include <type_traits>
@@ -444,29 +445,38 @@ static bool CPLZSTDCompressor(const void *input_data, size_t input_size,
 // to (0ULL - 2)...
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static size_t CPLZSTDGetDecompressedSize(const void *input_data,
-                                         size_t input_size)
+                                         size_t input_size, bool bEmitError)
 {
 #if (ZSTD_VERSION_MAJOR > 1) ||                                                \
     (ZSTD_VERSION_MAJOR == 1 && ZSTD_VERSION_MINOR >= 3)
     uint64_t nRet = ZSTD_getFrameContentSize(input_data, input_size);
     if (nRet == ZSTD_CONTENTSIZE_ERROR)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error while retrieving decompressed size of ZSTD frame.");
+        if (bEmitError)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error while retrieving decompressed size of ZSTD frame.");
+        }
         nRet = 0;
     }
     else if (nRet == ZSTD_CONTENTSIZE_UNKNOWN)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Decompressed size of ZSTD frame is unknown.");
+        if (bEmitError)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Decompressed size of ZSTD frame is unknown.");
+        }
         nRet = 0;
     }
 #else
     uint64_t nRet = ZSTD_getDecompressedSize(input_data, input_size);
     if (nRet == 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Decompressed size of ZSTD frame is unknown.");
+        if (bEmitError)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Decompressed size of ZSTD frame is unknown.");
+        }
     }
 #endif
 
@@ -480,6 +490,12 @@ static size_t CPLZSTDGetDecompressedSize(const void *input_data,
 #endif
 
     return static_cast<size_t>(nRet);
+}
+
+static size_t CPLZSTDGetDecompressedSize(const void *input_data,
+                                         size_t input_size)
+{
+    return CPLZSTDGetDecompressedSize(input_data, input_size, true);
 }
 
 static bool CPLZSTDDecompressor(const void *input_data, size_t input_size,
@@ -511,25 +527,111 @@ static bool CPLZSTDDecompressor(const void *input_data, size_t input_size,
     if (output_data != nullptr && *output_data == nullptr &&
         output_size != nullptr)
     {
-        size_t nOutSize = CPLZSTDGetDecompressedSize(input_data, input_size);
-        *output_data = VSI_MALLOC_VERBOSE(nOutSize);
-        if (*output_data == nullptr)
+        size_t nOutSize =
+            CPLZSTDGetDecompressedSize(input_data, input_size, false);
+        if (nOutSize > 0)
         {
-            *output_size = 0;
-            return false;
-        }
+            *output_data = VSI_MALLOC_VERBOSE(nOutSize);
+            if (*output_data == nullptr)
+            {
+                *output_size = 0;
+                return false;
+            }
 
-        size_t ret =
-            ZSTD_decompress(*output_data, nOutSize, input_data, input_size);
-        if (ZSTD_isError(ret))
+            size_t ret =
+                ZSTD_decompress(*output_data, nOutSize, input_data, input_size);
+            if (ZSTD_isError(ret))
+            {
+                *output_size = 0;
+                VSIFree(*output_data);
+                *output_data = nullptr;
+                return false;
+            }
+
+            *output_size = ret;
+        }
+        else
         {
-            *output_size = 0;
-            VSIFree(*output_data);
-            *output_data = nullptr;
-            return false;
-        }
+            ZSTD_DStream *dstream = ZSTD_createDStream();
+            if (!dstream)
+            {
+                *output_size = 0;
+                return false;
+            }
 
-        *output_size = ret;
+            size_t nOutputSize = input_size;
+            nOutputSize = static_cast<size_t>(
+                std::min<uint64_t>(256 + static_cast<uint64_t>(nOutputSize) * 2,
+                                   std::numeric_limits<size_t>::max() / 2));
+            *output_data = VSI_MALLOC_VERBOSE(nOutputSize);
+            if (*output_data == nullptr)
+            {
+                *output_size = 0;
+                ZSTD_freeDStream(dstream);
+                return false;
+            }
+
+            ZSTD_outBuffer outputBuf;
+            outputBuf.dst = *output_data;
+            outputBuf.size = nOutputSize;
+            outputBuf.pos = 0;
+
+            ZSTD_inBuffer inputBuf;
+            inputBuf.src = input_data;
+            inputBuf.size = input_size;
+            inputBuf.pos = 0;
+
+            while (true)
+            {
+                size_t ret =
+                    ZSTD_decompressStream(dstream, &outputBuf, &inputBuf);
+                if (ret == 0)
+                {
+                    *output_size = outputBuf.pos;
+                    break;
+                }
+                else if (ZSTD_isError(ret) || inputBuf.pos == input_size)
+                {
+                    *output_size = 0;
+                    VSIFree(*output_data);
+                    *output_data = nullptr;
+                    ZSTD_freeDStream(dstream);
+                    return false;
+                }
+                else
+                {
+                    CPLAssert(outputBuf.pos == outputBuf.size);
+                    const size_t nNewOutputSize =
+                        static_cast<size_t>(std::min<uint64_t>(
+                            static_cast<uint64_t>(nOutputSize) * 2,
+                            std::numeric_limits<size_t>::max() / 2));
+                    if (nNewOutputSize <= nOutputSize)
+                    {
+                        *output_size = 0;
+                        VSIFree(*output_data);
+                        *output_data = nullptr;
+                        ZSTD_freeDStream(dstream);
+                        return false;
+                    }
+                    nOutputSize = nNewOutputSize;
+                    void *pNewOutputData =
+                        VSI_REALLOC_VERBOSE(*output_data, nOutputSize);
+                    if (!pNewOutputData)
+                    {
+                        *output_size = 0;
+                        VSIFree(*output_data);
+                        *output_data = nullptr;
+                        ZSTD_freeDStream(dstream);
+                        return false;
+                    }
+                    *output_data = pNewOutputData;
+                    outputBuf.dst = *output_data;
+                    outputBuf.size = nOutputSize;
+                }
+            }
+
+            ZSTD_freeDStream(dstream);
+        }
         return true;
     }
 
@@ -590,7 +692,7 @@ static bool CPLLZ4Compressor(const void *input_data, size_t input_size,
             return false;
         }
 
-        int32_t sizeLSB = CPL_LSBWORD32(static_cast<int>(input_size));
+        int32_t sizeLSB = CPL_AS_LSB(static_cast<int32_t>(input_size));
         memcpy(*output_data, &sizeLSB, sizeof(sizeLSB));
 
         *output_size = static_cast<size_t>(header_size + ret);
@@ -681,7 +783,7 @@ static bool CPLLZ4Decompressor(const void *input_data, size_t input_size,
     {
         if (bHeader)
         {
-            int nSize = CPL_LSBSINT32PTR(input_data);
+            int nSize = CPL_FROM_LSB<int32_t>(input_data);
             if (nSize < 0)
             {
                 *output_size = 0;
@@ -704,7 +806,7 @@ static bool CPLLZ4Decompressor(const void *input_data, size_t input_size,
     {
         if (bHeader)
         {
-            int nSize = CPL_LSBSINT32PTR(input_data);
+            int nSize = CPL_FROM_LSB<int32_t>(input_data);
             if (nSize <= 0)
             {
                 *output_size = 0;
@@ -964,58 +1066,6 @@ static bool CPLZlibCompressor(const void *input_data, size_t input_size,
 
 namespace
 {
-template <class T> inline T swap(T x)
-{
-    return x;
-}
-
-template <> inline uint16_t swap<uint16_t>(uint16_t x)
-{
-    return CPL_SWAP16(x);
-}
-
-template <> inline int16_t swap<int16_t>(int16_t x)
-{
-    return CPL_SWAP16(x);
-}
-
-template <> inline uint32_t swap<uint32_t>(uint32_t x)
-{
-    return CPL_SWAP32(x);
-}
-
-template <> inline int32_t swap<int32_t>(int32_t x)
-{
-    return CPL_SWAP32(x);
-}
-
-template <> inline uint64_t swap<uint64_t>(uint64_t x)
-{
-    return CPL_SWAP64(x);
-}
-
-template <> inline int64_t swap<int64_t>(int64_t x)
-{
-    return CPL_SWAP64(x);
-}
-
-template <> inline float swap<float>(float x)
-{
-    float ret = x;
-    CPL_SWAP32PTR(&ret);
-    return ret;
-}
-
-template <> inline double swap<double>(double x)
-{
-    double ret = x;
-    CPL_SWAP64PTR(&ret);
-    return ret;
-}
-}  // namespace
-
-namespace
-{
 // Workaround -ftrapv
 template <class T>
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW inline T SubNoOverflow(T left, T right)
@@ -1068,7 +1118,8 @@ static bool DeltaCompressor(const void *input_data, size_t input_size,
         {
             if (bNeedSwap)
             {
-                pDst[i] = swap(SubNoOverflow(swap(pSrc[i]), swap(pSrc[i - 1])));
+                pDst[i] = CPL_SWAP(
+                    SubNoOverflow(CPL_SWAP(pSrc[i]), CPL_SWAP(pSrc[i - 1])));
             }
             else
             {
@@ -1565,7 +1616,8 @@ static bool DeltaDecompressor(const void *input_data, size_t input_size,
         {
             if (bNeedSwap)
             {
-                pDst[i] = swap(AddNoOverflow(swap(pDst[i - 1]), swap(pSrc[i])));
+                pDst[i] = CPL_SWAP(
+                    AddNoOverflow(CPL_SWAP(pDst[i - 1]), CPL_SWAP(pSrc[i])));
             }
             else
             {

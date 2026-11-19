@@ -37,7 +37,7 @@ def test_gdalalg_driver_gti_create_xml_filename(tmp_vsimem):
 
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("my_layer")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetLayerDefn().GetFieldCount() == 2
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "location"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString

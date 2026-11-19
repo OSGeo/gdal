@@ -19,6 +19,9 @@
 #include <initializer_list>
 #include <iterator>
 #include <string>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <string_view>
+#endif
 #include <vector>
 
 /**
@@ -115,6 +118,11 @@ class CPL_DLL CPLJSONObject
   public:
     // setters
     void Add(const std::string &osName, const std::string &osValue);
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+
+    void Add(const std::string &osName, std::string_view svValue);
+#endif
     void Add(const std::string &osName, const char *pszValue);
     void Add(const std::string &osName, double dfValue);
     void Add(const std::string &osName, int nValue);
@@ -173,11 +181,13 @@ class CPL_DLL CPLJSONObject
     double GetDouble(const std::string &osName, double dfDefault = 0.0) const;
     int GetInteger(const std::string &osName, int nDefault = 0) const;
     GInt64 GetLong(const std::string &osName, GInt64 nDefault = 0) const;
+    uint64_t GetUInt64(const std::string &osName, uint64_t nDefault = 0) const;
     bool GetBool(const std::string &osName, bool bDefault = false) const;
     std::string ToString(const std::string &osDefault = "") const;
     double ToDouble(double dfDefault = 0.0) const;
     int ToInteger(int nDefault = 0) const;
     GInt64 ToLong(GInt64 nDefault = 0) const;
+    uint64_t ToUInt64(uint64_t nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
     CPLJSONArray ToArray() const;
     std::string Format(PrettyFormat eFormat) const;
@@ -187,6 +197,7 @@ class CPL_DLL CPLJSONObject
     void DeleteNoSplitName(const std::string &osName);
     CPLJSONArray GetArray(const std::string &osName) const;
     CPLJSONObject GetObj(const std::string &osName) const;
+    CPLJSONObject GetObjNoSplitName(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;
     Type GetType() const;
 
@@ -303,12 +314,17 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     //! Return the size of the array
     inline size_t size() const
     {
-        return Size();
+        return static_cast<size_t>(Size());
     }
 
     void AddNull();
     void Add(const CPLJSONObject &oValue);
     void Add(const std::string &osValue);
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+
+    void Add(std::string_view svValue);
+#endif
     void Add(const char *pszValue);
     void Add(double dfValue);
     void Add(int nValue);

@@ -157,6 +157,11 @@ identified for the pixel.
 It is anticipated that additional reporting capabilities will be added to
 gdallocationinfo in the future.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

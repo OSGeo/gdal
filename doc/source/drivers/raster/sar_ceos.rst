@@ -11,7 +11,8 @@ SAR_CEOS -- CEOS SAR Image
 This is a read-only reader for CEOS SAR image files. To use, select the
 main imagery file.
 
-This driver works with most Radarsat, JERS-1 and ERS data products, including
+This driver works with most Radarsat, JERS-1, JAXA PALSAR-2 ALOS2,
+JAXA PALSAR-3 ALOS4 and ERS data products, including
 single look complex products; however, it is unlikely to work for
 non-Radar CEOS products. The simpler :ref:`raster.ceos` driver is often
 appropriate for these.

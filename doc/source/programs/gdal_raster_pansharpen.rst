@@ -1,5 +1,7 @@
 .. _gdal_raster_pansharpen:
 
+.. program:: gdal_raster_pansharpen
+
 ================================================================================
 ``gdal raster pansharpen``
 ================================================================================
@@ -101,6 +103,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

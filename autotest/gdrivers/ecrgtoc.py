@@ -329,12 +329,14 @@ def test_ecrgtoc_online_1():
         "http://www.falconview.org/trac/FalconView/downloads/17", "ECRG_Sample.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/ECRG_Sample.zip")
+        os.stat(f"{tmp_dir}/ECRG_Sample.zip")
     except OSError:
         pytest.skip()
 
-    ds = gdal.Open("/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml")
+    ds = gdal.Open(f"/vsizip/{tmp_dir}/ECRG_Sample.zip/ECRG_Sample/EPF/TOC.xml")
     assert ds is not None
 
     expected_gt = (

@@ -695,7 +695,7 @@ def test_gdaldem_lib_color_relief_synthetic_nodata_255(
         src_filename, 4, 1
     )
     src_ds.GetRasterBand(1).SetNoDataValue(255)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x01\x02\xff")
     if format != "MEM":
         src_ds.Close()
         src_ds = gdal.Open(src_filename)
@@ -836,7 +836,7 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
 def test_gdaldem_lib_nodata():
 
-    for (value, typ) in [
+    for value, typ in [
         (0, gdal.GDT_UInt8),
         (1, gdal.GDT_UInt8),
         (255, gdal.GDT_UInt8),

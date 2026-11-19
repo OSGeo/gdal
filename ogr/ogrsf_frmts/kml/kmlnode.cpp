@@ -102,15 +102,13 @@ static Coordinate *ParseCoordinate(std::string const &text)
 
 KMLNode::KMLNode()
     : pvpoChildren_(new std::vector<KMLNode *>),
-      pvsContent_(new std::vector<std::string>),
-      pvoAttributes_(new std::vector<Attribute *>)
+      pvsContent_(new std::vector<std::string>)
 {
 }
 
 KMLNode::~KMLNode()
 {
     CPLAssert(nullptr != pvpoChildren_);
-    CPLAssert(nullptr != pvoAttributes_);
 
     kml_nodes_t::iterator itChild;
     for (itChild = pvpoChildren_->begin(); itChild != pvpoChildren_->end();
@@ -121,12 +119,11 @@ KMLNode::~KMLNode()
     delete pvpoChildren_;
 
     kml_attributes_t::iterator itAttr;
-    for (itAttr = pvoAttributes_->begin(); itAttr != pvoAttributes_->end();
+    for (itAttr = voAttributes_.begin(); itAttr != voAttributes_.end();
          ++itAttr)
     {
         delete (*itAttr);
     }
-    delete pvoAttributes_;
 
     delete pvsContent_;
 }
@@ -149,7 +146,7 @@ void KMLNode::print(unsigned int what)
                      Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(),
                      static_cast<int>(pvpoChildren_->size()),
                      static_cast<int>(pvsContent_->size()),
-                     static_cast<int>(pvoAttributes_->size()), nLayerNumber_);
+                     static_cast<int>(voAttributes_.size()), nLayerNumber_);
         }
         else
         {
@@ -160,7 +157,7 @@ void KMLNode::print(unsigned int what)
                      Nodetype2String(eType_).c_str(), poParent_->sName_.c_str(),
                      static_cast<int>(pvpoChildren_->size()),
                      static_cast<int>(pvsContent_->size()),
-                     static_cast<int>(pvoAttributes_->size()));
+                     static_cast<int>(voAttributes_.size()));
         }
     }
     else
@@ -172,7 +169,7 @@ void KMLNode::print(unsigned int what)
                  Nodetype2String(eType_).c_str(),
                  static_cast<int>(pvpoChildren_->size()),
                  static_cast<int>(pvsContent_->size()),
-                 static_cast<int>(pvoAttributes_->size()));
+                 static_cast<int>(voAttributes_.size()));
     }
 
     if (what == 1 || what == 3)
@@ -184,10 +181,10 @@ void KMLNode::print(unsigned int what)
 
     if (what == 2 || what == 3)
     {
-        for (kml_attributes_t::size_type z = 0; z < pvoAttributes_->size(); z++)
+        for (kml_attributes_t::size_type z = 0; z < voAttributes_.size(); z++)
             CPLDebug("KML", "%s|->pvoAttributes_: %s = '%s'", indent.c_str(),
-                     (*pvoAttributes_)[z]->sName.c_str(),
-                     (*pvoAttributes_)[z]->sValue.c_str());
+                     voAttributes_[z]->sName.c_str(),
+                     voAttributes_[z]->sValue.c_str());
     }
 
     for (kml_nodes_t::size_type z = 0; z < pvpoChildren_->size(); z++)
@@ -236,6 +233,14 @@ int KMLNode::classify(KML *poKML, int nRecLevel)
                 b25D_ = true;
         }
     }
+    else if (sName_.compare("Schema") == 0)
+        eType_ = Schema;
+    else if (sName_.compare("SimpleField") == 0)
+        eType_ = SimpleField;
+    else if (sName_.compare("SchemaData") == 0)
+        eType_ = SchemaData;
+    else if (sName_.compare("SimpleData") == 0)
+        eType_ = SimpleData;
 
     const kml_nodes_t::size_type size = pvpoChildren_->size();
     for (kml_nodes_t::size_type z = 0; z < size; z++)
@@ -245,6 +250,8 @@ int KMLNode::classify(KML *poKML, int nRecLevel)
             return FALSE;
 
         Nodetype curr = (*pvpoChildren_)[z]->eType_;
+        if (curr == SchemaData || curr == SimpleData)
+            continue;
         b25D_ |= (*pvpoChildren_)[z]->b25D_;
 
         // Compare and return if it is mixed
@@ -366,7 +373,7 @@ std::size_t KMLNode::getLevel() const
 
 void KMLNode::addAttribute(Attribute *poAttr)
 {
-    pvoAttributes_->push_back(poAttr);
+    voAttributes_.push_back(poAttr);
 }
 
 void KMLNode::setParent(KMLNode *poPar)
@@ -404,7 +411,7 @@ void KMLNode::appendContent(std::string const &text)
     pvsContent_->back() += text;
 }
 
-std::string KMLNode::getContent(std::size_t index) const
+const std::string &KMLNode::getContent(std::size_t index) const
 {
     return (*pvsContent_)[index];
 }
@@ -737,6 +744,35 @@ Feature *KMLNode::getFeature(std::size_t nNum, int &nLastAsked, int &nLastCount)
     psReturn->sDescription = poFeat->getDescriptionElement();
     // the type
     psReturn->eType = poFeat->eType_;
+
+    for (nCount = 0; nCount < poFeat->pvpoChildren_->size(); nCount++)
+    {
+        const auto poChild = (*poFeat->pvpoChildren_)[nCount];
+        const auto &sName = poChild->sName_;
+        if (sName == "ExtendedData" && poChild->pvpoChildren_->size() == 1 &&
+            (*poChild->pvpoChildren_)[0]->sName_ == "SchemaData")
+        {
+            const auto poChild2 = (*poChild->pvpoChildren_)[0];
+            for (size_t j = 0; j < poChild2->pvpoChildren_->size(); ++j)
+            {
+                const auto poChild3 = (*poChild2->pvpoChildren_)[j];
+                if (poChild3->sName_ == "SimpleData" &&
+                    poChild3->numContent() == 1)
+                {
+                    std::string osAttrName;
+                    for (const auto *poAttr : poChild3->getAttributes())
+                    {
+                        if (poAttr->sName == "name")
+                            osAttrName = poAttr->sValue;
+                    }
+                    if (!osAttrName.empty())
+                    {
+                        psReturn->oFields[osAttrName] = poChild3->getContent(0);
+                    }
+                }
+            }
+        }
+    }
 
     std::string sElementName;
     if (poFeat->eType_ == Point || poFeat->eType_ == LineString ||

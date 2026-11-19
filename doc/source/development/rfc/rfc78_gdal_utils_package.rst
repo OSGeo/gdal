@@ -218,7 +218,7 @@ Previous discussions
 
 This topic has been discussed in the past in :
 
-- http://osgeo-org.1560.x6.nabble.com/gdal-dev-Call-for-discussion-on-RFC77-Drop-Python-2-support-td5449659.html
+- https://lists.osgeo.org/pipermail/gdal-dev/2020-November/053012.html
 
 Related PRs:
 -------------
@@ -231,7 +231,7 @@ Related PRs:
 Voting history
 --------------
 
-- http://osgeo-org.1560.x6.nabble.com/gdal-dev-Motion-RFC-78-gdal-utils-package-td5482707.html
+- https://lists.osgeo.org/pipermail/gdal-dev/2021-March/053676.html
 
 * +1 from EvenR, HowardB
 * +0 from KurtS, JukkaR

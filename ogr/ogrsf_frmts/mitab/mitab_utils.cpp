@@ -169,7 +169,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
         {
             if (EQUAL(pszTmpPath + iLastPartStart, papszDir[iEntry]))
             {
-                // Fount it.
+                // Found it.
                 strcpy(pszTmpPath + iLastPartStart, papszDir[iEntry]);
                 break;
             }

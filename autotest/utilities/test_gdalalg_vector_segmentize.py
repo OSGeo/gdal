@@ -49,9 +49,7 @@ def test_gdalalg_vector_segmentize():
         out_f.GetGeometryRef().ExportToWkt()
         == "LINESTRING (0 0,0.0 0.25,0.0 0.5,0.0 0.75,0 1)"
     )
-    assert (
-        out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "32631"
-    )
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef() is None
     assert out_lyr.GetFeatureCount() == 2

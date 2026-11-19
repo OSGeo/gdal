@@ -2237,8 +2237,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                        CSLConstList papszOptions)
 
 {
-    GDALValidateOptions(GDALGetGenImgProjTranformerOptionList(), papszOptions,
-                        "option", "transformer options");
+    GDALValidateOptions(nullptr, GDALGetGenImgProjTranformerOptionList(),
+                        papszOptions, "option", "transformer options");
 
     double dfWestLongitudeDeg = 0.0;
     double dfSouthLatitudeDeg = 0.0;
@@ -2413,6 +2413,9 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                    EQUAL(pszMethod, "GCP_HOMOGRAPHY"))) &&
                  GDALGetGCPCount(hDS) > 0)
         {
+            if (!pszMethod)
+                CPLDebug("WARP", "Using GCP_HOMOGRAPHY transformer due to GCP "
+                                 "count in [4, 5]");
             if (pszSRS == nullptr)
             {
                 auto hSRS = GDALGetGCPSpatialRef(hDS);
@@ -2442,7 +2445,17 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                   (pszMethod && EQUAL(pszMethod, "GCP_POLYNOMIAL"))) &&
                  GDALGetGCPCount(hDS) > 0)
         {
+            const auto nGCPCount = GDALGetGCPCount(hDS);
             const int nSanitizedOrder = std::max(0, nOrder);
+            if (!pszMethod && nSanitizedOrder == 0)
+            {
+                if (nGCPCount <= 6)
+                    CPLDebug("WARP", "Using GCP_POLYNOMIAL transformer with "
+                                     "order = 1 due to GCP count <= 6");
+                else
+                    CPLDebug("WARP", "Using GCP_POLYNOMIAL transformer with "
+                                     "order = 2 due to GCP count > 6");
+            }
 
             if (pszSRS == nullptr)
             {
@@ -2451,7 +2464,6 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                     oSRS = *(OGRSpatialReference::FromHandle(hSRS));
             }
 
-            const auto nGCPCount = GDALGetGCPCount(hDS);
             auto pasGCPList = GDALDuplicateGCPs(nGCPCount, GDALGetGCPs(hDS));
             GDALGCPAntimeridianUnwrap(nGCPCount, pasGCPList, oSRS,
                                       papszOptions);
@@ -2507,10 +2519,13 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALTPSTransform;
         }
 
-        else if ((pszMethod == nullptr || EQUAL(pszMethod, "RPC")) &&
-                 (papszMD = GDALGetMetadata(hDS, "RPC")) != nullptr &&
+        else if ((pszMethod == nullptr || EQUAL(pszMethod, GDAL_MDD_RPC)) &&
+                 (papszMD = GDALGetMetadata(hDS, GDAL_MDD_RPC)) != nullptr &&
                  GDALExtractRPCInfoV2(papszMD, &sRPCInfo))
         {
+            if (!pszMethod)
+                CPLDebug("WARP", "Using RPC transformer");
+
             CPLStringList aosOptions(papszOptions);
             if (!CSLFetchNameValue(papszOptions, "RPC_HEIGHT") &&
                 !CSLFetchNameValue(papszOptions, "RPC_DEM"))
@@ -2539,9 +2554,13 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
 
         else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")) &&
-                 ((papszMD = GDALGetMetadata(hDS, "GEOLOCATION")) != nullptr ||
+                 ((papszMD = GDALGetMetadata(hDS, GDAL_MDD_GEOLOCATION)) !=
+                      nullptr ||
                   pszGeolocArray != nullptr))
         {
+            if (!pszMethod)
+                CPLDebug("WARP", "Using geolocation array transformer");
+
             CPLStringList aosGeolocMD;  // keep in this scope
             if (pszGeolocArray != nullptr)
             {

@@ -17,6 +17,7 @@
 #include "cpl_multiproc.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <vector>
 
@@ -236,9 +237,9 @@ static int CreateRandomStrategyRequests(GDALDataset *poDS, int nMaxRequests,
     unsigned long seed = 1;
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
-    int nMaxXWin = MIN(1000, nXSize / 10 + 1);
-    int nMaxYWin = MIN(1000, nYSize / 10 + 1);
-    int nQueriedBands = MIN(4, poDS->GetRasterCount());
+    int nMaxXWin = std::min(1000, nXSize / 10 + 1);
+    int nMaxYWin = std::min(1000, nYSize / 10 + 1);
+    int nQueriedBands = std::min(4, poDS->GetRasterCount());
     int nAverageIterationsToReadWholeFile =
         ((nXSize + nMaxXWin / 2 - 1) / (nMaxXWin / 2)) *
         ((nYSize + nMaxYWin / 2 - 1) / (nMaxYWin / 2));
@@ -267,7 +268,7 @@ static int CreateLineStrategyRequests(GDALDataset *poDS, int nMaxRequests,
 {
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
-    int nQueriedBands = MIN(4, poDS->GetRasterCount());
+    int nQueriedBands = std::min(4, poDS->GetRasterCount());
     int bStop = FALSE;
     int nRequests = 0;
     for (int iLoop = 0; !bStop && iLoop < nLoops; iLoop++)
@@ -293,9 +294,9 @@ static int CreateBlockStrategyRequests(GDALDataset *poDS, int nMaxRequests,
 {
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
-    int nMaxXWin = MIN(1000, nXSize / 10 + 1);
-    int nMaxYWin = MIN(1000, nYSize / 10 + 1);
-    int nQueriedBands = MIN(4, poDS->GetRasterCount());
+    int nMaxXWin = std::min(1000, nXSize / 10 + 1);
+    int nMaxYWin = std::min(1000, nYSize / 10 + 1);
+    int nQueriedBands = std::min(4, poDS->GetRasterCount());
     int bStop = FALSE;
     int nRequests = 0;
     for (int iLoop = 0; !bStop && iLoop < nLoops; iLoop++)

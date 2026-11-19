@@ -1272,7 +1272,7 @@ OGRErr OGRUnionLayer::SetAttributeFilter(const char *pszAttributeFilterIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRUnionLayer::TestCapability(const char *pszCap) const
+bool OGRUnionLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
     {

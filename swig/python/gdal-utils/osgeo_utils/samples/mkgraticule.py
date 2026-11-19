@@ -23,9 +23,9 @@ def float_range(*args):
     if len(args) == 1:
         (stop,) = args
     elif len(args) == 2:
-        (start, stop) = args
+        start, stop = args
     elif len(args) == 3:
-        (start, stop, step) = args
+        start, stop, step = args
     else:
         raise TypeError("float_range needs 1-3 float arguments")
 

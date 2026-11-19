@@ -40,7 +40,7 @@ def test_gdalalg_convert_vector(tmp_vsimem):
     convert = get_convert_alg()
     assert convert.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 

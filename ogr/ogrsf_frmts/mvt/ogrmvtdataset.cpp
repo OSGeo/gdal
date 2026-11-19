@@ -20,6 +20,7 @@
 #include "cpl_json.h"
 #include "cpl_http.h"
 #include "ogr_p.h"
+#include "gdal_thread_pool.h"
 
 #include "mvt_tile.h"
 #include "mvtutils.h"
@@ -143,7 +144,7 @@ class OGRMVTLayerBase CPL_NON_FINAL
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMVTLayerBase)
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -262,7 +263,7 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
 
     OGRFeature *GetFeature(GIntBig nFID) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -309,7 +310,7 @@ class OGRMVTDataset final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -371,7 +372,7 @@ void OGRMVTLayerBase::InitFields(const CPLJSONObject &oFields,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTLayerBase::TestCapability(const char *pszCap) const
+bool OGRMVTLayerBase::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCFastSpatialFilter))
     {
@@ -420,7 +421,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
     // By default, we are more tolerant and only use reversal of winding order
     // to detect inner rings.
     m_bEnforceExternalIsClockwise = CPLTestBool(
-        CPLGetConfigOption("OGR_MVT_ENFORE_EXTERNAL_RING_IS_CLOCKWISE", "NO"));
+        CPLGetConfigOption("OGR_MVT_ENFORCE_EXTERNAL_RING_IS_CLOCKWISE", "NO"));
 }
 
 /************************************************************************/
@@ -1035,7 +1036,7 @@ OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
         {
             std::unique_ptr<OGRMultiPolygon> poMultiPoly;
             std::unique_ptr<OGRPolygon> poPoly;
-            int externalIsClockwise = 0;
+            bool externalIsClockwise = false;
             int nX = 0;
             int nY = 0;
             OGREnvelope sExteriorRingEnvelope;
@@ -1835,7 +1836,7 @@ OGRErr OGRMVTDirectoryLayer::ISetSpatialFilter(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTDirectoryLayer::TestCapability(const char *pszCap) const
+bool OGRMVTDirectoryLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastGetExtent))
     {
@@ -2791,9 +2792,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                                          poDS->m_bClip);
                     }
 
-                    for (int k = 0; k < poTileDS->GetLayerCount(); k++)
+                    for (auto *poTileLayer : poTileDS->GetLayers())
                     {
-                        OGRLayer *poTileLayer = poTileDS->GetLayer(k);
                         OGRFeatureDefn *poTileLDefn =
                             poTileLayer->GetLayerDefn();
                         OGRwkbGeometryType eTileGeomType =
@@ -3520,7 +3520,7 @@ class OGRMVTWriterDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr WriteFeature(OGRMVTWriterLayer *poLayer, OGRFeature *poFeature,
                         GIntBig nSerial, OGRGeometry *poGeom);
@@ -3570,7 +3570,7 @@ class OGRMVTWriterLayer final : public OGRLayer
         return m_poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;
 
@@ -3623,7 +3623,7 @@ OGRMVTWriterLayer::~OGRMVTWriterLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTWriterLayer::TestCapability(const char *pszCap) const
+bool OGRMVTWriterLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField))
@@ -5659,8 +5659,8 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     // GDAL extension for custom tiling schemes
     if (!bIsStandardTilingScheme)
     {
-        const char *pszAuthName = m_poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = m_poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = m_poSRS->GetAuthorityName();
+        const char *pszAuthCode = m_poSRS->GetAuthorityCode();
         if (pszAuthName && pszAuthCode)
         {
             WriteMetadataItem("crs",
@@ -6019,7 +6019,7 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMVTWriterDataset::TestCapability(const char *pszCap) const
+bool OGRMVTWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCRandomLayerWrite))
         return true;
@@ -6403,12 +6403,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    int nThreads = CPLGetNumCPUs();
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszNumThreads && CPLGetValueType(pszNumThreads) == CPL_VALUE_INTEGER)
-    {
-        nThreads = atoi(pszNumThreads);
-    }
+    const int nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultToAllCPUs = */ true);
     if (nThreads > 1)
     {
         poDS->m_bThreadPoolOK =

@@ -574,7 +574,7 @@ void OGRSOSILayer::ResetReading()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSOSILayer::TestCapability(const char *pszCap) const
+bool OGRSOSILayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))

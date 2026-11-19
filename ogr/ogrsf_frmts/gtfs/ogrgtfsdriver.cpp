@@ -14,6 +14,7 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
+#include <cassert>
 #include <map>
 #include <new>
 #include <utility>
@@ -80,7 +81,7 @@ class OGRGTFSLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
@@ -103,8 +104,15 @@ OGRGTFSLayer::OGRGTFSLayer(const std::string &osDirname, const char *pszName,
     m_poFeatureDefn->Reference();
 
     m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
-
+    assert(m_poUnderlyingLayer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     auto poSrcLayerDefn = m_poUnderlyingLayer->GetLayerDefn();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     const int nFieldCount = poSrcLayerDefn->GetFieldCount();
     m_nTripIdIdx = poSrcLayerDefn->GetFieldIndex("trip_id");
     if (EQUAL(pszName, "stops"))
@@ -359,7 +367,7 @@ GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGTFSLayer::TestCapability(const char *pszCap) const
+bool OGRGTFSLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }
@@ -386,7 +394,7 @@ class OGRGTFSShapesGeomLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -511,7 +519,7 @@ OGRFeature *OGRGTFSShapesGeomLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap) const
+bool OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }

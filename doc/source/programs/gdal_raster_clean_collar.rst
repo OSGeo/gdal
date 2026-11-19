@@ -1,5 +1,7 @@
 .. _gdal_raster_clean_collar:
 
+.. program:: gdal_raster_clean_collar
+
 ================================================================================
 ``gdal raster clean-collar``
 ================================================================================
@@ -26,6 +28,8 @@ to black or white.
 This is often used to "fix up" lossy compressed air photos so that color pixels can be
 treated as transparent when mosaicing. The output format must use lossless compression
 if either alpha band or mask band is not set.
+
+Since GDAL 3.14, :program:`gdal raster clean-collar` can be used as a step of a pipeline.
 
 Program-Specific Options
 ------------------------
@@ -99,6 +103,10 @@ Standard Options
         Note that updating an existing dataset may lead to file size increase if
         the dataset is compressed, and/or quality loss if lossy compression is used.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

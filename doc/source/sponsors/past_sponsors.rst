@@ -16,6 +16,15 @@ the Sponsorship program:
 - L3Harris Geospatial
 - Mapgears
 - Microsoft
+- Myles Sutherland
+- Phoenix LiDAR Systems, LLC
+- PIX4D
+- Regrid
+- Route4Me, Inc.
+- Space Intelligence
+- Sparkgeo
+- Umbra
+- Vortex f.d.c.
 
 
 .. below is an allow-list for spelling checker.
@@ -24,3 +33,5 @@ the Sponsorship program:
     Aerometrex
     Koordinates
     Mapgears
+    Regrid
+    Sparkgeo

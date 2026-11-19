@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -68,6 +68,7 @@ class GDALVectorRasterizeAlgorithm /* non final */
     std::string m_dialect{};
     double m_nodata = std::numeric_limits<double>::quiet_NaN();
     std::vector<double> m_initValues{};
+    GDALArgDatasetValue m_likeDataset{};
     std::string m_srs{};
     std::vector<std::string> m_transformerOption{};
     std::vector<double> m_targetExtent{};

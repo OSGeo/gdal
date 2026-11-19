@@ -20,6 +20,7 @@ from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("JP2KAK")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
@@ -174,12 +175,14 @@ def test_jp2kak_12():
 
 
 @pytest.mark.parametrize("use_stripe_compressor", ["YES", "NO"])
-def test_jp2kak_13(use_stripe_compressor):
+def test_jp2kak_13(tmp_path, use_stripe_compressor):
 
     src_ds = gdal.Open("data/pcidsk/utm.pix")
     with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
         with gdaltest.config_option("JP2KAK_THREADS", "0"):
-            jp2_ds = gdaltest.jp2kak_drv.CreateCopy("tmp/jp2kak_13.jp2", src_ds)
+            jp2_ds = gdaltest.jp2kak_drv.CreateCopy(
+                str(tmp_path / "jp2kak_13.jp2"), src_ds
+            )
     src_ds = None
 
     jp2_band = jp2_ds.GetRasterBand(1)
@@ -201,9 +204,9 @@ def test_jp2kak_13(use_stripe_compressor):
 #
 
 
-def test_jp2kak_14():
+def test_jp2kak_14(tmp_path):
 
-    jp2_ds = gdal.Open("tmp/jp2kak_13.jp2")
+    jp2_ds = gdal.Open(str(tmp_path / "jp2kak_13.jp2"))
 
     jp2_ds.BuildOverviews("NEAREST", overviewlist=[2, 4])
 
@@ -239,7 +242,7 @@ def test_jp2kak_14():
     ), "did not get expected overview checksum (2)"
 
     jp2_ds = None
-    gdaltest.jp2kak_drv.Delete("tmp/jp2kak_13.jp2")
+    gdaltest.jp2kak_drv.Delete(str(tmp_path / "jp2kak_13.jp2"))
 
 
 #
@@ -267,14 +270,14 @@ def test_jp2kak_15():
 #
 
 
-def test_jp2kak_16():
+def test_jp2kak_16(tmp_path):
 
     jp2_ds = gdal.Open("data/jpeg2000/small_200ppcm.jp2")
-    out_ds = gdaltest.jp2kak_drv.CreateCopy("tmp/jp2kak_16.jp2", jp2_ds)
+    out_ds = gdaltest.jp2kak_drv.CreateCopy(str(tmp_path / "jp2kak_16.jp2"), jp2_ds)
     del out_ds
     jp2_ds = None
 
-    jp2_ds = gdal.Open("tmp/jp2kak_16.jp2")
+    jp2_ds = gdal.Open(str(tmp_path / "jp2kak_16.jp2"))
     md = jp2_ds.GetMetadata()
 
     assert not (
@@ -284,7 +287,7 @@ def test_jp2kak_16():
 
     jp2_ds = None
 
-    gdaltest.jp2kak_drv.Delete("tmp/jp2kak_16.jp2")
+    gdaltest.jp2kak_drv.Delete(str(tmp_path / "jp2kak_16.jp2"))
 
 
 ###############################################################################
@@ -568,7 +571,7 @@ def test_jp2kak_20():
     #    gdaltest.post_reason('fail')
     #    return 'fail'
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )
@@ -674,7 +677,7 @@ def test_jp2jp2kak_test_multi_rate():
     # 1.2e+04 -> 12150 (24300 * 4 * 0.125F)
 
     split = arr[4][5][1].split(",")
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[2].split("\n")[0].strip() == "4.6e+03"
@@ -709,7 +712,7 @@ def test_jp2jp2kak_test_multi_rate_dash():
 
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[2].split("\n")[0].strip() == "1.2e+04"
@@ -738,7 +741,7 @@ def test_jp2jp2kak_test_single_rate():
 
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[5].split("\n")[0].strip() == "4.6e+03"
@@ -767,7 +770,7 @@ def test_jp2jp2kak_test_multi_rate_quality_50():
 
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
     assert split[5].split("\n")[0].strip() == "4.6e+03"
 
@@ -794,7 +797,7 @@ def test_jp2jp2kak_test_multi_rate_quality_100():
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[5].split("\n")[0].strip() == "4.6e+03"
@@ -824,7 +827,7 @@ def test_jp2jp2kak_test_multi_rate_quality_100_reversible():
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[5].split("\n")[0].strip() == "4.6e+03"
@@ -854,7 +857,7 @@ def test_jp2jp2kak_test_multi_rate_quality_100_no_reversible():
     # 4.6e+03 -> 4556 (24300 * 1.5 * 0.125F)
     split = arr[4][5][1].split(",")
 
-    # 4 layers + 2 blocs for extra information
+    # 4 layers + 2 blocks for extra information
     assert len(split) == 6
 
     assert split[5].split("\n")[0].strip() == "4.6e+03"
@@ -878,7 +881,7 @@ def test_jp2jp2kak_test_quality_100_no_reversible():
 
     split = arr[4][5][1].split(",")
 
-    # 12 layers + 2 blocs for extra information
+    # 12 layers + 2 blocks for extra information
     assert len(split) == 14
 
     gdal.Unlink("/vsimem/jp2kak_22.jp2")
@@ -900,7 +903,7 @@ def test_jp2jp2kak_test_quality_100_reversible():
 
     split = arr[4][5][1].split(",")
 
-    # 12 layers + 2 blocs for extra information
+    # 12 layers + 2 blocks for extra information
     assert len(split) == 14
     gdal.Unlink("/vsimem/jp2kak_22.jp2")
 
@@ -1051,3 +1054,20 @@ def test_jp2kak_non_persistent_read_overview():
         cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
     assert cs == 29642
+
+
+def test_jp2kak_rgbundefined(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
+    src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    src_ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    src_ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_Undefined)
+
+    gdal.GetDriverByName("JP2KAK").CreateCopy(tmp_vsimem / "out.jp2", src_ds)
+
+    ds = gdal.Open(tmp_vsimem / "out.jp2")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_Undefined

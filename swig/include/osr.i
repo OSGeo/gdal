@@ -468,11 +468,11 @@ public:
     return (const char*)name;
   }
 
-  const char *GetAuthorityCode( const char *target_key ) {
+  const char *GetAuthorityCode( const char *target_key = NULL ) {
     return OSRGetAuthorityCode( self, target_key );
   }
 
-  const char *GetAuthorityName( const char *target_key ) {
+  const char *GetAuthorityName( const char *target_key = NULL ) {
     return OSRGetAuthorityName( self, target_key );
   }
 
@@ -550,7 +550,7 @@ public:
     int bNorth = FALSE;
     int nZone = OSRGetUTMZone( self, &bNorth );
     if( !bNorth )
-        nZone = -1 * ABS(nZone);
+        nZone = -nZone;
     return nZone;
   }
 
@@ -574,6 +574,15 @@ public:
   {
        return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
   }
+#endif
+
+#ifdef SWIGJAVA
+%apply (int* pnList, int** ppListOut) {(int* nvalues, int **confidence_values)};
+  OSRSpatialReferenceShadow** FindMatches( char** options, int* nvalues, int** confidence_values )
+  {
+       return (OSRSpatialReferenceShadow**) OSRFindMatches(self, options, nvalues, confidence_values);
+  }
+%clear (int* nvalues, int **confidence_values);
 #endif
 
   OGRErr SetProjection( char const *arg ) {
@@ -1063,6 +1072,10 @@ public:
     return OSRImportFromMICoordSys( self, pszCoordSys );
   }
 
+  OGRErr ImportFromISISPVL( char const *pszPVLMappingGroup ) {
+    return OSRImportFromISISPVL( self, pszPVLMappingGroup );
+  }
+
 %apply Pointer NONNULL {const char* const *papszLines};
 %apply (char **options) { (const char* const *papszLines) };
   OGRErr ImportFromOzi( const char* const *papszLines ) {
@@ -1262,6 +1275,20 @@ public:
   ~OSRCoordinateTransformationShadow() {
     OCTDestroyCoordinateTransformation( self );
   }
+
+#ifdef SWIGJAVA 
+   %newobject GetSource;
+   OSRSpatialReferenceShadow* GetSource() {
+    OGRSpatialReferenceH srs = OCTGetSourceCS(self);
+    return (OSRSpatialReferenceShadow*) (srs ? OSRClone(srs) : NULL);
+  }
+
+   %newobject GetTarget;
+   OSRSpatialReferenceShadow* GetTarget() {
+    OGRSpatialReferenceH srs = OCTGetTargetCS(self);
+    return (OSRSpatialReferenceShadow*) (srs ? OSRClone(srs) : NULL);
+  }
+#endif
 
   %newobject GetInverse;
   OSRCoordinateTransformationShadow* GetInverse() {
@@ -1597,9 +1624,9 @@ void GetCRSInfoListFromDatabase( const char *authName,
 #endif // SWIGPYTHON
 
 %inline %{
-void SetPROJSearchPath( const char *utf8_path )
+void SetPROJSearchPath( const char *utf8_string )
 {
-    const char* const apszPaths[2] = { utf8_path, NULL };
+    const char* const apszPaths[2] = { utf8_string, NULL };
     OSRSetPROJSearchPaths(apszPaths);
 }
 %}
@@ -1656,9 +1683,9 @@ void SetPROJEnableNetwork(bool enabled)
 %}
 
 %inline %{
-void SetPROJAuxDbPath( const char *utf8_path )
+void SetPROJAuxDbPath( const char *utf8_string )
 {
-    const char* const apszPaths[2] = { utf8_path, NULL };
+    const char* const apszPaths[2] = { utf8_string, NULL };
     OSRSetPROJAuxDbPaths(apszPaths);
 }
 %}

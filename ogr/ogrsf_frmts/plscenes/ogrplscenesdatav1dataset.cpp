@@ -475,7 +475,7 @@ retry:
             if (nSubDataset != 0)
             {
                 GDALDataset *poDS = new OGRPLScenesDataV1Dataset();
-                poDS->SetMetadata(papszSubdatasets, "SUBDATASETS");
+                poDS->SetMetadata(papszSubdatasets, GDAL_MDD_SUBDATASETS);
                 CSLDestroy(papszSubdatasets);
                 return poDS;
             }

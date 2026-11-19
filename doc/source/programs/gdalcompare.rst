@@ -114,6 +114,11 @@ difference count (excluding the binary comparison). The
 `gdalcompare.compare_sds()` entry point can be used to compare
 subdatasets.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

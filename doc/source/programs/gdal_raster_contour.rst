@@ -1,5 +1,7 @@
 .. _gdal_raster_contour:
 
+.. program:: gdal_raster_contour
+
 ================================================================================
 ``gdal raster contour``
 ================================================================================
@@ -86,7 +88,7 @@ Program-Specific Options
 
     Create polygons instead of lines.
 
-.. option:: --src-nodata <SRCNODATA>
+.. option:: --input-nodata <INPUT-NODATA>
 
     Input pixel value to treat as 'nodata'.
 
@@ -108,6 +110,11 @@ Standard Options
     .. include:: gdal_options/of_vector.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -136,3 +143,21 @@ Examples
      and from 100 to 200 and from 200 to the maximum value, and with attributes ``MIN``, and ``MAX``.
 
 
+.. example::
+   :title: Create contour lines from a set of point measurements
+
+       As the name implies, :program:`gdal raster contour` creates only creates
+       contours from raster datasets. If we want to create contours from a set of
+       points, we must first interpolate a raster from the points. Here,
+       :ref:`gdal_vector_grid` is used in a pipeline to interpolate gridded
+       values from a set of points representing the depth to water in various
+       wells. Two-foot depth-to-water contours are then generated from the gridded
+       values.
+
+       .. code-block:: bash
+
+           gdal pipeline ! \
+               read shallow2016_pnts.shp ! \
+               grid invdist --zfield DTW16 ! \
+               contour --interval 2 ! \
+           write contours.shp

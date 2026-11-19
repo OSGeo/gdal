@@ -778,7 +778,7 @@ OGRErr TABSeamless::ISetSpatialFilter(int /*iGeomField*/,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int TABSeamless::TestCapability(const char *pszCap) const
+bool TABSeamless::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

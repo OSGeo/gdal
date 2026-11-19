@@ -996,7 +996,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
     if (m_bStopParsing)
         return nullptr;
 
-    if (!m_oFeatureQueue.empty())
+    if (!this->m_oFeatureQueue.empty())
     {
         OGRFeature *poFeature = std::move(m_oFeatureQueue.front()).release();
         m_oFeatureQueue.pop_front();
@@ -1019,16 +1019,13 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         if (XML_Parse(m_oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of GPX file failed : "
-                     "%s at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(m_oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(m_oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(m_oParser)));
+                     "XML parsing of GPX file failed: %s",
+                     OGRExpatGetParseError(m_oParser));
             m_bStopParsing = true;
             break;
         }
         m_nWithoutEventCounter++;
-    } while (!nDone && m_oFeatureQueue.empty() && !m_bStopParsing &&
+    } while (!nDone && this->m_oFeatureQueue.empty() && !m_bStopParsing &&
              m_nWithoutEventCounter < 10);
 
     if (m_nWithoutEventCounter == 10)
@@ -1038,7 +1035,7 @@ OGRFeature *OGRGPXLayer::GetNextFeature()
         m_bStopParsing = true;
     }
 
-    if (!m_oFeatureQueue.empty())
+    if (!this->m_oFeatureQueue.empty())
     {
         OGRFeature *poFeature = std::move(m_oFeatureQueue.front()).release();
         m_oFeatureQueue.pop_front();
@@ -1358,13 +1355,13 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
         if (m_poDS->GetLastGPXGeomTypeWritten() == GPX_ROUTE)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'wpt' element after a 'rte' element.\n");
+                     "Cannot write a 'wpt' element after a 'rte' element.");
             return OGRERR_FAILURE;
         }
         else if (m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'wpt' element after a 'trk' element.\n");
+                     "Cannot write a 'wpt' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 
@@ -1404,7 +1401,7 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
             m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK_POINT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'rte' element after a 'trk' element.\n");
+                     "Cannot write a 'rte' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 
@@ -1604,7 +1601,7 @@ OGRErr OGRGPXLayer::ICreateFeature(OGRFeature *poFeature)
             m_poDS->GetLastGPXGeomTypeWritten() == GPX_TRACK_POINT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Cannot write a 'rte' element after a 'trk' element.\n");
+                     "Cannot write a 'rte' element after a 'trk' element.");
             return OGRERR_FAILURE;
         }
 
@@ -1807,7 +1804,7 @@ OGRErr OGRGPXLayer::CreateField(const OGRFieldDefn *poField, int /*bApproxOK*/)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGPXLayer::TestCapability(const char *pszCap) const
+bool OGRGPXLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
@@ -1880,13 +1877,9 @@ void OGRGPXLayer::LoadExtensionsSchema()
         if (XML_Parse(m_oSchemaParser, aBuf.data(), nLen, nDone) ==
             XML_STATUS_ERROR)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "XML parsing of GPX file failed : "
-                "%s at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(m_oSchemaParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(m_oSchemaParser)),
-                static_cast<int>(XML_GetCurrentColumnNumber(m_oSchemaParser)));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of GPX file failed: %s",
+                     OGRExpatGetParseError(m_oSchemaParser));
             m_bStopParsing = true;
             break;
         }

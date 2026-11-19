@@ -18,6 +18,8 @@
 
 #include "jpipkakdrivercore.h"
 
+#include <algorithm>
+
 /*
 ** The following are for testing premature stream termination support.
 ** This is a mechanism to test handling of failed or incomplete reads
@@ -258,13 +260,13 @@ CPLErr JPIPKAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (xOff + xSize > poBaseDS->GetRasterXSize())
     {
         xSize = poBaseDS->GetRasterXSize() - xOff;
-        nBufXSize = MAX(xSize / nZoom, 1);
+        nBufXSize = std::max(xSize / nZoom, 1);
     }
 
     if (yOff + ySize > poBaseDS->GetRasterYSize())
     {
         ySize = poBaseDS->GetRasterYSize() - yOff;
-        nBufYSize = MAX(ySize / nZoom, 1);
+        nBufYSize = std::max(ySize / nZoom, 1);
     }
 
     /* -------------------------------------------------------------------- */
@@ -638,9 +640,9 @@ int JPIPKAKDataset::Initialize(const char *pszDatasetName, int bReinitializing)
         if ((poCodestream->get_bit_depth(0) % 8) != 0 &&
             poCodestream->get_bit_depth(0) < 16)
             SetMetadataItem(
-                "NBITS",
+                GDALMD_NBITS,
                 CPLString().Printf("%d", poCodestream->get_bit_depth(0)),
-                "IMAGE_STRUCTURE");
+                GDAL_MDD_IMAGE_STRUCTURE);
 
         // TODO add color interpretation
 
@@ -1735,8 +1737,8 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         region.size.x = (int)ceil(region.size.x * x_ratio);
         region.size.y = (int)ceil(region.size.y * y_ratio);
 
-        region.size.x = MIN(region.size.x, nBufXSize);
-        region.size.y = MIN(region.size.y, nBufYSize);
+        region.size.x = std::min(region.size.x, nBufXSize);
+        region.size.y = std::min(region.size.y, nBufYSize);
 
         if (region.pos.x + region.size.x > view_dims.size.x)
             region.size.x = view_dims.size.x - region.pos.x;
@@ -2042,9 +2044,9 @@ static void JPIPWorkerFunc(void *req)
         long nEnd = clock();
 
         if ((nEnd - nStart) > 0)
-            nCurrentTransmissionLength =
-                (int)MAX(bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC),
-                         nMinimumTransmissionLength);
+            nCurrentTransmissionLength = (int)std::max<double>(
+                bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC),
+                nMinimumTransmissionLength);
 
         CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 

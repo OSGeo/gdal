@@ -17,6 +17,7 @@ Synopsis
 
 
     gdal2tiles [--help] [--help-general]
+                  [--legacy]
                   [-p <profile>] [-r resampling] [-s <srs>] [-z <zoom>]
                   [-e] [-a nodata] [-v] [-q] [-h] [-k] [-n] [-u <url>]
                   [-w <webviewer>] [-t <title>] [-c <copyright>]
@@ -29,6 +30,16 @@ Synopsis
 
 Description
 -----------
+
+.. warning::
+
+    Starting with GDAL 3.13, :program:`gdal2tiles` is deprecated, and by default
+    is remapped to :ref:`gdal_raster_tile`. For now, you may force the use of
+    the legacy code by specifying `--legacy`, but legacy mode will be
+    removed in GDAL 3.15. If you find yourself to need legacy mode
+    and cannot find workarounds using gdal raster tile, please file a ticket at
+    https://github.com/OSGeo/GDAL
+
 
 This utility generates a directory with small tiles and metadata, following
 the OSGeo Tile Map Service Specification. Simple web pages with viewers based on
@@ -64,6 +75,13 @@ can publish a picture without proper georeferencing too.
 .. program:: gdal2tiles
 
 .. include:: options/help_and_help_general.rst
+
+.. option:: --legacy
+
+  .. versionadded:: 3.13
+
+  Force the use of the legacy code base. Since GDAL 3.13, by default, gdal2tiles
+  is implemented using :ref:`gdal_raster_tile`.
 
 .. option:: -p <PROFILE>, --profile=<PROFILE>
 
@@ -128,18 +146,24 @@ can publish a picture without proper georeferencing too.
 
 .. option:: --mpi
 
+  .. versionadded:: 3.5
+
   Assume launched by mpiexec, enable MPI parallelism and ignore --processes.
   Requires working MPI environment and the MPI for Python (mpi4py) package.
   User should set GDAL_CACHEMAX to an appropriate cache size per process
   based on memory per node and the number of processes launched per node.
 
-  .. versionadded:: 3.5
+  .. warning::
+
+     --mpi mode is not supported in :ref:`gdal_raster_tile` non-legacy mode.
+     You may specify :option:`--legacy` to go on, but this legacy mode is going
+     to be removed in GDAL 3.15.
 
 .. option:: --tilesize=<PIXELS>
 
-  Width and height in pixel of a tile. Default is 256.
-
   .. versionadded:: 3.1
+
+  Width and height in pixel of a tile. Default is 256.
 
 .. option:: --tiledriver=<DRIVER>
 
@@ -225,7 +249,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. option:: -g <GOOGLEKEY>, --googlekey=<GOOGLEKEY>
 
-  Google Maps API key from http://code.google.com/apis/maps/signup.html.
+  Google Maps API key from https://developers.google.com/maps/get-started.
 
 .. option:: -b <BINGKEY>, --bingkey=<BINGKEY>
 
@@ -293,6 +317,10 @@ The following configuration options are available to further customize the JPEG 
 
     QUALITY is a integer between 1-100. Default is 75.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

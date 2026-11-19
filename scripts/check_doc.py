@@ -68,8 +68,10 @@ for i in range(gdal.GetDriverCount()):
     doc_caps = map_doc_caps[shortname.upper()]
 
     if drv.GetMetadataItem(gdal.DCAP_CREATE):
-        if shortname == "PDF":
-            continue  # Supports Create() but in a very specific mode, hence better not advertizing it
+        if shortname in ("PDF", "PMTiles"):
+            # PDF supports Create() but in a very specific mode, hence better not advertizing it
+            # The raster-side of the PMTiles driver does not support Create()
+            continue
         assert (
             "supports_create" in doc_caps
         ), f"Driver {shortname} declares DCAP_CREATE but doc does not!"

@@ -434,7 +434,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
 
         for (i = 0; i < nPhysicalCols; i++)
         {
-            int nDataBlockCount, nLongitudeCount;
+            int nDataBlockCount;
 
             if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize,
                           SEEK_SET) < 0 ||
@@ -455,8 +455,9 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
                          nDataBlockCount, i);
             }
 
-            nLongitudeCount = (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
-            if (nLongitudeCount < 0 || nLongitudeCount >= psDInfo->nXSize)
+            const int nLongitudeCount =
+                (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
+            if (nLongitudeCount >= psDInfo->nXSize)
             {
                 CPLDebug("DTED",
                          "Invalid longitude count (%d) at physical column %d",
@@ -692,10 +693,11 @@ int DTEDReadProfileEx(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData,
         for (i = 0; i < psDInfo->nYSize * 2 + 8; i++)
             nCheckSum += pabyRecord[i];
 
-        fileCheckSum = (pabyRecord[8 + psDInfo->nYSize * 2 + 0] << 24) |
-                       (pabyRecord[8 + psDInfo->nYSize * 2 + 1] << 16) |
-                       (pabyRecord[8 + psDInfo->nYSize * 2 + 2] << 8) |
-                       pabyRecord[8 + psDInfo->nYSize * 2 + 3];
+        fileCheckSum =
+            ((unsigned)pabyRecord[8 + psDInfo->nYSize * 2 + 0] << 24) |
+            (pabyRecord[8 + psDInfo->nYSize * 2 + 1] << 16) |
+            (pabyRecord[8 + psDInfo->nYSize * 2 + 2] << 8) |
+            pabyRecord[8 + psDInfo->nYSize * 2 + 3];
 
         if (fileCheckSum > 0xff * (8 + (unsigned int)psDInfo->nYSize * 2))
         {
@@ -767,7 +769,7 @@ int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData)
 
     for (i = 0; i < psDInfo->nYSize; i++)
     {
-        int nABSVal = ABS(panData[psDInfo->nYSize - i - 1]);
+        int nABSVal = CPL_ABS(panData[psDInfo->nYSize - i - 1]);
         pabyRecord[8 + i * 2] = (GByte)((nABSVal >> 8) & 0x7f);
         pabyRecord[8 + i * 2 + 1] = (GByte)(nABSVal & 0xff);
 
@@ -1063,7 +1065,7 @@ int DTEDSetMetadata(DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
     /* -------------------------------------------------------------------- */
     /*      Update it, padding with spaces.                                 */
     /* -------------------------------------------------------------------- */
-    nLenToCopy = MIN((size_t)nFieldLen, strlen(pszNewValue));
+    nLenToCopy = CPL_MIN((size_t)nFieldLen, strlen(pszNewValue));
     memcpy(pszFieldSrc, pszNewValue, nLenToCopy);
     if (nLenToCopy < (size_t)nFieldLen)
         memset(pszFieldSrc + nLenToCopy, ' ', nFieldLen - nLenToCopy);

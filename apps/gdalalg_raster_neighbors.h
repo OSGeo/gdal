@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_NEIGHBORS_INCLUDED
 #define GDALALG_RASTER_NEIGHBORS_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -66,4 +66,4 @@ class GDALRasterNeighborsAlgorithmStandalone final
 
 //! @endcond
 
-#endif /* GDALALG_RASTER_CALC_INCLUDED */
+#endif /* GDALALG_RASTER_NEIGHBORS_INCLUDED */

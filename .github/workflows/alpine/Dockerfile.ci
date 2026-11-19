@@ -3,9 +3,11 @@ FROM alpine:edge@sha256:732b6226a359f67fad4e38b34dd374bd62a6d282e20c493a38cc7d3a
 RUN apk add \
     apache-arrow-dev \
     armadillo-dev \
+    bash-completion \
     basisu-dev \
     blosc-dev \
     brunsli-dev \
+    cargo \
     ccache \
     cfitsio-dev \
     cmake \
@@ -56,7 +58,8 @@ RUN apk add \
     sfcgal-dev \
     snappy-dev \
     sqlite-dev \
-    tiledb-dev \
+    # FIXME tiledb-dev is currently broken on alpine edge. Re-enable when it installs again.
+    # tiledb-dev \
     tiff-dev \
     unixodbc-dev \
     xerces-c-dev \
@@ -81,7 +84,7 @@ RUN wget https://www.python.org/ftp/python/3.14.0/Python-3.14.0.tar.xz && \
     ./configure --enable-shared --disable-gil --prefix=/usr && \
     make -j$(nproc) && \
     make -j$(nproc) install && \
-    cd .. \
+    cd .. && \
     rm -rf Python-3.14.0 Python-3.14.0.tar.xz
 
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages numpy setuptools pyarrow
@@ -89,9 +92,12 @@ RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages num
 COPY requirements.txt /tmp/
 RUN PYTHON_CMD=python3 && $PYTHON_CMD -m pip install --break-system-packages -U -r /tmp/requirements.txt
 
+ARG SWIG_GIT_REF=master
+
 RUN apk add git autoconf automake libtool bison && \
-    git clone --branch "${SWIG_GIT_TAG:-master}" --depth 1 https://github.com/swig/swig.git swig-git && \
-    cd swig-git && \
+    wget https://github.com/swig/swig/archive/${SWIG_GIT_REF}.tar.gz -O swig.tar.gz && \
+    tar xzf swig.tar.gz && \
+    cd swig-${SWIG_GIT_REF} && \
     ./autogen.sh && \
     ./configure --prefix=/usr && \
     make -j$(nproc) && \

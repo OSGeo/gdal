@@ -92,7 +92,7 @@ PGconn *PostGISRasterDriver::GetConnection(const char *pszConnectionString,
     poConn = PQconnectdb(pszConnectionString);
     if (poConn == nullptr || PQstatus(poConn) == CONNECTION_BAD)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "PQconnectdb failed: %s\n",
+        CPLError(CE_Failure, CPLE_AppDefined, "PQconnectdb failed: %s",
                  PQerrorMessage(poConn));
         PQfinish(poConn);
         return nullptr;

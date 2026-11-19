@@ -197,7 +197,7 @@ GDALWMSMetaDataset::DownloadGetTileService(GDALOpenInfo *poOpenInfo)
 char **GDALWMSMetaDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -207,7 +207,7 @@ char **GDALWMSMetaDataset::GetMetadataDomainList()
 CSLConstList GDALWMSMetaDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALPamDataset::GetMetadata(pszDomain);
@@ -438,6 +438,72 @@ void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
             pszMinY = pszMinYLocal;
             pszMaxX = pszMaxXLocal;
             pszMaxY = pszMaxYLocal;
+        }
+    }
+
+    std::string osMinX, osMinY, osMaxX, osMaxY;
+    if (psSRS == nullptr)
+    {
+        const auto psExGeographicBoundingBox =
+            CPLGetXMLNode(psXML, "EX_GeographicBoundingBox");
+        if (psExGeographicBoundingBox)
+        {
+            pszMinXLocal = CPLGetXMLValue(psExGeographicBoundingBox,
+                                          "westBoundLongitude", nullptr);
+            pszMinYLocal = CPLGetXMLValue(psExGeographicBoundingBox,
+                                          "southBoundLatitude", nullptr);
+            pszMaxXLocal = CPLGetXMLValue(psExGeographicBoundingBox,
+                                          "eastBoundLongitude", nullptr);
+            pszMaxYLocal = CPLGetXMLValue(psExGeographicBoundingBox,
+                                          "northBoundLatitude", nullptr);
+
+            if (pszMinXLocal && pszMinYLocal && pszMaxXLocal && pszMaxYLocal)
+            {
+                pszSRS = "EPSG:4326";
+                pszMinX = pszMinXLocal;
+                pszMinY = pszMinYLocal;
+                pszMaxX = pszMaxXLocal;
+                pszMaxY = pszMaxYLocal;
+
+                // Try to reproject the bbox to the default CRS
+                pszSRSLocal = GetCRS(psXML);
+                if (pszSRSLocal)
+                {
+                    OGRSpatialReference oSrcSRS;
+                    oSrcSRS.importFromEPSG(4326);
+                    oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                    OGRSpatialReference oDstSRS;
+                    oDstSRS.SetFromUserInput(
+                        pszSRSLocal, OGRSpatialReference::
+                                         SET_FROM_USER_INPUT_LIMITATIONS_get());
+                    oDstSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+                    auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                        OGRCreateCoordinateTransformation(&oSrcSRS, &oDstSRS));
+                    double dfMinX = 0;
+                    double dfMinY = 0;
+                    double dfMaxX = 0;
+                    double dfMaxY = 0;
+                    if (poCT &&
+                        poCT->TransformBounds(
+                            CPLAtof(pszMinXLocal), CPLAtof(pszMinYLocal),
+                            CPLAtof(pszMaxXLocal), CPLAtof(pszMaxYLocal),
+                            &dfMinX, &dfMinY, &dfMaxX, &dfMaxY,
+                            /* densify_pts = */ 21))
+                    {
+                        osMinX = CPLSPrintf("%.17g", dfMinX);
+                        osMinY = CPLSPrintf("%.17g", dfMinY);
+                        osMaxX = CPLSPrintf("%.17g", dfMaxX);
+                        osMaxY = CPLSPrintf("%.17g", dfMaxY);
+                        pszSRS = pszSRSLocal;
+                        pszMinX = osMinX.c_str();
+                        pszMinY = osMinY.c_str();
+                        pszMaxX = osMaxX.c_str();
+                        pszMaxY = osMaxY.c_str();
+                    }
+                }
+            }
         }
     }
 

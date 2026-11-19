@@ -42,9 +42,6 @@ OGROCILoaderLayer::OGROCILoaderLayer(OGROCIDataSource *poDSIn,
     nSRID = nSRIDIn;
     poSRS = poDSIn->FetchSRS(nSRID);
 
-    if (poSRS != nullptr)
-        poSRS->Reference();
-
     /* -------------------------------------------------------------------- */
     /*      Open the loader file.                                           */
     /* -------------------------------------------------------------------- */
@@ -78,9 +75,6 @@ OGROCILoaderLayer::~OGROCILoaderLayer()
     }
 
     CPLFree(pszLoaderFilename);
-
-    if (poSRS != nullptr && poSRS->Dereference() == 0)
-        delete poSRS;
 }
 
 /************************************************************************/
@@ -540,7 +534,7 @@ OGRErr OGROCILoaderLayer::ICreateFeature(OGRFeature *poFeature)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROCILoaderLayer::TestCapability(const char *pszCap) const
+bool OGROCILoaderLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

@@ -277,8 +277,7 @@ CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
             poReader = nullptr;
         }
 
-        delete poStoredGMLFeature;
-        poStoredGMLFeature = nullptr;
+        poStoredGMLFeature.reset();
 
         if (m_bUnlinkXSDFilename)
         {
@@ -1094,7 +1093,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                         const char *pszEscapedURL = papszTokens[i + 1];
                         char *pszLocation = CPLUnescapeString(
                             pszEscapedURL, nullptr, CPLES_URL);
-                        CPLString osLocation = pszLocation;
+                        const CPLString osLocation(pszLocation);
                         CPLFree(pszLocation);
                         if (osLocation.ifind("typename=") !=
                                 std::string::npos &&
@@ -1658,10 +1657,10 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
 {
     // Create an empty layer.
     const char *pszSRSName = poClass->GetSRSName();
-    OGRSpatialReference *poSRS = nullptr;
+    OGRSpatialReferenceRefCountedPtr poSRS;
     if (pszSRSName)
     {
-        poSRS = new OGRSpatialReference();
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(m_bInvertAxisOrderIfLatLong
                                           ? OAMS_TRADITIONAL_GIS_ORDER
                                           : OAMS_AUTHORITY_COMPLIANT);
@@ -1670,8 +1669,7 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
                 OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
             OGRERR_NONE)
         {
-            delete poSRS;
-            poSRS = nullptr;
+            poSRS.reset();
         }
     }
     else
@@ -1680,7 +1678,7 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
 
         if (pszSRSName && GML_IsLegitSRSName(pszSRSName))
         {
-            poSRS = new OGRSpatialReference();
+            poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(m_bInvertAxisOrderIfLatLong
                                               ? OAMS_TRADITIONAL_GIS_ORDER
                                               : OAMS_AUTHORITY_COMPLIANT);
@@ -1689,8 +1687,7 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
                     OGRSpatialReference::
                         SET_FROM_USER_INPUT_LIMITATIONS_get()) != OGRERR_NONE)
             {
-                delete poSRS;
-                poSRS = nullptr;
+                poSRS.reset();
             }
 
             if (poSRS != nullptr && m_bInvertAxisOrderIfLatLong &&
@@ -1777,7 +1774,7 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
         const auto &osSRSName = poProperty->GetSRSName();
         if (!osSRSName.empty())
         {
-            OGRSpatialReference *poSRS2 = new OGRSpatialReference();
+            auto poSRS2 = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS2->SetAxisMappingStrategy(m_bInvertAxisOrderIfLatLong
                                                ? OAMS_TRADITIONAL_GIS_ORDER
                                                : OAMS_AUTHORITY_COMPLIANT);
@@ -1786,13 +1783,12 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
                     OGRSpatialReference::
                         SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE)
             {
-                oField.SetSpatialRef(poSRS2);
+                oField.SetSpatialRef(poSRS2.get());
             }
-            poSRS2->Release();
         }
         else
         {
-            oField.SetSpatialRef(poSRS);
+            oField.SetSpatialRef(poSRS.get());
         }
         oField.SetNullable(poProperty->IsNullable());
         oField.SetCoordinatePrecision(poProperty->GetCoordinatePrecision());
@@ -1834,9 +1830,6 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
         oField.SetComment(poProperty->GetDocumentation());
         poLayer->GetLayerDefn()->AddFieldDefn(&oField);
     }
-
-    if (poSRS != nullptr)
-        poSRS->Release();
 
     return poLayer;
 }
@@ -2277,7 +2270,8 @@ void OGRGMLDataSource::DeclareNewWriteSRS(const OGRSpatialReference *poSRS)
             m_bWriteGlobalSRSInit = true;
             if (poSRS)
             {
-                m_poWriteGlobalSRS.reset(poSRS->Clone());
+                m_poWriteGlobalSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
                 m_poWriteGlobalSRS->SetAxisMappingStrategy(
                     OAMS_TRADITIONAL_GIS_ORDER);
             }
@@ -2383,7 +2377,7 @@ OGRGMLDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGMLDataSource::TestCapability(const char *pszCap) const
+bool OGRGMLDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -3249,18 +3243,13 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
 {
   private:
     const int nVal;
-    OGRFeatureDefn *poFeatureDefn = nullptr;
+    OGRFeatureDefnRefCountedPtr poFeatureDefn{};
     int iNextShapeId = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGMLSingleFeatureLayer)
 
   public:
     explicit OGRGMLSingleFeatureLayer(int nVal);
-
-    ~OGRGMLSingleFeatureLayer() override
-    {
-        poFeatureDefn->Release();
-    }
 
     void ResetReading() override
     {
@@ -3271,10 +3260,10 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return poFeatureDefn;
+        return poFeatureDefn.get();
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }
@@ -3285,9 +3274,10 @@ class OGRGMLSingleFeatureLayer final : public OGRLayer
 /************************************************************************/
 
 OGRGMLSingleFeatureLayer::OGRGMLSingleFeatureLayer(int nValIn)
-    : nVal(nValIn), poFeatureDefn(new OGRFeatureDefn("SELECT")), iNextShapeId(0)
+    : nVal(nValIn),
+      poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance("SELECT")),
+      iNextShapeId(0)
 {
-    poFeatureDefn->Reference();
     OGRFieldDefn oField("Validates", OFTInteger);
     poFeatureDefn->AddFieldDefn(&oField);
 }
@@ -3301,7 +3291,7 @@ OGRFeature *OGRGMLSingleFeatureLayer::GetNextFeature()
     if (iNextShapeId != 0)
         return nullptr;
 
-    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn.get());
     poFeature->SetField(0, nVal);
     poFeature->SetFID(iNextShapeId++);
     return poFeature;
@@ -3348,7 +3338,7 @@ void OGRGMLDataSource::FindAndParseTopElements(VSILFILE *fp)
     // Build a shortened XML file that contain only the global
     // boundedBy element, so as to be able to parse it easily.
 
-    char szStartTag[128];
+    char szStartTag[128] = {};
     char *pszXML = static_cast<char *>(CPLMalloc(8192 + 128 + 3 + 1));
     VSIFSeekL(fp, 0, SEEK_SET);
     int nRead = static_cast<int>(VSIFReadL(pszXML, 1, 8192, fp));

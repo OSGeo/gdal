@@ -67,6 +67,8 @@ class VRTOverviewInfo
         oOther.poBand = nullptr;
     }
 
+    VRTOverviewInfo &operator=(VRTOverviewInfo &&) = delete;
+
     ~VRTOverviewInfo()
     {
         CloseDataset();
@@ -216,6 +218,9 @@ class CPL_DLL VRTSource
     }
 
   protected:
+    VRTSource() = default;
+    VRTSource(const VRTSource &) = default;
+
     std::string m_osName{};
 };
 
@@ -260,8 +265,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
 
     std::vector<gdal::GCP> m_asGCPs{};
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-        m_poGCP_SRS{};
+    OGRSpatialReferenceRefCountedPtr m_poGCP_SRS{};
 
     bool m_bNeedsFlush = false;
     bool m_bWritable = true;
@@ -319,7 +323,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     int m_nBlockXSize = 0;
     int m_nBlockYSize = 0;
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> m_poSRS{};
+    OGRSpatialReferenceRefCountedPtr m_poSRS{};
 
     int m_bGeoTransformSet = false;
     GDALGeoTransform m_gt{};
@@ -899,7 +903,7 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
     virtual CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
                                        GUIntBig *panHistogram) override;
 
-    CPLErr CopyCommonInfoFrom(GDALRasterBand *);
+    CPLErr CopyCommonInfoFrom(const GDALRasterBand *);
 
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles);
@@ -955,6 +959,10 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
   protected:
     bool SkipBufferInitialization();
 
+    void InitializeOutputBuffer(void *pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType, GSpacing nPixelSpace,
+                                GSpacing nLineSpace) const;
+
   public:
     std::vector<std::unique_ptr<VRTSource>> m_papoSources{};
 
@@ -966,6 +974,12 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                          int nXSize, int nYSize, int nBlockXSizeIn,
                          int nBlockYSizeIn);
     ~VRTSourcedRasterBand() override;
+
+    void CopyForCloneWithoutSources(const VRTSourcedRasterBand *poSrcBand);
+
+    virtual std::unique_ptr<VRTSourcedRasterBand>
+    CloneWithoutSources(GDALDataset *poNewDS, int nNewXSize,
+                        int nNewYSize) const;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -1000,7 +1014,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData) override;
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc pfnProgress,
@@ -1218,6 +1233,12 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
                          int nBlockYSizeIn = 0);
     ~VRTDerivedRasterBand() override;
 
+    void CopyForCloneWithoutSources(const VRTDerivedRasterBand *poSrcBand);
+
+    std::unique_ptr<VRTSourcedRasterBand>
+    CloneWithoutSources(GDALDataset *poNewDS, int nNewXSize,
+                        int nNewYSize) const override;
+
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                      GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
@@ -1257,7 +1278,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev,
                                      GDALProgressFunc pfnProgress,
-                                     void *pProgressData) override;
+                                     void *pProgressData,
+                                     CSLConstList papszOptions) override;
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc pfnProgress,
@@ -1541,6 +1563,10 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     {
         m_nMaxValue = nVal;
     }
+
+    static std::pair<std::string, bool>
+    ComputeSourceNameAndRelativeFlag(const char *pszVRTPath,
+                                     const std::string &osSourceNameIn);
 };
 
 /************************************************************************/
@@ -1683,7 +1709,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
                      GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
                      GDALDataType eWrkDataType, WorkingState &oWorkingState);
 
-    template <class SourceDT, GDALDataType eSourceType>
+    template <class WorkingDT, GDALDataType eWorkDT>
     CPLErr RasterIOProcessNoData(GDALRasterBand *poSourceBand,
                                  GDALDataType eVRTBandDataType, int nReqXOff,
                                  int nReqYOff, int nReqXSize, int nReqYSize,
@@ -1920,6 +1946,7 @@ class VRTGroup final : public GDALGroup
 
     std::string m_osFilename{};
     mutable bool m_bDirty = false;
+    bool m_bGuessRegularlySpacedArrays = true;
     std::string m_osVRTPath{};
     std::vector<std::string> m_aosGroupNames{};
     std::map<std::string, std::shared_ptr<VRTGroup>> m_oMapGroups{};
@@ -2036,6 +2063,16 @@ class VRTGroup final : public GDALGroup
     void SetVRTPath(const std::string &osVRTPath)
     {
         m_osVRTPath = osVRTPath;
+    }
+
+    inline bool GetGuessRegularlySpacedArrays() const
+    {
+        return m_bGuessRegularlySpacedArrays;
+    }
+
+    void SetGuessRegularlySpacedArrays(bool b)
+    {
+        m_bGuessRegularlySpacedArrays = b;
     }
 
     void SetDirty();

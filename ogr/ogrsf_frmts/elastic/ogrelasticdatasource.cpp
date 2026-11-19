@@ -52,7 +52,7 @@ OGRElasticDataSource::~OGRElasticDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRElasticDataSource::TestCapability(const char *pszCap) const
+bool OGRElasticDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer) ||
         EQUAL(pszCap, ODsCCreateGeomFieldAfterCreateLayer))

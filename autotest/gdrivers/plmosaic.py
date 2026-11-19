@@ -25,6 +25,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("PLMosaic")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -42,7 +43,7 @@ def setup_and_cleanup(tmp_path):
 @pytest.fixture(scope="module")
 def server():
 
-    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
 
     if port == 0:
         pytest.skip()
@@ -63,7 +64,7 @@ def server():
 def test_plmosaic_2():
 
     with gdal.config_option("PL_URL", "/vsimem/root"), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER)
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER)
     assert ds is None
 
     assert "API_KEY" in gdal.GetLastErrorMsg()
@@ -76,7 +77,7 @@ def test_plmosaic_2():
 def test_plmosaic_3():
 
     with gdal.config_option("PL_URL", "/vsimem/does_not_exist/"), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
     assert "404" in gdal.GetLastErrorMsg()
@@ -93,7 +94,7 @@ def test_plmosaic_4(tmp_vsimem):
     gdal.FileFromMemBuffer(root, """{""")
 
     with gdal.config_option("PL_URL", root), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
     assert "JSON parsing error" in gdal.GetLastErrorMsg()
@@ -110,7 +111,7 @@ def test_plmosaic_5(tmp_vsimem):
     gdal.FileFromMemBuffer(root, """null""")
 
     with gdal.config_option("PL_URL", root), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
     assert "JSON parsing error" in gdal.GetLastErrorMsg()
@@ -127,7 +128,7 @@ def test_plmosaic_6(tmp_vsimem):
     gdal.FileFromMemBuffer(root, """{}""")
 
     with gdal.config_option("PL_URL", root), gdal.quiet_errors():
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
 
@@ -147,7 +148,7 @@ def test_plmosaic_7(tmp_vsimem):
     )
 
     with gdal.config_option("PL_URL", root):
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds is None
 
 
@@ -210,7 +211,7 @@ def valid_root_with_two_mosaics(server):
 def test_plmosaic_8(server):
 
     with gdal.config_option("PL_URL", f"http://localhost:{server.port}/root"):
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds.GetMetadata("SUBDATASETS") == {
         "SUBDATASET_2_NAME": "PLMOSAIC:mosaic=another_mosaic_name",
         "SUBDATASET_2_DESC": "Mosaic another_mosaic_name",
@@ -228,7 +229,7 @@ def test_plmosaic_8(server):
 def test_plmosaic_9(tmp_vsimem):
 
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=does_not_exist"],
@@ -247,7 +248,7 @@ def test_plmosaic_9bis(tmp_vsimem):
 
     gdal.FileFromMemBuffer(f"{tmp_vsimem}/root/?name__is=my_mosaic", """{""")
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -264,7 +265,7 @@ def test_plmosaic_9ter(tmp_vsimem):
 
     gdal.FileFromMemBuffer(f"{tmp_vsimem}/root/?name__is=my_mosaic", """{}""")
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -288,7 +289,7 @@ def test_plmosaic_10(tmp_vsimem):
 }""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -318,7 +319,7 @@ def test_plmosaic_11(tmp_vsimem):
 }""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -350,7 +351,7 @@ def test_plmosaic_12(tmp_vsimem):
 }""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -380,7 +381,7 @@ def test_plmosaic_13(tmp_vsimem):
 }""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -410,7 +411,7 @@ def test_plmosaic_14(tmp_vsimem):
 }""",
     )
     with gdal.config_option("PL_URL", f"{tmp_vsimem}/root"), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic"],
@@ -447,7 +448,7 @@ def test_plmosaic_15(tmp_vsimem):
         ),
     )
     with gdal.config_option("PL_URL", root), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic", "CACHE_PATH=tmp"],
@@ -518,14 +519,14 @@ def valid_mosaic(valid_mosaic_handler, server):
 def test_plmosaic_16(valid_mosaic):
 
     with gdal.config_option("PL_URL", valid_mosaic), gdaltest.error_handler():
-        ds = gdal.OpenEx("PLMosaic:api_key=foo,unsupported_option=val", gdal.OF_RASTER)
+        ds = gdal.Open("PLMosaic:api_key=foo,unsupported_option=val", gdal.OF_RASTER)
     assert (
         ds is None
         and gdal.GetLastErrorMsg().find("Unsupported option unsupported_option") >= 0
     )
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds.GetMetadata("SUBDATASETS") == {}
     assert ds.GetMetadata() == {
         "LAST_ACQUIRED": "last_date",
@@ -548,7 +549,7 @@ def test_plmosaic_17(tmp_path, tmp_vsimem, valid_mosaic, valid_mosaic_handler):
     valid_mosaic_handler.set_fallback(tmp_vsimem)
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic", f"CACHE_PATH={tmp_path}"],
@@ -672,7 +673,7 @@ def test_plmosaic_17(tmp_path, tmp_vsimem, valid_mosaic, valid_mosaic_handler):
     # delete the full GeoTIFF before
     gdal.Unlink(tmp_vsimem / "my_mosaic_id/quads/0-2047/full")
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             f"PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH={tmp_path},TRUST_CACHE=YES",
             gdal.OF_RASTER,
         )
@@ -684,7 +685,7 @@ def test_plmosaic_17(tmp_path, tmp_vsimem, valid_mosaic, valid_mosaic_handler):
 
     # Read again from file cache but the metatile has changed in between
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic", f"CACHE_PATH={tmp_path}"],
@@ -713,18 +714,15 @@ def test_plmosaic_17(tmp_path, tmp_vsimem, valid_mosaic, valid_mosaic_handler):
 def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic", "CACHE_PATH=tmp"],
         )
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo />
+    assert ret == """<LocationInfo />
 """
-    )
     old_ret = ret
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
     assert ret == old_ret
@@ -741,9 +739,7 @@ def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
     ds.FlushCache()
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo>
+    assert ret == """<LocationInfo>
   <Scenes>
     <Scene>
       <link>foo</link>
@@ -751,7 +747,6 @@ def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
   </Scenes>
 </LocationInfo>
 """
-    )
     ds = None
 
 
@@ -773,7 +768,7 @@ def test_plmosaic_19(tmp_vsimem, valid_mosaic, valid_mosaic_handler):
         tmp_ds.GetRasterBand(1).Fill(254)
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=[
@@ -811,7 +806,7 @@ def test_plmosaic_20(tmp_vsimem, valid_mosaic, valid_mosaic_handler):
         tmp_ds.GetRasterBand(1).Fill(254)
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=my_mosaic", "CACHE_PATH="],
@@ -835,7 +830,7 @@ def test_plmosaic_20(tmp_vsimem, valid_mosaic, valid_mosaic_handler):
 def test_plmosaic_21(valid_mosaic, valid_mosaic_handler):
 
     with gdal.config_option("PL_URL", valid_mosaic):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=[
@@ -888,7 +883,7 @@ def test_plmosaic_21(valid_mosaic, valid_mosaic_handler):
     # Should emit a warning
     gdal.ErrorReset()
     with gdal.config_option("PL_URL", valid_mosaic), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=[
@@ -927,7 +922,7 @@ def test_plmosaic_21(valid_mosaic, valid_mosaic_handler):
     # Should emit a warning
     gdal.ErrorReset()
     with gdal.config_option("PL_URL", valid_mosaic), gdaltest.error_handler():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "PLMosaic:",
             gdal.OF_RASTER,
             open_options=[
@@ -996,7 +991,7 @@ def test_plmosaic_with_bbox(tmp_vsimem):
     )
 
     with gdal.config_option("PL_URL", root):
-        ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
+        ds = gdal.Open("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds.RasterXSize == 233472
     assert ds.RasterYSize == 286720
     got_gt = ds.GetGeoTransform()
@@ -1036,9 +1031,7 @@ def test_plmosaic_with_bbox(tmp_vsimem):
     )
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo>
+    assert ret == """<LocationInfo>
   <Scenes>
     <Scene>
       <link>bar</link>
@@ -1046,4 +1039,3 @@ def test_plmosaic_with_bbox(tmp_vsimem):
   </Scenes>
 </LocationInfo>
 """
-    )

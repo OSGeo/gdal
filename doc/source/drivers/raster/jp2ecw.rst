@@ -216,14 +216,14 @@ impact decoding speed and compatibility with other JPEG2000 toolkits.
 
 -  .. co:: TILE_WIDTH
 
-      Tile Width (default, image width eg. 1 tile). Apart
+      Tile Width (default, image width, e.g., 1 tile). Apart
       from GeoTIFF, in JPEG2000 tiling is not critical for speed if
       precincts are used. The minimum tile size allowed by the standard is
       1024x1024 pixels.
 
 -  .. co:: TILE_HEIGHT
 
-      Tile Height (default, image height eg. 1 tile)
+      Tile Height (default, image height, e.g., 1 tile)
 
 -  .. co:: INCLUDE_SOP
       :choices: YES, NO
@@ -357,7 +357,7 @@ generic File Metadata reported under "JPEG2000" metadata domain (-mdd):
    (smallest to largest) on Y Axis
 -  **CODE_BLOCK_SIZE_X**: Code block size on X Axis
 -  **CODE_BLOCK_SIZE_Y**: Code block size on Y Axis
--  **PRECISION**: Precision / Bit-depth of each component eg. 8,8,8 for
+-  **PRECISION**: Precision / Bit-depth of each component, e.g., 8,8,8 for
    8bit 3 band imagery.
 -  **RESOLUTION_LEVELS**: Number of resolution levels
 -  **QUALITY_LAYERS**: Number of quality layers

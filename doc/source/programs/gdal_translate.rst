@@ -36,6 +36,8 @@ resampling, and rescaling pixels in the process.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/ot.rst
 
 .. option:: -strict
@@ -47,7 +49,7 @@ resampling, and rescaling pixels in the process.
     The exact behavior of this option is driver-dependent. Most raster
     drivers use it to enforce strict preservation of the input data type
     and will report an error if the requested operation cannot be performed
-    without data loss. See :example:`strict`.
+    without data loss. See :example:`gdal-translate-strict`.
 
 .. include:: options/if.rst
 
@@ -441,6 +443,11 @@ source band, a mask band, an alpha band will not be used during resampling
 
 .. include:: nodata_handling_gdaladdo_gdal_translate.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 C API
 -----
 
@@ -484,7 +491,7 @@ Examples
 
 .. example::
    :title: Use of strict mode with unsupported data type
-   :id: strict
+   :id: gdal-translate-strict
 
    .. code-block:: console
 

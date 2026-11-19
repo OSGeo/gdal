@@ -61,6 +61,8 @@
 #include "avc.h"
 #include "avc_mbyte.h"
 
+#include <algorithm>
+
 /*---------------------------------------------------------------------
  * Define a static flag and set it with the byte ordering on this machine
  * we will then compare with this value to decide if we need to swap
@@ -620,7 +622,7 @@ void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite)
      */
     for (i = 0; i < nBytesToWrite; i += 8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8, (nBytesToWrite - i)),
+        AVCRawBinWriteBytes(psFile, std::min(8, (nBytesToWrite - i)),
                             (GByte *)acZeros);
     }
 }
@@ -648,7 +650,7 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
         AVCE00Convert2ArcDBCS(psFile->psDBCSInfo, pszString, nFieldSize);
 
     nLen = (int)strlen((const char *)pszString);
-    nLen = MIN(nLen, nFieldSize);
+    nLen = std::min(nLen, nFieldSize);
     numSpaces = nFieldSize - nLen;
 
     if (nLen > 0)
@@ -658,6 +660,7 @@ void AVCRawBinWritePaddedString(AVCRawBinFile *psFile, int nFieldSize,
      */
     for (i = 0; i < numSpaces; i += 8)
     {
-        AVCRawBinWriteBytes(psFile, MIN(8, (numSpaces - i)), (GByte *)acSpaces);
+        AVCRawBinWriteBytes(psFile, std::min(8, (numSpaces - i)),
+                            (GByte *)acSpaces);
     }
 }

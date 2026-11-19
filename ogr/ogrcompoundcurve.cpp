@@ -222,7 +222,7 @@ void OGRCompoundCurve::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurve::IsEmpty() const
+bool OGRCompoundCurve::IsEmpty() const
 {
     return oCC.IsEmpty();
 }
@@ -332,7 +332,7 @@ OGRCompoundCurve::CurveToLine(double dfMaxAngleStepSizeDegrees,
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurve::Equals(const OGRGeometry *poOther) const
+bool OGRCompoundCurve::Equals(const OGRGeometry *poOther) const
 {
     if (poOther == this)
         return TRUE;
@@ -352,12 +352,12 @@ bool OGRCompoundCurve::setCoordinateDimension(int nNewDimension)
     return oCC.setCoordinateDimension(this, nNewDimension);
 }
 
-bool OGRCompoundCurve::set3D(OGRBoolean bIs3D)
+bool OGRCompoundCurve::set3D(bool bIs3D)
 {
     return oCC.set3D(this, bIs3D);
 }
 
-bool OGRCompoundCurve::setMeasured(OGRBoolean bIsMeasured)
+bool OGRCompoundCurve::setMeasured(bool bIsMeasured)
 {
     return oCC.setMeasured(this, bIsMeasured);
 }
@@ -652,7 +652,7 @@ void OGRCompoundCurve::swapXY()
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurve::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRCompoundCurve::hasCurveGeometry(int bLookForNonLinear) const
 {
     if (bLookForNonLinear)
     {
@@ -712,14 +712,14 @@ class OGRCompoundCurvePointIterator final : public OGRPointIterator
         delete poCurveIter;
     }
 
-    OGRBoolean getNextPoint(OGRPoint *p) override;
+    bool getNextPoint(OGRPoint *p) override;
 };
 
 /************************************************************************/
 /*                            getNextPoint()                            */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurvePointIterator::getNextPoint(OGRPoint *p)
+bool OGRCompoundCurvePointIterator::getNextPoint(OGRPoint *p)
 {
     if (iCurCurve == poCC->getNumCurves())
         return FALSE;

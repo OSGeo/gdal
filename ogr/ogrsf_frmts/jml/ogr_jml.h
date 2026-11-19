@@ -123,7 +123,7 @@ class OGRJMLLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -183,7 +183,7 @@ class OGRJMLWriterLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override;
 };
@@ -214,7 +214,7 @@ class OGRJMLDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);

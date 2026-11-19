@@ -1,0 +1,96 @@
+<DDFModule _interchangeLevel="3" _leaderIden="L" _inlineCodeExtensionIndicator="E" _versionNumber="1" _appIndicator=" " _extendedCharSet=" ! " _fieldControlLength="9" _sizeFieldLength="3" _sizeFieldPos="4" _sizeFieldTag="4">
+<DDFFieldDefn tag="0000" fieldName="" dataStructCode="elementary" dataTypeCode="char_string" arrayDescr="DSIDDSSICSIDCRSHCRSHCSAXCRSHVDATPRIDC3IT" formatControls="" escapeSequence="   "/>
+<DDFFieldDefn tag="DSID" fieldName="Data Set Identification" dataStructCode="concatenated" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!DSAB!DSED\\*DSTC" formatControls="(b11,b14,7A,A(8),3A,(b11))" escapeSequence="%/G"/>
+<DDFFieldDefn tag="DSSI" fieldName="Data Set Structure Information" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="DCOX!DCOY!DCOZ!CMFX!CMFY!CMFZ!NOIR!NOPN!NOMN!NOCN!NOXN!NOSN!NOFR" formatControls="(3b48,10b14)" escapeSequence="   "/>
+<DDFFieldDefn tag="CSID" fieldName="Coordinate Reference System Record Identifier" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="RCNM!RCID!NCRC" formatControls="(b11,b14,b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="CRSH" fieldName="Coordinate Reference System Header" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="CRIX!CRST!CSTY!CRNM!CRSI!CRSS!SCRI" formatControls="(3b11,2A,b11,A)" escapeSequence="%/G"/>
+<DDFFieldDefn tag="CSAX" fieldName="Coordinate System Axes" dataStructCode="array" dataTypeCode="implicit_point" arrayDescr="*AXTY!AXUM" formatControls="(2b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="VDAT" fieldName="Vertical Datum" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="DTNM!DTID!DTSR!SCRI" formatControls="(2A,b11,A)" escapeSequence="%/G"/>
+<DDFFieldDefn tag="C3IT" fieldName="3-D Integer Coordinate Tuple" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="VCID!YCOO!XCOO!ZCOO" formatControls="(b11,3b24)" escapeSequence="   "/>
+<DDFFieldDefn tag="PRID" fieldName="Point Record Identifier" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="RCNM!RCID!RVER!RUIN" formatControls="(b11,b14,b12,b11)" escapeSequence="   "/>
+<DDFRecord>
+  <DDFField name="DSID">
+    <DDFSubfield name="RCNM" type="integer">10</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="ENSP" type="string">S-100 Part 10a</DDFSubfield>
+    <DDFSubfield name="ENED" type="string">5.2</DDFSubfield>
+    <DDFSubfield name="PRSP" type="string">INT.IHO.S-101.2.0</DDFSubfield>
+    <DDFSubfield name="PRED" type="string">2.0</DDFSubfield>
+    <DDFSubfield name="PROF" type="string">1</DDFSubfield>
+    <DDFSubfield name="DSNM" type="string">file name</DDFSubfield>
+    <DDFSubfield name="DSTL" type="string">dataset title</DDFSubfield>
+    <DDFSubfield name="DSRD" type="string">20260401</DDFSubfield>
+    <DDFSubfield name="DSLG" type="string">EN</DDFSubfield>
+    <DDFSubfield name="DSAB" type="string"></DDFSubfield>
+    <DDFSubfield name="DSED" type="string">10.0</DDFSubfield>
+    <DDFSubfield name="DSTC" type="integer">14</DDFSubfield>
+    <DDFSubfield name="DSTC" type="integer">18</DDFSubfield>
+  </DDFField>
+  <DDFField name="DSSI">
+    <DDFSubfield name="DCOX" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="DCOY" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="DCOZ" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="CMFX" type="integer">10000000</DDFSubfield>
+    <DDFSubfield name="CMFY" type="integer">10000000</DDFSubfield>
+    <DDFSubfield name="CMFZ" type="integer">10</DDFSubfield>
+    <DDFSubfield name="NOIR" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOPN" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NOMN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOCN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOXN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOSN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOFR" type="integer">0</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord>
+  <DDFField name="CSID">
+    <DDFSubfield name="RCNM" type="integer">15</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NCRC" type="integer">2</DDFSubfield>
+  </DDFField>
+  <DDFField name="CRSH">
+    <DDFSubfield name="CRIX" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CRST" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CSTY" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CRNM" type="string">WGS84</DDFSubfield>
+    <DDFSubfield name="CRSI" type="string">4326</DDFSubfield>
+    <DDFSubfield name="CRSS" type="integer">2</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="CRSH">
+    <DDFSubfield name="CRIX" type="integer">2</DDFSubfield>
+    <DDFSubfield name="CRST" type="integer">5</DDFSubfield>
+    <DDFSubfield name="CSTY" type="integer">3</DDFSubfield>
+    <DDFSubfield name="CRNM" type="string">meanHighWaterSprings</DDFSubfield>
+    <DDFSubfield name="CRSI" type="string"></DDFSubfield>
+    <DDFSubfield name="CRSS" type="integer">255</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="CSAX">
+    <DDFSubfield name="AXTY" type="integer">12</DDFSubfield>
+    <DDFSubfield name="AXUM" type="integer">4</DDFSubfield>
+  </DDFField>
+  <DDFField name="VDAT">
+    <DDFSubfield name="DTNM" type="string">meanHighWaterSprings</DDFSubfield>
+    <DDFSubfield name="DTID" type="string">17</DDFSubfield>
+    <DDFSubfield name="DTSR" type="integer">2</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+ </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="PRID">
+    <DDFSubfield name="RCNM" type="integer">110</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="C3IT">
+    <DDFSubfield name="VCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">495000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">25000000</DDFSubfield>
+    <DDFSubfield name="ZCOO" type="integer">155</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+</DDFModule>

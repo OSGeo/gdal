@@ -27,12 +27,11 @@ constexpr const size_t nDefaultIdentifierSize = 16;
 
 OGRLVBAGLayer::OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
                              char **papszOpenOptions)
-    : OGRAbstractProxiedLayer{poPoolIn},
-      poFeatureDefn{new OGRFeatureDefn{}}, fp{nullptr}, osFilename{pszFilename},
-      eFileDescriptorsState{FD_CLOSED}, oParser{nullptr}, bSchemaOnly{false},
-      bHasReadSchema{false}, bFixInvalidData{CPLFetchBool(
-                                 papszOpenOptions, "AUTOCORRECT_INVALID_DATA",
-                                 false)},
+    : OGRAbstractProxiedLayer{poPoolIn}, poFeatureDefn{new OGRFeatureDefn{}},
+      fp{nullptr}, osFilename{pszFilename}, eFileDescriptorsState{FD_CLOSED},
+      oParser{nullptr}, bSchemaOnly{false}, bHasReadSchema{false},
+      bFixInvalidData{
+          CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false)},
       bLegacyId{CPLFetchBool(papszOpenOptions, "LEGACY_ID", false)},
       nNextFID{0}, nCurrentDepth{0}, nGeometryElementDepth{0},
       nFeatureCollectionDepth{0}, nFeatureElementDepth{0},
@@ -823,14 +822,9 @@ bool OGRLVBAGLayer::IsParserFinished(XML_Status status)
             return false;
 
         case XML_STATUS_ERROR:
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Parsing of LV BAG file failed : %s at line %d, "
-                "column %d",
-                XML_ErrorString(XML_GetErrorCode(oParser.get())),
-                static_cast<int>(XML_GetCurrentLineNumber(oParser.get())),
-                static_cast<int>(XML_GetCurrentColumnNumber(oParser.get())));
-
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "XML parsing of LV BAG file failed: %s",
+                     OGRExpatGetParseError(oParser.get()));
             delete m_poFeature;
             m_poFeature = nullptr;
             return true;
@@ -933,7 +927,7 @@ OGRFeature *OGRLVBAGLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGLayer::TestCapability(const char *pszCap) const
+bool OGRLVBAGLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
     {

@@ -122,9 +122,7 @@ def test_ogr_jml_2(tmp_vsimem):
     data = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert (
-        data
-        == """<?xml version='1.0' encoding='UTF-8'?>
+    assert data == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -143,7 +141,6 @@ def test_ogr_jml_2(tmp_vsimem):
 </featureCollection>
 </JCSDataFile>
 """
-    )
 
 
 @gdaltest.disable_exceptions()
@@ -201,9 +198,7 @@ def test_ogr_jml_2a(tmp_vsimem):
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert (
-        data
-        == """<?xml version='1.0' encoding='UTF-8'?>
+    assert data == """<?xml version='1.0' encoding='UTF-8'?>
 <JCSDataFile xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance" >
 <JCSGMLInputTemplate>
 <CollectionElement>featureCollection</CollectionElement>
@@ -309,7 +304,6 @@ def test_ogr_jml_2a(tmp_vsimem):
 </featureCollection>
 </JCSDataFile>
 """
-    )
 
 
 @gdaltest.disable_exceptions()

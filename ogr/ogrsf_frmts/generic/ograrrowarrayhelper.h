@@ -226,6 +226,7 @@ class CPL_DLL OGRArrowArrayHelper
         auto panOffsets =
             static_cast<int32_t *>(const_cast<void *>(psArray->buffers[1]));
         const uint32_t nCurLength = static_cast<uint32_t>(panOffsets[iFeat]);
+#ifndef __COVERITY__
         if (nLen > nMaxAlloc - nCurLength)
         {
             constexpr uint32_t INT32_MAX_AS_UINT32 =
@@ -265,6 +266,7 @@ class CPL_DLL OGRArrowArrayHelper
             }
             psArray->buffers[2] = newBuffer;
         }
+#endif
         GByte *paby =
             static_cast<GByte *>(const_cast<void *>(psArray->buffers[2])) +
             nCurLength;

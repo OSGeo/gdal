@@ -196,8 +196,8 @@ BuildBandDescArray(json_object *poBands,
             dfResX == 1.0 && dfResY == 1.0 )
         {
             // e.g. EEDAI:LT5_L1T_8DAY_EVI/19840109
-            const char* pszAuthorityName = oSRS.GetAuthorityName(nullptr);
-            const char* pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            const char* pszAuthorityName = oSRS.GetAuthorityName();
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode();
             if( pszAuthorityName && pszAuthorityCode &&
                 EQUAL(pszAuthorityName, "EPSG") &&
                 EQUAL(pszAuthorityCode, "4326") )

@@ -58,10 +58,10 @@ def test_ogr_basic_2():
     lyr = ds.GetLayerByName("poly")
 
     assert lyr.GetName() == "poly"
-    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon
 
     assert lyr.GetLayerDefn().GetName() == "poly"
-    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon
 
     count = lyr.GetFeatureCount()
     assert count == 10, (
@@ -156,14 +156,20 @@ def test_ogr_basic_5():
 
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayerByName("poly")
+    assert lyr.GetAttributeFilter() is None, "unexpected initial attribute filter."
 
     lyr.SetAttributeFilter("FID = 3")
     lyr.ResetReading()
+
+    assert (
+        lyr.GetAttributeFilter() == "FID = 3"
+    ), "GetAttributeFilter() returns wrong value."
 
     feat1 = lyr.GetNextFeature()
     feat2 = lyr.GetNextFeature()
 
     lyr.SetAttributeFilter(None)
+    assert lyr.GetAttributeFilter() is None, "unexpected attribute filter."
 
     assert feat1 is not None and feat2 is None, "unexpected result count."
 
@@ -441,7 +447,7 @@ def test_ogr_basic_9():
 # Run test_ogrsf -all_drivers
 
 
-def test_ogr_basic_10():
+def test_ogr_basic_10(tmp_path):
 
     import test_cli_utilities
 
@@ -452,7 +458,9 @@ def test_ogr_basic_10():
     # under UBSAN.
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path()
-        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES"
+        + " -all_drivers --config OPENFILEGDB_REPRODUCIBLE_UUID=YES --config CPL_TMPDIR {}".format(
+            tmp_path
+        )
     )
 
     assert "INFO" in ret
@@ -941,7 +949,7 @@ def test_ogr_basic_test_future_warning_exceptions():
         "ogr.Open('data/poly.shp');" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "FutureWarning: Neither ogr.UseExceptions()" in err
@@ -972,6 +980,32 @@ def test_feature_defn_use_after_layer_del():
 
     assert defn1.GetReferenceCount() == 1
     assert defn1.GetFieldCount() == 3
+
+
+###############################################################################
+# check field defn access after the feature defn owning it has been released
+
+
+def test_field_defn_use_after_layer_del():
+    with ogr.Open("data/poly.shp") as ds:
+        fld_defn = ds.GetLayer(0).GetLayerDefn().GetFieldDefn(0)
+        geom_fld_defn = ds.GetLayer(0).GetLayerDefn().GetGeomFieldDefn(0)
+        prec = geom_fld_defn.GetCoordinatePrecision()
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
+    assert prec.GetXYResolution() == 0.0
+
+
+def test_field_defn_use_after_feature_del():
+    with ogr.Open("data/poly.shp") as ds:
+        feat = ds.GetLayer(0).GetNextFeature()
+        fld_defn = feat.GetFieldDefnRef(0)
+        geom_fld_defn = feat.GetGeomFieldDefnRef(0)
+        del feat
+
+    assert fld_defn.GetName() == "AREA"
+    assert geom_fld_defn.GetName() == ""
 
 
 ###############################################################################
@@ -1202,6 +1236,72 @@ def test_geom_use_after_feature_delete_2(arg_type):
         geom.ExportToWkt()
 
 
+def test_subgeom_use_after_feature_delete():
+
+    feat = ogr.Feature(ogr.FeatureDefn())
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))"))
+    poly = feat.GetGeometryRef().GetGeometryRef(0)
+    ring = poly.GetGeometryRef(0)
+
+    del feat
+
+    with pytest.raises(Exception):
+        poly.ExportToWkt()
+
+    with pytest.raises(Exception):
+        ring.GetPointCount()
+
+
+def test_subgeom_use_after_geom_destroy():
+
+    geom = ogr.CreateGeometryFromWkt("MULTIPOLYGON (((0 0,0 1,1 1,0 0)))")
+    poly = geom.GetGeometryRef(0)
+    ring = poly.GetGeometryRef(0)
+
+    geom.Destroy()
+
+    with pytest.raises(Exception):
+        poly.ExportToWkt()
+
+    with pytest.raises(Exception):
+        ring.GetPointCount()
+
+
+def _make_ring():
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    for x, y in [(0, 0), (0, 1), (1, 1), (0, 0)]:
+        ring.AddPoint_2D(x, y)
+    return ring
+
+
+def test_geom_use_after_add_geometry_directly_parent_delete():
+
+    ring = _make_ring()
+    poly = ogr.Geometry(ogr.wkbPolygon)
+    poly.AddGeometryDirectly(ring)
+
+    del poly
+
+    assert ring.GetPointCount() == 4
+
+
+def test_geom_use_after_add_geometry_directly_feature_delete():
+
+    feat = ogr.Feature(ogr.FeatureDefn())
+    feat.SetGeometry(ogr.Geometry(ogr.wkbPolygon))
+    ring = _make_ring()
+    feat.GetGeometryRef().AddGeometryDirectly(ring)
+
+    del feat
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Geometry_GetPointCount', argument 1 of type 'OGRGeometryShadow \*'",
+    ):
+        ring.GetPointCount()
+
+
 def test_geom_use_after_transfer_to_feature_1(tmp_vsimem):
 
     ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(tmp_vsimem / "test.shp")
@@ -1287,14 +1387,14 @@ def test_ogr_basic_dataset_get_spatial_ref():
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("one", srs=srs)
     geom_field_defn = ogr.GeomFieldDefn("second")
     geom_field_defn.SetSpatialRef(srs)
     lyr.CreateGeomField(geom_field_defn)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("one", srs=srs)
@@ -1306,7 +1406,7 @@ def test_ogr_basic_dataset_get_spatial_ref():
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
     ds.CreateLayer("two", srs=srs)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
@@ -1322,3 +1422,175 @@ def test_ogr_basic_dataset_get_spatial_ref():
     ds.CreateLayer("one", srs=None)
     ds.CreateLayer("two", srs=None)
     assert ds.GetSpatialRef() is None
+
+
+###############################################################################
+# Test SetField with numpy types
+
+
+@pytest.mark.require_64bit()
+def test_ogr_basic_numpy():
+
+    np = pytest.importorskip("numpy")
+
+    defn = ogr.FeatureDefn()
+    defn.AddFieldDefn(ogr.FieldDefn("int", ogr.OFTIntegerList))
+    defn.AddFieldDefn(ogr.FieldDefn("int64", ogr.OFTInteger64List))
+    defn.AddFieldDefn(ogr.FieldDefn("real", ogr.OFTRealList))
+    defn.AddFieldDefn(ogr.FieldDefn("string", ogr.OFTStringList))
+
+    f = ogr.Feature(defn)
+    f["int"] = np.array([1, 2, 3], dtype=np.int32)
+    f["int64"] = 2**32 + np.array([1, 2, 3], dtype=np.int64)
+    f["real"] = np.sqrt(np.array([1, 2, 3], dtype=np.float64))
+    f["string"] = np.array(["abc", "def", "ghi"])
+
+    assert f["int"] == [1, 2, 3]
+    assert f["int64"] == (2**32 + np.array([1, 2, 3])).tolist()
+    assert f["real"] == [1.0, math.sqrt(2), math.sqrt(3)]
+    assert f["string"] == ["abc", "def", "ghi"]
+
+    with pytest.raises(Exception, match="Unsupported type"):
+        f["int"] = np.array([[1, 2, 3], [4, 5, 6]])
+
+
+###############################################################################
+# Test SetPoint with out-of-bounds index
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_setpoint_grows_geometry():
+
+    g = ogr.CreateGeometryFromWkt("LINESTRING (3 3, 2 2)")
+
+    g.SetPoint(5, 1, 1, 1)
+
+    assert g.GetPointCount() == 6
+
+    g.SetPoint_2D(10, 1, 1)
+
+    assert g.GetPointCount() == 11
+
+    g.SetPointM(15, 1, 1, 1)
+
+    assert g.GetPointCount() == 16
+
+    g.SetPointZM(20, 1, 1, 1, 1)
+
+
+###############################################################################
+# Test that objects borrowed from a Dataset are invalidated when it closes
+
+
+def test_field_domain_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        ds.AddFieldDomain(
+            ogr.CreateRangeFieldDomain(
+                "dom", "", ogr.OFTInteger, ogr.OFSTNone, 1, True, 2, True
+            )
+        )
+        dom = ds.GetFieldDomain("dom")
+
+    # Make sure ds.__exit__() invalidation has propagated to the field domain
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'FieldDomain_GetName', argument 1 of type 'OGRFieldDomainShadow \*'",
+    ):
+        dom.GetName()
+
+
+def test_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        ds.SetStyleTable(st)
+        style_table = ds.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the style table
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'StyleTable_Find', argument 1 of type 'OGRStyleTableShadow \*'",
+    ):
+        style_table.Find("style")
+
+
+def test_layer_style_table_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        lyr = ds.CreateLayer("lyr")
+        st = ogr.StyleTable()
+        st.AddStyle("style", "PEN(c:#FF0000)")
+        lyr.SetStyleTable(st)
+        style_table = lyr.GetStyleTable()
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer style table
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'StyleTable_Find', argument 1 of type 'OGRStyleTableShadow \*'",
+    ):
+        style_table.Find("style")
+
+
+def test_spatial_filter_use_after_dataset_close():
+    with gdal.OpenEx("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+        lyr.SetSpatialFilterRect(0, 0, 1, 1)
+        filter_geom = lyr.GetSpatialFilter()
+
+    # Make sure ds.__exit__() invalidation has propagated to the spatial filter
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Geometry_ExportToWkt', argument 1 of type 'OGRGeometryShadow \*'",
+    ):
+        filter_geom.ExportToWkt()
+
+
+def test_relationship_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        ds.AddRelationship(
+            gdal.Relationship(
+                "rel", "origin_table", "dest_table", gdal.GRC_MANY_TO_MANY
+            )
+        )
+        rel = ds.GetRelationship("rel")
+
+    # Make sure ds.__exit__() invalidation has propagated to the relationship
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Relationship_GetName', argument 1 of type 'GDALRelationshipShadow \*'",
+    ):
+        rel.GetName()
+
+
+@pytest.mark.parametrize("include_pct", (False, True))
+def test_dataset_get_next_feature_layer_use_after_dataset_close(include_pct):
+    with gdal.OpenEx("data/poly.shp") as ds:
+        if include_pct:
+            _, lyr, _ = ds.GetNextFeature(include_pct=True)
+        else:
+            _, lyr = ds.GetNextFeature()
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Layer_GetName', argument 1 of type 'OGRLayerShadow \*'",
+    ):
+        lyr.GetName()
+
+
+def test_create_layer_from_geom_field_defn_use_after_dataset_close():
+    with gdal.GetDriverByName("MEM").CreateVector("") as ds:
+        lyr = ds.CreateLayerFromGeomFieldDefn("test", ogr.GeomFieldDefn())
+
+    # Make sure ds.__exit__() invalidation has propagated to the layer
+
+    with pytest.raises(
+        Exception,
+        match=r"in method 'Layer_GetName', argument 1 of type 'OGRLayerShadow \*'",
+    ):
+        lyr.GetName()

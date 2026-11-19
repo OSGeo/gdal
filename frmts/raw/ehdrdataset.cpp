@@ -126,8 +126,8 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         nBlockXSize = poDS->GetRasterXSize();
         nBlockYSize = 1;
 
-        SetMetadataItem("NBITS", CPLString().Printf("%d", nBits),
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, CPLString().Printf("%d", nBits),
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -605,7 +605,7 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     // We only support non-rotated images with info in the .HDR file.
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         return GDALPamDataset::SetGeoTransform(gt);
     }
@@ -629,16 +629,16 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
     // Set the transformation information.
     CPLString oValue;
 
-    oValue.Printf("%.15g", m_gt[0] + m_gt[1] * 0.5);
+    oValue.Printf("%.15g", m_gt.xorig + m_gt.xscale * 0.5);
     ResetKeyValue("ULXMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[3] + m_gt[5] * 0.5);
+    oValue.Printf("%.15g", m_gt.yorig + m_gt.yscale * 0.5);
     ResetKeyValue("ULYMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[1]);
+    oValue.Printf("%.15g", m_gt.xscale);
     ResetKeyValue("XDIM", oValue);
 
-    oValue.Printf("%.15g", fabs(m_gt[5]));
+    oValue.Printf("%.15g", fabs(m_gt.yscale));
     ResetKeyValue("YDIM", oValue);
 
     return CE_None;
@@ -1073,7 +1073,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
             dfNoData = CPLAtofM(papszTokens[1]);
             bNoDataSet = TRUE;
         }
-        else if (EQUAL(papszTokens[0], "NBITS"))
+        else if (EQUAL(papszTokens[0], GDALMD_NBITS))
         {
             nBits = atoi(papszTokens[1]);
         }
@@ -1332,21 +1332,21 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         if (bCenter)
         {
-            poDS->m_gt[0] = dfULXMap - dfXDim * 0.5;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap + dfYDim * 0.5;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap - dfXDim * 0.5;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap + dfYDim * 0.5;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
         else
         {
-            poDS->m_gt[0] = dfULXMap;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
     }
 
@@ -1388,12 +1388,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                               ""),
                       "DS"))
             {
-                poDS->m_gt[0] /= 3600.0;
-                poDS->m_gt[1] /= 3600.0;
-                poDS->m_gt[2] /= 3600.0;
-                poDS->m_gt[3] /= 3600.0;
-                poDS->m_gt[4] /= 3600.0;
-                poDS->m_gt[5] /= 3600.0;
+                poDS->m_gt.xorig /= 3600.0;
+                poDS->m_gt.xscale /= 3600.0;
+                poDS->m_gt.xrot /= 3600.0;
+                poDS->m_gt.yorig /= 3600.0;
+                poDS->m_gt.yrot /= 3600.0;
+                poDS->m_gt.yscale /= 3600.0;
             }
         }
         else
@@ -1532,54 +1532,26 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     // Only read the .clr for byte, int16 or uint16 bands.
     if (nItemSize <= 2)
-        fp = VSIFOpenL(osCLRFilename.c_str(), "r");
-    else
-        fp = nullptr;
-
-    if (fp != nullptr)
     {
-        std::shared_ptr<GDALRasterAttributeTable> poRat(
-            new GDALDefaultRasterAttributeTable());
-        poRat->CreateColumn("Value", GFT_Integer, GFU_Generic);
-        poRat->CreateColumn("Red", GFT_Integer, GFU_Red);
-        poRat->CreateColumn("Green", GFT_Integer, GFU_Green);
-        poRat->CreateColumn("Blue", GFT_Integer, GFU_Blue);
-
-        poDS->m_poColorTable.reset(new GDALColorTable());
-
-        bool bHasFoundNonCTValues = false;
-        int nRatRow = 0;
-
-        while (true)
+        auto poRAT = GDALLoadEsriCLRAsRAT(osCLRFilename.c_str());
+        if (poRAT && poRAT->GetColumnCount() == 4)
         {
-            pszLine = CPLReadLineL(fp);
-            if (!pszLine)
-                break;
+            poDS->m_poColorTable = std::make_unique<GDALColorTable>();
 
-            if (*pszLine == '#' || *pszLine == '!')
-                continue;
+            bool bHasFoundNonCTValues = false;
 
-            char **papszValues =
-                CSLTokenizeString2(pszLine, "\t ", CSLT_HONOURSTRINGS);
-
-            if (CSLCount(papszValues) >= 4)
+            for (int iRow = 0; iRow < poRAT->GetRowCount(); ++iRow)
             {
-                const int nIndex = atoi(papszValues[0]);
-                poRat->SetValue(nRatRow, 0, nIndex);
-                poRat->SetValue(nRatRow, 1, atoi(papszValues[1]));
-                poRat->SetValue(nRatRow, 2, atoi(papszValues[2]));
-                poRat->SetValue(nRatRow, 3, atoi(papszValues[3]));
-                nRatRow++;
-
+                const int nIndex = poRAT->GetValueAsInt(iRow, 0);
                 if (nIndex >= 0 && nIndex < 65536)
                 {
                     const GDALColorEntry oEntry = {
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[1]), 0, 255)),  // Red
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[2]), 0, 255)),  // Green
-                        static_cast<short>(
-                            std::clamp(atoi(papszValues[3]), 0, 255)),  // Blue
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 1), 0, 255)),  // Red
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 2), 0, 255)),  // Green
+                        static_cast<short>(std::clamp(
+                            poRAT->GetValueAsInt(iRow, 3), 0, 255)),  // Blue
                         255};
 
                     poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
@@ -1591,32 +1563,28 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                     //   http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/
                     // But, there's no way of representing them with GDAL color
                     // table model.
-                    if (!bHasFoundNonCTValues)
-                        CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
+                    CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
                     bHasFoundNonCTValues = true;
+                    break;
                 }
             }
 
-            CSLDestroy(papszValues);
+            if (bHasFoundNonCTValues)
+            {
+                poDS->m_poRAT.reset(poRAT.release());
+            }
+
+            for (int i = 1; i <= poDS->nBands; i++)
+            {
+                EHdrRasterBand *poBand =
+                    cpl::down_cast<EHdrRasterBand *>(poDS->GetRasterBand(i));
+                poBand->m_poColorTable = poDS->m_poColorTable;
+                poBand->m_poRAT = poDS->m_poRAT;
+                poBand->SetColorInterpretation(GCI_PaletteIndex);
+            }
+
+            poDS->bCLRDirty = false;
         }
-
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-
-        if (bHasFoundNonCTValues)
-        {
-            poDS->m_poRAT.swap(poRat);
-        }
-
-        for (int i = 1; i <= poDS->nBands; i++)
-        {
-            EHdrRasterBand *poBand =
-                cpl::down_cast<EHdrRasterBand *>(poDS->GetRasterBand(i));
-            poBand->m_poColorTable = poDS->m_poColorTable;
-            poBand->m_poRAT = poDS->m_poRAT;
-            poBand->SetColorInterpretation(GCI_PaletteIndex);
-        }
-
-        poDS->bCLRDirty = false;
     }
 
     // Read statistics (.STX).
@@ -1693,7 +1661,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
     }
 
     // Decide how many bits the file should have.
-    const char *pszNBITS = CSLFetchNameValue(papszParamList, "NBITS");
+    const char *pszNBITS = CSLFetchNameValue(papszParamList, GDALMD_NBITS);
     const int nBits =
         pszNBITS ? atoi(pszNBITS) : GDALGetDataTypeSizeBits(eType);
     if (nBits <= 0 || nXSize > (static_cast<int64_t>(INT_MAX) * 8 - 7) / nBits)
@@ -1772,12 +1740,13 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
 
     // Ensure we pass on NBITS and PIXELTYPE structure information.
     auto poSrcBand = poSrcDS->GetRasterBand(1);
-    if (poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE") != nullptr &&
-        CSLFetchNameValue(papszOptions, "NBITS") == nullptr)
+    if (poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE) !=
+            nullptr &&
+        CSLFetchNameValue(papszOptions, GDALMD_NBITS) == nullptr)
     {
         papszAdjustedOptions = CSLSetNameValue(
-            papszAdjustedOptions, "NBITS",
-            poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE"));
+            papszAdjustedOptions, GDALMD_NBITS,
+            poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE));
     }
 
     if (poSrcBand->GetRasterDataType() == GDT_UInt8 &&
@@ -1785,7 +1754,7 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
     {
         poSrcBand->EnablePixelTypeSignedByteWarning(false);
         const char *pszPixelType =
-            poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem("PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
         poSrcBand->EnablePixelTypeSignedByteWarning(true);
         if (pszPixelType != nullptr)
         {

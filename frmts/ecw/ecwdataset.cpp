@@ -217,10 +217,10 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
     if ((poDSIn->psFileInfo->pBands[nBand - 1].nBits % 8) != 0 &&
         !bPromoteTo8Bit)
         GDALPamRasterBand::SetMetadataItem(
-            "NBITS",
+            GDALMD_NBITS,
             CPLString().Printf("%d",
                                poDSIn->psFileInfo->pBands[nBand - 1].nBits),
-            "IMAGE_STRUCTURE");
+            GDAL_MDD_IMAGE_STRUCTURE);
 
     GDALRasterBand::SetDescription(
         poDSIn->psFileInfo->pBands[nBand - 1].szDesc);
@@ -1642,10 +1642,10 @@ void ECWDataset::WriteHeader()
 
     if (bGeoTransformChanged)
     {
-        psEditInfo->fOriginX = m_gt[0];
-        psEditInfo->fCellIncrementX = m_gt[1];
-        psEditInfo->fOriginY = m_gt[3];
-        psEditInfo->fCellIncrementY = m_gt[5];
+        psEditInfo->fOriginX = m_gt.xorig;
+        psEditInfo->fCellIncrementX = m_gt.xscale;
+        psEditInfo->fOriginY = m_gt.yorig;
+        psEditInfo->fCellIncrementY = m_gt.yscale;
         CPLDebug("ECW", "Rewrite Geotransform");
     }
 
@@ -1724,7 +1724,7 @@ CPLErr ECWDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
     }
 
     // We don't setup the reading window right away, in case the actual read
-    // pattern wouldn't be compatible of it. Which might be the case for
+    // pattern wouldn't be compatible with it. Which might be the case for
     // example if AdviseRead() requests a full image, but we don't read by
     // chunks of the full width of one or several lines
     m_nAdviseReadXOff = nXOff;
@@ -2125,10 +2125,10 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 poMEMDS->AddMEMBand(hBand);
 
                 const char *pszNBITS = GetRasterBand(i + 1)->GetMetadataItem(
-                    "NBITS", "IMAGE_STRUCTURE");
+                    GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
                 if (pszNBITS)
                     poMEMDS->GetRasterBand(i + 1)->SetMetadataItem(
-                        "NBITS", pszNBITS, "IMAGE_STRUCTURE");
+                        GDALMD_NBITS, pszNBITS, GDAL_MDD_IMAGE_STRUCTURE);
             }
 
             GDALRasterIOExtraArg sExtraArgTmp;
@@ -3414,12 +3414,12 @@ void ECWDataset::ECW2WKTProjection()
     {
         bGeoTransformValid = TRUE;
 
-        m_gt[0] = psFileInfo->fOriginX;
-        m_gt[1] = psFileInfo->fCellIncrementX;
-        m_gt[2] = 0.0;
+        m_gt.xorig = psFileInfo->fOriginX;
+        m_gt.xscale = psFileInfo->fCellIncrementX;
+        m_gt.xrot = 0.0;
 
-        m_gt[3] = psFileInfo->fOriginY;
-        m_gt[4] = 0.0;
+        m_gt.yorig = psFileInfo->fOriginY;
+        m_gt.yrot = 0.0;
 
         /* By default, set Y-resolution negative assuming images always */
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
@@ -3429,9 +3429,9 @@ void ECWDataset::ECW2WKTProjection()
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if (CPLTestBool(CPLGetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")))
-            m_gt[5] = -fabs(psFileInfo->fCellIncrementY);
+            m_gt.yscale = -fabs(psFileInfo->fCellIncrementY);
         else
-            m_gt[5] = psFileInfo->fCellIncrementY;
+            m_gt.yscale = psFileInfo->fCellIncrementY;
     }
 
     /* -------------------------------------------------------------------- */

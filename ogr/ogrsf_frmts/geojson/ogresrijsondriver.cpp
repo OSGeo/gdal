@@ -85,6 +85,13 @@ void RegisterOGRESRIJSON()
         "  <Option name='FEATURE_SERVER_PAGING' type='boolean' "
         "description='Whether to automatically scroll through results with a "
         "ArcGIS Feature Service endpoint'/>"
+        "  <Option name='HTTP_METHOD' type='string-select' default='AUTO' "
+        "description='Which HTTP request method to use to send requests to "
+        "the server'>"
+        "    <Value>AUTO</Value>"
+        "    <Value>GET</Value>"
+        "    <Value>POST</Value>"
+        "  </Option>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,

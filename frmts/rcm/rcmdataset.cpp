@@ -2113,12 +2113,14 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psPos, "upperRightCorner.mapCoordinate.northing",
                                "0.0"),
                 nullptr);
-            poDS->m_gt[1] = (tr_x - tl_x) / (poDS->nRasterXSize - 1);
-            poDS->m_gt[4] = (tr_y - tl_y) / (poDS->nRasterXSize - 1);
-            poDS->m_gt[2] = (bl_x - tl_x) / (poDS->nRasterYSize - 1);
-            poDS->m_gt[5] = (bl_y - tl_y) / (poDS->nRasterYSize - 1);
-            poDS->m_gt[0] = (tl_x - 0.5 * poDS->m_gt[1] - 0.5 * poDS->m_gt[2]);
-            poDS->m_gt[3] = (tl_y - 0.5 * poDS->m_gt[4] - 0.5 * poDS->m_gt[5]);
+            poDS->m_gt.xscale = (tr_x - tl_x) / (poDS->nRasterXSize - 1);
+            poDS->m_gt.yrot = (tr_y - tl_y) / (poDS->nRasterXSize - 1);
+            poDS->m_gt.xrot = (bl_x - tl_x) / (poDS->nRasterYSize - 1);
+            poDS->m_gt.yscale = (bl_y - tl_y) / (poDS->nRasterYSize - 1);
+            poDS->m_gt.xorig =
+                (tl_x - 0.5 * poDS->m_gt.xscale - 0.5 * poDS->m_gt.xrot);
+            poDS->m_gt.yorig =
+                (tl_y - 0.5 * poDS->m_gt.yrot - 0.5 * poDS->m_gt.yscale);
 
             /* Use bottom right pixel to test geotransform */
             const double br_x = CPLStrtod(
@@ -2129,19 +2131,20 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLGetXMLValue(psPos, "lowerRightCorner.mapCoordinate.northing",
                                "0.0"),
                 nullptr);
-            const double testx = poDS->m_gt[0] +
-                                 poDS->m_gt[1] * (poDS->nRasterXSize - 0.5) +
-                                 poDS->m_gt[2] * (poDS->nRasterYSize - 0.5);
-            const double testy = poDS->m_gt[3] +
-                                 poDS->m_gt[4] * (poDS->nRasterXSize - 0.5) +
-                                 poDS->m_gt[5] * (poDS->nRasterYSize - 0.5);
+            const double testx =
+                poDS->m_gt.xorig +
+                poDS->m_gt.xscale * (poDS->nRasterXSize - 0.5) +
+                poDS->m_gt.xrot * (poDS->nRasterYSize - 0.5);
+            const double testy = poDS->m_gt.yorig +
+                                 poDS->m_gt.yrot * (poDS->nRasterXSize - 0.5) +
+                                 poDS->m_gt.yscale * (poDS->nRasterYSize - 0.5);
 
             /* Give 1/4 pixel numerical error leeway in calculating location
             based on affine transform */
             if ((fabs(testx - br_x) >
-                 fabs(0.25 * (poDS->m_gt[1] + poDS->m_gt[2]))) ||
+                 fabs(0.25 * (poDS->m_gt.xscale + poDS->m_gt.xrot))) ||
                 (fabs(testy - br_y) >
-                 fabs(0.25 * (poDS->m_gt[4] + poDS->m_gt[5]))))
+                 fabs(0.25 * (poDS->m_gt.yrot + poDS->m_gt.yscale))))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "WARNING: Unexpected error in calculating affine "
@@ -2408,7 +2411,7 @@ GDALDataset *RCMDataset::Open(GDALOpenInfo *poOpenInfo)
                 papszRPC = CSLSetNameValue(
                     papszRPC, apszXMLToGDALMapping[i + 1], pszValue);
         }
-        poDS->GDALDataset::SetMetadata(papszRPC, "RPC");
+        poDS->GDALDataset::SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 
@@ -2542,7 +2545,7 @@ CPLErr RCMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 char **RCMDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -2552,7 +2555,8 @@ char **RCMDataset::GetMetadataDomainList()
 CSLConstList RCMDataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS") &&
+    if (pszDomain != nullptr &&
+        STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS) &&
         papszSubDatasets != nullptr)
         return papszSubDatasets;
 

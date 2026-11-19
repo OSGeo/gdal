@@ -54,8 +54,13 @@ bool GDALRasterWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     if (m_appendRaster)
     {
-        aosOptions.AddString("-co");
-        aosOptions.AddString("APPEND_SUBDATASET=YES");
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        if (std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                m_outputDataset.GetName().c_str(), GDAL_OF_RASTER)))
+        {
+            aosOptions.AddString("-co");
+            aosOptions.AddString("APPEND_SUBDATASET=YES");
+        }
     }
     if (!m_format.empty())
     {

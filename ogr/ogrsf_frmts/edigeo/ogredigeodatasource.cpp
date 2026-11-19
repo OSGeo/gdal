@@ -23,7 +23,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
       bExtentValid(FALSE), dfMinX(0), dfMinY(0), dfMaxX(0), dfMaxY(0),
       bRecodeToUTF8(
           CPLTestBool(CPLGetConfigOption("OGR_EDIGEO_RECODE_TO_UTF8", "YES"))),
-      bHasUTF8ContentOnly(TRUE), iATR(-1), iDI3(-1), iDI4(-1), iHEI(-1),
+      bHasUTF8ContentOnly(true), iATR(-1), iDI3(-1), iDI4(-1), iHEI(-1),
       iFON(-1), iATR_VAL(-1), iANGLE(-1), iSIZE(-1), iOBJ_LNK(-1),
       iOBJ_LNK_LAYER(-1),
       // coverity[tainted_data]
@@ -836,7 +836,8 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName) const
             }
             else if (bHasUTF8ContentOnly)
             {
-                bHasUTF8ContentOnly = CPLIsUTF8(osAttVal.c_str(), -1);
+                bHasUTF8ContentOnly =
+                    CPL_TO_BOOL(CPLIsUTF8(osAttVal.c_str(), -1));
             }
             if (!osAttId.empty())
                 aosAttIdVal.push_back(strstrType(osAttId, osAttVal));
@@ -954,7 +955,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString &osFEA,
     if (strcmp(poFeature->GetDefnRef()->GetName(), "ID_S_OBJ_Z_1_2_2") == 0 &&
         iATR != -1 && (pszATR = poFeature->GetFieldAsString(iATR)) != nullptr)
     {
-        const CPLString osATR = pszATR;
+        const CPLString osATR(pszATR);
         std::map<CPLString, CPLString>::iterator itFEA_FEA =
             mapFEA_FEA.find(osFEA);
         if (itFEA_FEA != mapFEA_FEA.end())

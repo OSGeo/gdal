@@ -42,7 +42,7 @@ pytestmark = pytest.mark.require_driver("JPEG")
 # Test writing and reading of ICC profile in CreateCopy()
 
 
-def test_jpeg_copy_icc():
+def test_jpeg_copy_icc(tmp_path):
 
     f = open("data/sRGB.icc", "rb")
     data = f.read()
@@ -54,10 +54,12 @@ def test_jpeg_copy_icc():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
+    ds = driver_tiff.Create(
+        str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8, options
+    )
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds)
+    ds2 = driver.CreateCopy(str(tmp_path / "icc_test.jpg"), ds)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -65,22 +67,22 @@ def test_jpeg_copy_icc():
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.jpg")
+    ds2 = gdal.Open(str(tmp_path / "icc_test.jpg"))
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.jpg")
+    driver_tiff.Delete(str(tmp_path / "icc_test.tiff"))
+    driver.Delete(str(tmp_path / "icc_test.jpg"))
 
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
 
-def test_jpeg_copy_options_icc():
+def test_jpeg_copy_options_icc(tmp_path):
 
     f = open("data/sRGB.icc", "rb")
     data = f.read()
@@ -92,10 +94,10 @@ def test_jpeg_copy_options_icc():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8)
+    ds = driver_tiff.Create(str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8)
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=options)
+    ds2 = driver.CreateCopy(str(tmp_path / "icc_test.jpg"), ds, options=options)
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
@@ -103,22 +105,22 @@ def test_jpeg_copy_options_icc():
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.jpg")
+    ds2 = gdal.Open(str(tmp_path / "icc_test.jpg"))
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds = None
     ds2 = None
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.jpg")
+    driver_tiff.Delete(str(tmp_path / "icc_test.tiff"))
+    driver.Delete(str(tmp_path / "icc_test.jpg"))
 
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
 
 
-def test_jpeg_copy_icc_64K():
+def test_jpeg_copy_icc_64K(tmp_path):
 
     # In JPEG, APP2 chunks can only be 64K, so they would be split up.
     # It will still work, but need to test that the segmented ICC profile
@@ -136,44 +138,46 @@ def test_jpeg_copy_icc_64K():
 
     driver = gdal.GetDriverByName("JPEG")
     driver_tiff = gdal.GetDriverByName("GTiff")
-    ds = driver_tiff.Create("tmp/icc_test.tiff", 64, 64, 3, gdal.GDT_UInt8, options)
+    ds = driver_tiff.Create(
+        str(tmp_path / "icc_test.tiff"), 64, 64, 3, gdal.GDT_UInt8, options
+    )
 
     # Check with dataset from CreateCopy()
-    ds2 = driver.CreateCopy("tmp/icc_test.jpg", ds, options=["COMMENT=foo"])
+    ds2 = driver.CreateCopy(str(tmp_path / "icc_test.jpg"), ds, options=["COMMENT=foo"])
     ds = None
     md = ds2.GetMetadata("COLOR_PROFILE")
     comment = ds2.GetMetadataItem("COMMENT")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.jpg.aux.xml")
+        os.stat(str(tmp_path / "icc_test.jpg.aux.xml"))
 
     assert comment == "foo"
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with dataset from Open()
-    ds2 = gdal.Open("tmp/icc_test.jpg")
+    ds2 = gdal.Open(str(tmp_path / "icc_test.jpg"))
     md = ds2.GetMetadata("COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.jpg.aux.xml")
+        os.stat(str(tmp_path / "icc_test.jpg.aux.xml"))
 
     assert md["SOURCE_ICC_PROFILE"] == icc
 
     # Check again with GetMetadataItem()
-    ds2 = gdal.Open("tmp/icc_test.jpg")
+    ds2 = gdal.Open(str(tmp_path / "icc_test.jpg"))
     source_icc_profile = ds2.GetMetadataItem("SOURCE_ICC_PROFILE", "COLOR_PROFILE")
     ds2 = None
 
     with pytest.raises(OSError):
-        os.stat("tmp/icc_test.jpg.aux.xml")
+        os.stat(str(tmp_path / "icc_test.jpg.aux.xml"))
 
     assert source_icc_profile == icc
 
-    driver_tiff.Delete("tmp/icc_test.tiff")
-    driver.Delete("tmp/icc_test.jpg")
+    driver_tiff.Delete(str(tmp_path / "icc_test.tiff"))
+    driver.Delete(str(tmp_path / "icc_test.jpg"))
 
 
 ###############################################################################################

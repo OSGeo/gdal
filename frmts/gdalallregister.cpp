@@ -189,6 +189,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_IDB_DRIVER)
     DeclareDeferredOGRIDBPlugin();
 #endif
+#if defined(DEFERRED_JP2Grok_DRIVER)
+    DeclareDeferredJP2GrokPlugin();
+#endif
 #if defined(DEFERRED_JP2KAK_DRIVER)
     DeclareDeferredJP2KAKPlugin();
 #endif
@@ -209,6 +212,9 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 #if defined(DEFERRED_MONGODBV3_DRIVER)
     DeclareDeferredOGRMongoDBv3Plugin();
+#endif
+#if defined(DEFERRED_LERC_DRIVER)
+    DeclareDeferredLERCPlugin();
 #endif
 #if defined(DEFERRED_MRF_DRIVER)
     DeclareDeferredMRFPlugin();
@@ -300,11 +306,17 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_ZARR_DRIVER)
     DeclareDeferredZarrPlugin();
 #endif
+#if defined(DEFERRED_ICECHUNK_DRIVER)
+    DeclareDeferredIcechunkPlugin();
+#endif
 #if defined(DEFERRED_XODR_DRIVER)
     DeclareDeferredOGRXODRPlugin();
 #endif
 #if defined(DEFERRED_ADBC_DRIVER)
     DeclareDeferredOGRADBCPlugin();
+#endif
+#if defined(DEFERRED_S101_DRIVER)
+    DeclareDeferredOGRS101Plugin();
 #endif
 
     // AutoLoadDrivers is a no-op if compiled with GDAL_NO_AUTOLOAD defined.
@@ -494,6 +506,10 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_ERS();
 #endif
 
+#ifdef FRMT_jp2grok
+    GDALRegister_JP2Grok();
+#endif
+
 #ifdef FRMT_jp2kak
     // JPEG2000 support using Kakadu toolkit
     GDALRegister_JP2KAK();
@@ -604,12 +620,12 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_SENTINEL2();
 #endif
 
-#ifdef FRMT_mrf
-    GDALRegister_MRF();
+#ifdef FRMT_lerc
+    GDALRegister_LERC();
 #endif
 
-#ifdef FRMT_tiledb
-    GDALRegister_TileDB();
+#ifdef FRMT_mrf
+    GDALRegister_MRF();
 #endif
 
 #ifdef FRMT_rdb
@@ -624,6 +640,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_raw
     GDALRegister_raw_no_sidecar();
+#endif
+
+#ifdef FRMT_tiledb
+    GDALRegister_TileDB();
 #endif
 
     /* -------------------------------------------------------------------- */
@@ -794,6 +814,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_zarr
     GDALRegister_Zarr();
+#endif
+
+#ifdef FRMT_icechunk
+    GDALRegister_Icechunk();
 #endif
 
 #ifdef FRMT_rcm

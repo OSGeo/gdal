@@ -240,8 +240,8 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
     // definition in case a trip to WKT1 has lost the area of use.
     // unless OGR_CT_PREFER_OFFICIAL_SRS_DEF=NO (see
     // https://github.com/OSGeo/PROJ/issues/2955)
-    const char *pszAuth = poSRS->GetAuthorityName(nullptr);
-    const char *pszCode = poSRS->GetAuthorityCode(nullptr);
+    const char *pszAuth = poSRS->GetAuthorityName();
+    const char *pszCode = poSRS->GetAuthorityCode();
     if (pszAuth && pszCode &&
         CPLTestBool(
             CPLGetConfigOption("OGR_CT_PREFER_OFFICIAL_SRS_DEF", "YES")))
@@ -254,8 +254,8 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
         OGRSpatialReference oTmpSRS;
         if (oTmpSRS.SetFromUserInput(osAuthCode) == OGRERR_NONE)
         {
-            const char *pszAuthAfter = oTmpSRS.GetAuthorityName(nullptr);
-            const char *pszCodeAfter = oTmpSRS.GetAuthorityCode(nullptr);
+            const char *pszAuthAfter = oTmpSRS.GetAuthorityName();
+            const char *pszCodeAfter = oTmpSRS.GetAuthorityCode();
             if (pszAuthAfter && pszCodeAfter && EQUAL(pszAuthAfter, pszAuth) &&
                 EQUAL(pszCodeAfter, pszCode))
             {
@@ -528,7 +528,7 @@ int OCTCoordinateTransformationOptionsSetOperation(
  *
  * An accuracy of 0 is valid and means a coordinate operation made only of one
  * or several conversions (map projections, unit conversion, etc.) Operations
- * involving ballpark transformations have a unknown accuracy, and will be
+ * involving ballpark transformations have an unknown accuracy, and will be
  * filtered out by any dfAccuracy >= 0 value.
  *
  * If this option is specified with PROJ < 8, the OGR_CT_OP_SELECTION
@@ -1416,10 +1416,10 @@ void OGRProjCT::DetectWebMercatorToWGS84()
         // Examine SRS ID before going to Proj4 string for faster execution
         // This assumes that the SRS definition is "not lying", that is, it
         // is equivalent to the resolution of the official EPSG code.
-        const char *pszSourceAuth = poSRSSource->GetAuthorityName(nullptr);
-        const char *pszSourceCode = poSRSSource->GetAuthorityCode(nullptr);
-        const char *pszTargetAuth = poSRSTarget->GetAuthorityName(nullptr);
-        const char *pszTargetCode = poSRSTarget->GetAuthorityCode(nullptr);
+        const char *pszSourceAuth = poSRSSource->GetAuthorityName();
+        const char *pszSourceCode = poSRSSource->GetAuthorityCode();
+        const char *pszTargetAuth = poSRSTarget->GetAuthorityName();
+        const char *pszTargetCode = poSRSTarget->GetAuthorityCode();
         if (pszSourceAuth && pszSourceCode && pszTargetAuth && pszTargetCode &&
             EQUAL(pszSourceAuth, "EPSG") && EQUAL(pszTargetAuth, "EPSG"))
         {
@@ -2488,8 +2488,11 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
         double y0 = y[0];
         for (size_t i = 0; i < nCount; i++)
         {
-            if (x[i] == HUGE_VAL)
+            if (!std::isfinite(x[i]))
             {
+                x[i] = HUGE_VAL;
+                y[i] = HUGE_VAL;
+                y0 = HUGE_VAL;
                 bRet = FALSE;
             }
             else
@@ -2510,10 +2513,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                     }
                     else
                     {
-                        do
-                        {
-                            x[i] -= 2 * M_PI;
-                        } while (x[i] > M_PI);
+                        x[i] = std::remainder(x[i], 2 * M_PI);
                     }
                 }
                 else if (x[i] < -M_PI)
@@ -2531,10 +2531,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                     }
                     else
                     {
-                        do
-                        {
-                            x[i] += 2 * M_PI;
-                        } while (x[i] < -M_PI);
+                        x[i] = std::remainder(x[i], 2 * M_PI);
                     }
                 }
                 constexpr double RAD_TO_DEG = 180. / M_PI;
@@ -2914,7 +2911,8 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                             CPLDebug("OGRCT", "Reprojection failed, err = %d",
                                      err);
                         else
-                            CPLDebug("OGRCT", "%s", pszError);
+                            CPLDebug("OGRCT", "%s for xIn=%.10g yIn=%.10g",
+                                     pszError, xIn, yIn);
                     }
                 }
                 else if (nErrorCount == 20)
@@ -3261,8 +3259,8 @@ bool OGRProjCT::ContainsNorthPole(const double xmin, const double ymin,
     if (!inverseCT)
         return false;
     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-    const bool success = inverseCT->TransformWithErrorCodes(
-        1, &pole_x, &pole_y, nullptr, nullptr, nullptr);
+    const bool success = CPL_TO_BOOL(inverseCT->TransformWithErrorCodes(
+        1, &pole_x, &pole_y, nullptr, nullptr, nullptr));
     return success && xmin < pole_x && pole_x < xmax && ymax > pole_y &&
            pole_y > ymin;
 }
@@ -3286,8 +3284,8 @@ bool OGRProjCT::ContainsSouthPole(const double xmin, const double ymin,
     if (!inverseCT)
         return false;
     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-    const bool success = inverseCT->TransformWithErrorCodes(
-        1, &pole_x, &pole_y, nullptr, nullptr, nullptr);
+    const bool success = CPL_TO_BOOL(inverseCT->TransformWithErrorCodes(
+        1, &pole_x, &pole_y, nullptr, nullptr, nullptr));
     return success && xmin < pole_x && pole_x < xmax && ymax > pole_y &&
            pole_y > ymin;
 }
@@ -3443,9 +3441,9 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
 
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-        bool success = TransformWithErrorCodes(
+        bool success = CPL_TO_BOOL(TransformWithErrorCodes(
             boundary_len, &x_boundary_array[0], &y_boundary_array[0], nullptr,
-            nullptr, anErrorCodes.data());
+            nullptr, anErrorCodes.data()));
         if (!success)
         {
             for (int i = 0; i < boundary_len; ++i)

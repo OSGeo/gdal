@@ -21,10 +21,9 @@
 #pragma warning(push)
 // Warning C4005: '_HDF5USEDLL_' : macro redefinition.
 #pragma warning(disable : 4005)
-#pragma warning(                                                               \
-    disable : 4268) /* 'H5O_TOKEN_UNDEF_g': 'const' static/global data         \
-                       initialized with compiler generated default constructor \
-                       fills the object with zeros */
+// 'H5O_TOKEN_UNDEF_g': 'const' static/global data initialized with compiler
+// generated default constructor fills the object with zeros
+#pragma warning(disable : 4268)
 #endif
 
 #include "hdf5.h"

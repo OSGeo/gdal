@@ -24,6 +24,9 @@
 #include <complex>
 #include <iterator>
 #include <memory>
+#if __cplusplus >= 201703L
+#include <optional>
+#endif
 #if __cplusplus >= 202002L
 #include <span>
 #endif
@@ -455,8 +458,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     // This method should only be overloaded by GDALProxyRasterBand
     virtual GDALRasterBlock *
-    TryGetLockedBlockRef(int nXBlockOff,
-                         int nYBlockYOff) CPL_WARN_UNUSED_RESULT;
+    TryGetLockedBlockRef(int nXBlockOff, int nYBlockOff) CPL_WARN_UNUSED_RESULT;
 
     // This method should only be overloaded by GDALProxyRasterBand
     virtual CPLErr FlushBlock(int nXBlockOff, int nYBlockOff,
@@ -475,6 +477,40 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual double GetNoDataValue(int *pbSuccess = nullptr);
     virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr);
     virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr);
+
+#if __cplusplus >= 201703L
+    template <class T> inline std::optional<T> GetNoDataValue() const
+    {
+        int bSuccess = false;
+        if constexpr (std::is_same_v<T, int64_t>)
+        {
+            const int64_t v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValueAsInt64(
+                    &bSuccess);
+            if (!bSuccess)
+                return {};
+            return v;
+        }
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            const uint64_t v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValueAsUInt64(
+                    &bSuccess);
+            if (!bSuccess)
+                return {};
+            return v;
+        }
+        else
+        {
+            const double v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValue(&bSuccess);
+            if (!bSuccess)
+                return {};
+            return static_cast<T>(v);
+        }
+    }
+#endif
+
     virtual double GetMinimum(int *pbSuccess = nullptr);
     virtual double GetMaximum(int *pbSuccess = nullptr);
     virtual double GetOffset(int *pbSuccess = nullptr);
@@ -500,10 +536,21 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLErr GetStatistics(int bApproxOK, int bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,
                                  double *padfStdDev);
+
+#ifndef DOXYGEN_SKIP
+    virtual CPLErr
+    ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
+                      double *pdfMean, double *pdfStdDev, GDALProgressFunc,
+                      void *pProgressData,
+                      CSLConstList papszOptions OPTIONAL_OUTSIDE_GDAL(nullptr));
+#else
     virtual CPLErr ComputeStatistics(int bApproxOK, double *pdfMin,
                                      double *pdfMax, double *pdfMean,
                                      double *pdfStdDev, GDALProgressFunc,
-                                     void *pProgressData);
+                                     void *pProgressData,
+                                     CSLConstList papszOptions);
+#endif
+
     virtual CPLErr SetStatistics(double dfMin, double dfMax, double dfMean,
                                  double dfStdDev);
     virtual CPLErr ComputeRasterMinMax(int bApproxOK, double *adfMinMax);

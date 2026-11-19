@@ -488,7 +488,7 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
                              bool bStringsAsUTF8);
     ~OGRSQLiteExecuteSQLLayer() override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 };
 
 /************************************************************************/
@@ -527,7 +527,7 @@ OGRSQLiteExecuteSQLLayer::~OGRSQLiteExecuteSQLLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteExecuteSQLLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return m_bStringsAsUTF8;
@@ -972,7 +972,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     sqlite3 *hDB = poSQLiteDS->GetDB();
 
     /* -------------------------------------------------------------------- */
-    /*      Analysze the statement to determine which tables will be used.  */
+    /*      Analyze the statement to determine which tables will be used.   */
     /* -------------------------------------------------------------------- */
     std::set<LayerDesc> oSetLayers;
     std::set<CPLString> oSetSpatialIndex;
@@ -1095,19 +1095,30 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     bool bEmptyLayer = false;
 
     sqlite3_stmt *hSQLStmt = nullptr;
-    int rc = sqlite3_prepare_v2(hDB, pszStatement, -1, &hSQLStmt, nullptr);
+    const char *pszTail = nullptr;
+    int rc = sqlite3_prepare_v2(hDB, pszStatement, -1, &hSQLStmt, &pszTail);
 
     if (rc != SQLITE_OK)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s", pszStatement,
-                 sqlite3_errmsg(hDB));
-
+        CPLError(
+            CE_Failure, CPLE_AppDefined, "%s",
+            SQLFormatErrorMsgFailedPrepare(
+                hDB, "In ExecuteSQL(): sqlite3_prepare_v2(): ", pszStatement)
+                .c_str());
         if (hSQLStmt != nullptr)
         {
             sqlite3_finalize(hSQLStmt);
+            hSQLStmt = nullptr;
         }
-
+    }
+    else if (strchr(pszStatement, ';') && pszTail &&
+             SQLHasRemainingContent(pszTail))
+    {
+        sqlite3_finalize(hSQLStmt);
+        hSQLStmt = nullptr;
+    }
+    if (!hSQLStmt)
+    {
         delete poSQLiteDS;
         VSIUnlink(pszTmpDBName);
         CPLFree(pszTmpDBName);

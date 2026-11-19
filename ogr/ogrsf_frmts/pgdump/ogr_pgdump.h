@@ -161,7 +161,7 @@ class OGRPGDumpLayer final : public OGRLayer
     {
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateFeatureViaInsert(OGRFeature *poFeature);
@@ -285,7 +285,7 @@ class OGRPGDumpDataSource final : public GDALDataset
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void LogStartTransaction();
     void LogCommit();

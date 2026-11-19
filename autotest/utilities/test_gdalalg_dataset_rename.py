@@ -44,3 +44,32 @@ def test_gdalalg_dataset_rename_error(tmp_vsimem):
             source="/i_do/not/exist.tif",
             destination=tmp_vsimem / "out.tif",
         )
+
+
+def test_gdalalg_dataset_rename_shapefile_dir(tmp_vsimem):
+
+    gdal.alg.vector.convert(
+        input="../ogr/data/poly.shp",
+        output=tmp_vsimem / "in_dir",
+        output_format="ESRI Shapefile",
+    )
+    gdal.alg.dataset.rename(
+        source=tmp_vsimem / "in_dir", destination=tmp_vsimem / "out_dir"
+    )
+    assert gdal.ReadDir(tmp_vsimem / "in_dir") is None
+    assert set(gdal.ReadDir(tmp_vsimem / "out_dir")) == set(
+        ["poly.shp", "poly.dbf", "poly.shx", "poly.prj"]
+    )
+
+
+def test_gdalalg_dataset_rename_shapefile_dir_error(tmp_vsimem):
+
+    gdal.alg.vector.convert(
+        input="../ogr/data/poly.shp",
+        output=tmp_vsimem / "in_dir",
+        output_format="ESRI Shapefile",
+    )
+    with pytest.raises(Exception, match="Cannot create directory"):
+        gdal.alg.dataset.rename(
+            source=tmp_vsimem / "in_dir", destination="/vsisubfile/out_dir"
+        )

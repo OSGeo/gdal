@@ -92,7 +92,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
@@ -148,6 +148,8 @@ class PCIDSK2Band final : public GDALPamRasterBand
     CSLConstList GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
 
     char **GetCategoryNames() override;
 };
@@ -193,7 +195,7 @@ class OGRPCIDSKLayer final : public OGRLayer,
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr DeleteFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;

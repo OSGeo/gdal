@@ -61,7 +61,7 @@ class CPL_DLL OGRMutexedDataSource final : public GDALDataset
     OGRErr DeleteLayer(int) override;
     bool IsLayerPrivate(int iLayer) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    const OGRGeomFieldDefn *poGeomFieldDefn,

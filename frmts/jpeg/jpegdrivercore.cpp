@@ -92,7 +92,7 @@ int JPEGDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (pabyHeader[0] != 0xff || pabyHeader[1] != 0xd8 || pabyHeader[2] != 0xff)
         return FALSE;
 
-        // libjpeg-turbo >= 2.2 supports lossless mode
+    // libjpeg-turbo >= 2.2 supports lossless mode
 #if !defined(D_LOSSLESS_SUPPORTED)
     if (JPEGDatasetIsJPEGLS(poOpenInfo))
     {

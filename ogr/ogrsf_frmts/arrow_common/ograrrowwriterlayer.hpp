@@ -408,7 +408,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
         }
 
         auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
-                                  poFieldDefn->IsNullable());
+                                  CPL_TO_BOOL(poFieldDefn->IsNullable()));
         if (pszFieldMetadata)
         {
             auto kvMetadata = std::make_shared<arrow::KeyValueMetadata>();
@@ -507,6 +507,10 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 
                         oMetadataDoc.GetRoot().Add("crs", oCRSRoot);
                     }
+                    else
+                    {
+                        oMetadataDoc.GetRoot().Add("crs", "srid:0");
+                    }
 
                     if (m_bEdgesSpherical)
                     {
@@ -591,7 +595,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
 
         std::shared_ptr<arrow::Field> field(
             arrow::field(poGeomFieldDefn->GetNameRef(), std::move(dt),
-                         poGeomFieldDefn->IsNullable()));
+                         CPL_TO_BOOL(poGeomFieldDefn->IsNullable())));
         if (m_bWriteFieldArrowExtensionName)
         {
             auto kvMetadata = field->metadata()
@@ -624,7 +628,7 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
                 arrow::struct_(
                     {std::move(bbox_field_xmin), std::move(bbox_field_ymin),
                      std::move(bbox_field_xmax), std::move(bbox_field_ymax)}),
-                poGeomFieldDefn->IsNullable()));
+                CPL_TO_BOOL(poGeomFieldDefn->IsNullable())));
             fields.emplace_back(bbox_field);
             m_apoFieldsBBOX.emplace_back(bbox_field);
         }
@@ -707,7 +711,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
                            std::abs(nHours), nMinutes);
             auto dt = arrow::timestamp(arrow::TimeUnit::MILLI, osTZ);
             auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
-                                      poFieldDefn->IsNullable());
+                                      CPL_TO_BOOL(poFieldDefn->IsNullable()));
             auto result = m_poSchema->SetField(nArrowIdxFirstField + i, field);
             if (!result.ok())
             {
@@ -2387,7 +2391,7 @@ inline GIntBig OGRArrowWriterLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-inline int OGRArrowWriterLayer::TestCapability(const char *pszCap) const
+inline bool OGRArrowWriterLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField) || EQUAL(pszCap, OLCCreateGeomField))
         return m_poSchema == nullptr;
@@ -2869,9 +2873,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     // but make sure the original release() callback sees the original children
     struct ArrayReleaser
     {
-        struct ArrowArray ori_array
-        {
-        };
+        struct ArrowArray ori_array{};
 
         explicit ArrayReleaser(struct ArrowArray *array)
         {

@@ -55,9 +55,7 @@ Also some information is written to the stdout.
 
     Show progress.
 
-.. option:: -quiet
-
-    Suppress all messages except errors and results.
+.. include:: options/quiet.rst
 
 .. option:: -f <format_name>
 
@@ -159,6 +157,11 @@ Also some information is written to the stdout.
 .. option:: -me <position>
 
     The input end linear distance
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

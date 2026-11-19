@@ -57,7 +57,7 @@ class OGREDIGEOLayer final : public OGRLayer,
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void AddFeature(OGRFeature *poFeature);
 
@@ -202,7 +202,7 @@ class OGREDIGEODataSource final : public GDALDataset
         mapFEA_FEA; /* Map Attribut_TEX{X}_id_Objet_{Y} to Objet_Y */
 
     mutable int bRecodeToUTF8;
-    mutable int bHasUTF8ContentOnly;
+    mutable bool bHasUTF8ContentOnly;
 
     int ReadVEC(const char *pszVECName) const;
 
@@ -234,7 +234,7 @@ class OGREDIGEODataSource final : public GDALDataset
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;
 
-    int HasUTF8ContentOnly()
+    bool HasUTF8ContentOnly()
     {
         return bHasUTF8ContentOnly;
     }

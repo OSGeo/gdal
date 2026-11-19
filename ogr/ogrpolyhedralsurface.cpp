@@ -530,8 +530,8 @@ OGRPolyhedralSurface::GetCasterToCurvePolygon() const
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRBoolean
-OGRPolyhedralSurface::isCompatibleSubType(OGRwkbGeometryType eSubType) const
+bool OGRPolyhedralSurface::isCompatibleSubType(
+    OGRwkbGeometryType eSubType) const
 {
     return wkbFlatten(eSubType) == wkbPolygon;
 }
@@ -566,7 +566,7 @@ OGRwkbGeometryType OGRPolyhedralSurface::getSubGeometryType() const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRPolyhedralSurface::Equals(const OGRGeometry *poOther) const
+bool OGRPolyhedralSurface::Equals(const OGRGeometry *poOther) const
 {
 
     if (poOther == this)
@@ -896,7 +896,7 @@ const OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i) const
  * @return TRUE if the PolyhedralSurface is empty, FALSE otherwise
  */
 
-OGRBoolean OGRPolyhedralSurface::IsEmpty() const
+bool OGRPolyhedralSurface::IsEmpty() const
 {
     return oMP.IsEmpty();
 }
@@ -909,7 +909,7 @@ OGRBoolean OGRPolyhedralSurface::IsEmpty() const
  * \brief Set the type as 3D geometry
  */
 
-bool OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
+bool OGRPolyhedralSurface::set3D(bool bIs3D)
 {
     return oMP.set3D(bIs3D) && OGRGeometry::set3D(bIs3D);
 }
@@ -922,7 +922,7 @@ bool OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
  * \brief Set the type as Measured
  */
 
-bool OGRPolyhedralSurface::setMeasured(OGRBoolean bIsMeasured)
+bool OGRPolyhedralSurface::setMeasured(bool bIsMeasured)
 {
     return oMP.setMeasured(bIsMeasured) &&
            OGRGeometry::setMeasured(bIsMeasured);
@@ -966,7 +966,7 @@ void OGRPolyhedralSurface::swapXY()
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(int) const
+bool OGRPolyhedralSurface::hasCurveGeometry(int) const
 {
     return FALSE;
 }

@@ -63,12 +63,12 @@ The following configuration options are supported:
 
       Set name of primary key.
 
-Example
--------
+Examples
+--------
 
-This example shows using ogrinfo to list Informix DataBlade layers on a
-different host.
+.. example::
+   :title: List Informix DataBlade layers on a different host
 
-::
-
-   ogrinfo -ro IDB:"server=demo_on user=informix dbname=frames"
+   .. code-block:: bash
+   
+      ogrinfo -ro IDB:"server=demo_on user=informix dbname=frames"

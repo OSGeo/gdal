@@ -19,6 +19,7 @@ import os.path
 import shutil
 import struct
 import sys
+import tempfile
 
 import gdaltest
 import pytest
@@ -48,22 +49,17 @@ def has_write_support():
 
     ds = gdal.Open("data/ecw/jrc.ecw")
     if ds:
-        out_ds = ecw_drv.CreateCopy("tmp/jrc_out.ecw", ds, options=["TARGET=75"])
-        if out_ds:
-            out_ds = None
-            gdaltest.b_ecw_has_write_support = True
+        with tempfile.TemporaryDirectory() as tmp_path:
+            out_ds = ecw_drv.CreateCopy(
+                os.path.join(tmp_path, "jrc_out.ecw"), ds, options=["TARGET=75"]
+            )
+            if out_ds:
+                out_ds = None
+                gdaltest.b_ecw_has_write_support = True
 
-            try:
-                os.remove("tmp/jrc_out.ecw")
-            except OSError:
-                pass
-            try:
-                os.remove("tmp/jrc_out.ecw.aux.xml")
-            except OSError:
-                pass
-        else:
-            if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
-                pytest.fail("ECW creation failed for unknown reason")
+            else:
+                if "ECW_ENCODE_KEY" not in gdal.GetLastErrorMsg():
+                    pytest.fail("ECW creation failed for unknown reason")
 
     return gdaltest.b_ecw_has_write_support
 
@@ -115,14 +111,14 @@ def test_ecw_2():
     ds = gdal.Open("data/ecw/jrc.ecw")
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (141.172, 67.3636)
+        exp_mean, exp_stddev = (141.172, 67.3636)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (141.606, 67.2919)
+            exp_mean, exp_stddev = (141.606, 67.2919)
         else:
-            (exp_mean, exp_stddev) = (140.332, 67.611)
+            exp_mean, exp_stddev = (140.332, 67.611)
 
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(
         exp_stddev, abs=0.5
@@ -163,14 +159,14 @@ def test_ecw_4(tmp_path):
     assert version == "2", "bad VERSION"
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (140.290, 66.6303)
+        exp_mean, exp_stddev = (140.290, 66.6303)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (141.517, 67.1285)
+            exp_mean, exp_stddev = (141.517, 67.1285)
         else:
-            (exp_mean, exp_stddev) = (138.971, 67.716)
+            exp_mean, exp_stddev = (138.971, 67.716)
 
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=1.5) and stddev == pytest.approx(
         exp_stddev, abs=0.5
@@ -218,10 +214,10 @@ def test_ecw_5(tmp_path):
     ds = gdal.Open(tmp_path / "ecw_5.jp2")
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (144.422, 44.9075)
+        exp_mean, exp_stddev = (144.422, 44.9075)
     else:
-        (exp_mean, exp_stddev) = (143.375, 44.8539)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+        exp_mean, exp_stddev = (143.375, 44.8539)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
@@ -234,7 +230,7 @@ def test_ecw_5(tmp_path):
         exp_stddev,
     )
 
-    (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
+    mean, stddev = ds.GetRasterBand(2).ComputeBandStats()
 
     # The difference in the stddev is outrageously large between win32 and
     # Linux, but I don't know why.
@@ -283,8 +279,8 @@ def test_ecw_7(tmp_path):
 
     ds = gdal.Open(tmp_path / "ecw_7.ntf")
 
-    (exp_mean, exp_stddev) = (145.57, 43.1712)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    exp_mean, exp_stddev = (145.57, 43.1712)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=1.0) and stddev == pytest.approx(
         exp_stddev, abs=1.0
@@ -349,8 +345,8 @@ def test_ecw_9(tmp_path):
 
     ds = gdal.Open(tmp_path / "ecw9.jp2")
 
-    (exp_mean, exp_stddev) = (98.49, 57.7129)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    exp_mean, exp_stddev = (98.49, 57.7129)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=1.1) and stddev == pytest.approx(
         exp_stddev, abs=0.1
@@ -633,13 +629,13 @@ def test_ecw_20():
     assert data_subsampled == data_overview, "inconsistent overview behaviour"
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (141.644, 67.2186)
+        exp_mean, exp_stddev = (141.644, 67.2186)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (142.189, 62.4223)
+            exp_mean, exp_stddev = (142.189, 62.4223)
         else:
-            (exp_mean, exp_stddev) = (140.889, 62.742)
-    (mean, stddev) = band.GetOverview(0).ComputeBandStats()
+            exp_mean, exp_stddev = (140.889, 62.742)
+    mean, stddev = band.GetOverview(0).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(
         exp_stddev, abs=0.5
@@ -667,14 +663,14 @@ def test_ecw_21():
     ds = None
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (141.172, 67.3636)
+        exp_mean, exp_stddev = (141.172, 67.3636)
     else:
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (141.606, 67.2919)
+            exp_mean, exp_stddev = (141.606, 67.2919)
         else:
-            (exp_mean, exp_stddev) = (140.332, 67.611)
+            exp_mean, exp_stddev = (140.332, 67.611)
 
-    (mean, stddev) = mem_ds.GetRasterBand(1).ComputeBandStats()
+    mean, stddev = mem_ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(exp_mean, abs=0.5) and stddev == pytest.approx(
         exp_stddev, abs=0.5
@@ -851,7 +847,7 @@ def test_ecw_26(tmp_path):
 # Check that we can use .j2w world files (#4651)
 
 
-def test_ecw_27():
+def test_ecw_27(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
@@ -935,8 +931,8 @@ def test_ecw_29():
                 data2 = ds2.ReadRaster(i * int(tile / 2), j * int(tile / 2), tile, tile)
                 tmp_ds1.WriteRaster(0, 0, tile, tile, data1)
                 tmp_ds2.WriteRaster(0, 0, tile, tile, data2)
-                (_, _, mean1, stddev1) = tmp_ds1.GetRasterBand(1).GetStatistics(1, 1)
-                (_, _, mean2, stddev2) = tmp_ds2.GetRasterBand(1).GetStatistics(1, 1)
+                _, _, mean1, stddev1 = tmp_ds1.GetRasterBand(1).GetStatistics(1, 1)
+                _, _, mean2, stddev2 = tmp_ds2.GetRasterBand(1).GetStatistics(1, 1)
                 nvals = nvals + 1
                 sum_abs_diff_mean = sum_abs_diff_mean + abs(mean1 - mean2)
                 sum_abs_diff_stddev = sum_abs_diff_stddev + abs(stddev1 - stddev2)
@@ -971,7 +967,7 @@ def test_ecw_29():
 def test_ecw_30():
 
     ds = gdal.Open("data/ecw/jrc.ecw")
-    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     data_readraster = ds.GetRasterBand(1).ReadRaster(0, 0, blockxsize, blockysize)
     data_readblock = ds.GetRasterBand(1).ReadBlock(0, 0)
     ds = None
@@ -1036,8 +1032,7 @@ def test_ecw_32():
     data_321 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[3, 2, 1])
     assert data_123 != data_321
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="400" rasterYSize="400">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
     <VRTRasterBand dataType="Byte" band="1">
         <SimpleSource>
         <SourceFilename relativeToVRT="0">data/ecw/jrc.ecw</SourceFilename>
@@ -1056,8 +1051,7 @@ def test_ecw_32():
         <SourceBand>1</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
     data_vrt = vrt_ds.ReadRaster(
         0, 0, ds.RasterXSize, ds.RasterYSize, band_list=[1, 2, 3]
     )
@@ -1213,8 +1207,7 @@ def test_ecw_36(tmp_path):
     if gdaltest.ecw_drv.major_version < 5:
         pytest.skip("Requires ECW SDK >= 5.0")
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="400" rasterYSize="400">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="400" rasterYSize="400">
     <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Blue</ColorInterp>
         <SimpleSource>
@@ -1236,8 +1229,7 @@ def test_ecw_36(tmp_path):
         <SourceBand>2</SourceBand>
         </SimpleSource>
     </VRTRasterBand>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
 
     dswr = gdaltest.ecw_drv.CreateCopy(
         tmp_path / "jrc312.ecw", vrt_ds, options=["ECW_FORMAT_VERSION=3", "TARGET=75"]
@@ -1346,7 +1338,7 @@ def test_ecw_37(tmp_path):
 def test_ecw_38(tmp_path):
 
     fname = (
-        tmp_path / "za\u017C\u00F3\u0142\u0107g\u0119\u015Bl\u0105ja\u017A\u0144.ecw"
+        tmp_path / "za\u017c\u00f3\u0142\u0107g\u0119\u015bl\u0105ja\u017a\u0144.ecw"
     )
 
     if gdaltest.ecw_drv.major_version < 4:
@@ -1442,7 +1434,7 @@ def test_ecw_40():
     ]
 
     got_md = ds.GetMetadata()
-    for (key, value) in expected_md:
+    for key, value in expected_md:
         assert key in got_md and got_md[key] == value
 
     expected_cs_list = [28760, 59071, 54087, 22499]
@@ -1797,9 +1789,9 @@ def test_ecw_42(tmp_path):
     md = {}
     md["FILE_METADATA_CLASSIFICATION"] = "FILE_METADATA_CLASSIFICATION"
     md["FILE_METADATA_ACQUISITION_DATE"] = "2013-04-04"
-    md[
+    md["FILE_METADATA_ACQUISITION_SENSOR_NAME"] = (
         "FILE_METADATA_ACQUISITION_SENSOR_NAME"
-    ] = "FILE_METADATA_ACQUISITION_SENSOR_NAME"
+    )
     md["FILE_METADATA_COMPRESSION_SOFTWARE"] = "FILE_METADATA_COMPRESSION_SOFTWARE"
     md["FILE_METADATA_AUTHOR"] = "FILE_METADATA_AUTHOR"
     md["FILE_METADATA_COPYRIGHT"] = "FILE_METADATA_COPYRIGHT"
@@ -1889,7 +1881,7 @@ def test_ecw_43():
 
     assert jp2_fourth_band_data == gtiff_fourth_band_data
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg2000/stefan_full_rgba_alpha_1bit.jp2",
         open_options=["1BIT_ALPHA_PROMOTION=NO"],
     )
@@ -1934,7 +1926,7 @@ def test_ecw_44():
     ]
 
     got_md = ds.GetMetadata("JPEG2000")
-    for (key, value) in expected_md:
+    for key, value in expected_md:
         assert key in got_md and got_md[key] == value
 
 
@@ -1952,7 +1944,7 @@ def RemoveDriverMetadata(md):
     return md
 
 
-def test_ecw_45():
+def test_ecw_45(tmp_path):
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
@@ -2038,7 +2030,7 @@ def test_ecw_45():
 # Test non nearest upsampling
 
 
-def test_ecw_46():
+def test_ecw_46(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
@@ -2108,13 +2100,13 @@ def test_ecw_47():
     mean_tolerance = 0.5
 
     if gdaltest.ecw_drv.major_version == 5:
-        (exp_mean, exp_stddev) = (141.606, 67.2919)
+        exp_mean, exp_stddev = (141.606, 67.2919)
     elif gdaltest.ecw_drv.major_version == 4:
-        (exp_mean, exp_stddev) = (140.332, 67.611)
+        exp_mean, exp_stddev = (140.332, 67.611)
     elif gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (141.172, 67.3636)
+        exp_mean, exp_stddev = (141.172, 67.3636)
 
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert mean == pytest.approx(
         exp_mean, abs=mean_tolerance
@@ -2185,7 +2177,7 @@ def test_ecw_49():
 @gdaltest.disable_exceptions()
 def test_ecw_read_uint32_jpeg2000():
 
-    ds = gdal.OpenEx("data/jpeg2000/uint32_2x2_lossless_nbits_20.j2k", gdal.OF_RASTER)
+    ds = gdal.Open("data/jpeg2000/uint32_2x2_lossless_nbits_20.j2k", gdal.OF_RASTER)
     if gdaltest.ecw_drv.major_version == 3:
         assert ds is not None
     else:
@@ -2205,12 +2197,12 @@ def test_ecw_read_uint32_jpeg2000():
 # Test unsupported XML SRS
 
 
-def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_vsimem):
+def test_jp2ecw_unsupported_srs_for_gmljp2(tmp_path):
 
     if gdaltest.jp2ecw_drv is None or not has_write_support():
         pytest.skip("ECW write support not available")
 
-    filename = str(tmp_vsimem / "out.jp2")
+    filename = str(tmp_path / "out.jp2")
     # There is no EPSG code and Albers Equal Area is not supported by OGRSpatialReference::exportToXML()
     wkt = """PROJCRS["Africa_Albers_Equal_Area_Conic",
     BASEGEOGCRS["WGS 84",
@@ -2273,14 +2265,16 @@ def test_ecw_online_1():
         "7sisters200.j2k",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 32316 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/7sisters200.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/7sisters200.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/7sisters200.j2k")
+    ds = gdal.Open(f"{tmp_dir}/7sisters200.j2k")
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2296,16 +2290,20 @@ def test_ecw_online_2():
         "http://download.osgeo.org/gdal/data/jpeg2000/gcp.jp2", "gcp.jp2"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 1292 on my PC
-    tst = gdaltest.GDALTest("JP2ECW", "tmp/cache/gcp.jp2", 1, None, filename_absolute=1)
+    tst = gdaltest.GDALTest(
+        "JP2ECW", f"{tmp_dir}/gcp.jp2", 1, None, filename_absolute=1
+    )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/gcp.jp2")
+    ds = gdal.Open(f"{tmp_dir}/gcp.jp2")
     ds.GetRasterBand(1).Checksum()
     assert len(ds.GetGCPs()) == 15, "bad number of GCP"
 
-    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetGCPSpatialRef().GetAuthorityCode() == "4326"
 
     ds = None
 
@@ -2327,15 +2325,17 @@ def ecw_online_3():
         "http://www.openjpeg.org/samples/Bretagne1.bmp", "Bretagne1.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # checksum = 16481 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne1.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne1.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne1.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne1.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne1.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne1.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
     print(ds.GetRasterBand(1).Checksum())
     print(ds_ref.GetRasterBand(1).Checksum())
@@ -2366,15 +2366,17 @@ def test_ecw_online_4():
         "http://www.openjpeg.org/samples/Bretagne2.bmp", "Bretagne2.bmp"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Checksum = 53054 on my PC
     tst = gdaltest.GDALTest(
-        "JP2ECW", "tmp/cache/Bretagne2.j2k", 1, None, filename_absolute=1
+        "JP2ECW", f"{tmp_dir}/Bretagne2.j2k", 1, None, filename_absolute=1
     )
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/Bretagne2.j2k")
-    ds_ref = gdal.Open("tmp/cache/Bretagne2.bmp")
+    ds = gdal.Open(f"{tmp_dir}/Bretagne2.j2k")
+    ds_ref = gdal.Open(f"{tmp_dir}/Bretagne2.bmp")
     maxdiff = gdaltest.compare_ds(ds, ds_ref, width=256, height=256)
     #    print(ds.GetRasterBand(1).Checksum())
     #    print(ds_ref.GetRasterBand(1).Checksum())
@@ -2395,20 +2397,22 @@ def test_ecw_online_5():
         "http://download.osgeo.org/gdal/data/ecw/red_flower.ecw", "red_flower.ecw"
     )
 
-    ds = gdal.Open("tmp/cache/red_flower.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/red_flower.ecw")
 
     if gdaltest.ecw_drv.major_version == 3:
-        (exp_mean, exp_stddev) = (112.801, 52.0431)
+        exp_mean, exp_stddev = (112.801, 52.0431)
         # on Tamas slavebots, (mean,stddev)  = (113.301,52.0434)
         mean_tolerance = 1
     else:
         mean_tolerance = 0.5
         if gdaltest.ecw_drv.major_version == 5:
-            (exp_mean, exp_stddev) = (113.345, 52.1259)
+            exp_mean, exp_stddev = (113.345, 52.1259)
         else:
-            (exp_mean, exp_stddev) = (114.337, 52.1751)
+            exp_mean, exp_stddev = (114.337, 52.1751)
 
-    (mean, stddev) = ds.GetRasterBand(2).ComputeBandStats()
+    mean, stddev = ds.GetRasterBand(2).ComputeBandStats()
 
     assert mean == pytest.approx(
         exp_mean, abs=mean_tolerance
@@ -2428,6 +2432,7 @@ def test_ecw_online_5():
 
 
 @pytest.mark.require_driver("HTTP")
+@gdaltest.skip_on_network_error()
 def test_ecw_online_6():
 
     url = "http://download.osgeo.org/gdal/data/ecw/spif83.ecw"
@@ -2459,7 +2464,9 @@ def test_ecw_online_7():
         "sandiego2m_null.ecw",
     )
 
-    ds = gdal.Open("tmp/cache/sandiego2m_null.ecw")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/sandiego2m_null.ecw")
     if gdaltest.ecw_drv.major_version == 3:
         expected_band_count = 3
     else:
@@ -2477,7 +2484,7 @@ def test_ecw_online_7():
 def test_ecw_byte_tile_2048():
 
     ds = gdal.Open("data/jpeg2000/byte_tile_2048.jp2")
-    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     assert (blockxsize, blockysize) == (
         (20, 20) if gdaltest.ecw_drv.version >= (5, 1) else (256, 256)
     )

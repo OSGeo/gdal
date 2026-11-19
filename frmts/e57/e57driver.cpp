@@ -98,7 +98,7 @@ class GDAL_E57Dataset final : public GDALProxyDataset
                     std::unique_ptr<GDALDataset> poMaskDS,
                     const E57ImageDesc &sE57ImageDesc, std::string osXML);
 
-    GDALDriver *GetDriver() override;
+    GDALDriver *GetDriver() const override;
 
     char **GetMetadataDomainList() override
     {
@@ -157,7 +157,7 @@ class GDAL_E57Dataset final : public GDALProxyDataset
     bool m_bMDSet = false;
 };
 
-GDALDriver *GDAL_E57Dataset::GetDriver()
+GDALDriver *GDAL_E57Dataset::GetDriver() const
 {
     // Short-circuit proxying, so as not to get the PNG/JPEG driver
     return GDALDataset::GetDriver();
@@ -831,7 +831,7 @@ GDALDataset *GDAL_E57Dataset::Open(GDALOpenInfo *poOpenInfo)
                 CPLString().Printf("SUBDATASET_%u_DESC", i + 1),
                 osDesc.c_str());
         }
-        poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+        poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         CPLStringList aosXMLE57;
         aosXMLE57.AddString(osXML.c_str());
         poDS->SetMetadata(aosXMLE57.List(), "xml:E57");

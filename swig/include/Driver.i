@@ -36,11 +36,13 @@ public:
 
 %apply Pointer NONNULL { const char* newName, const char* oldName, GDALDatasetShadow* src };
 
+%apply (const char *utf8_string) { (const char* path) };
+
 %newobject Create;
 #ifndef SWIGJAVA
 %feature( "kwargs" ) Create;
 #endif
-  GDALDatasetShadow *Create(    const char *utf8_path,
+  GDALDatasetShadow *Create(    const char *path,
                                 int xsize,
                                 int ysize,
                                 int bands = 1,
@@ -48,7 +50,7 @@ public:
                                 char **options = 0 ) {
 
     GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(    self,
-                                                                utf8_path,
+                                                                path,
                                                                 xsize,
                                                                 ysize,
                                                                 bands,
@@ -61,8 +63,8 @@ public:
 #ifndef SWIGJAVA
 %feature( "kwargs" ) CreateVector;
 #endif
-  GDALDatasetShadow *CreateVector(const char *utf8_path, char **options = 0) {
-    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(self, utf8_path, 0, 0, 0, GDT_Unknown, options);
+  GDALDatasetShadow *CreateVector(const char *path, char **options = 0) {
+    GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreate(self, path, 0, 0, 0, GDT_Unknown, options);
     return ds;
   }
 
@@ -71,12 +73,12 @@ public:
 %feature( "kwargs" ) CreateMultiDimensional;
 #endif
 %apply (char **options ) { (char **root_group_options) };
-  GDALDatasetShadow *CreateMultiDimensional(    const char *utf8_path,
+  GDALDatasetShadow *CreateMultiDimensional(    const char *path,
                                 char **root_group_options = 0,
                                 char **options = 0 ) {
 
     GDALDatasetShadow* ds = (GDALDatasetShadow*) GDALCreateMultiDimensional(    self,
-                                                                utf8_path,
+                                                                path,
                                                                 root_group_options,
                                                                 options );
     return ds;
@@ -89,7 +91,7 @@ public:
 %feature( "kwargs" ) CreateCopy;
 #endif
 #endif
-  GDALDatasetShadow *CreateCopy(    const char *utf8_path,
+  GDALDatasetShadow *CreateCopy(    const char *path,
                                     GDALDatasetShadow* src,
                                     int strict = 1,
                                     char **options = 0,
@@ -97,7 +99,7 @@ public:
                                     void* callback_data=NULL) {
 
     GDALDatasetShadow *ds = (GDALDatasetShadow*) GDALCreateCopy(    self,
-                                                                    utf8_path,
+                                                                    path,
                                                                     src,
                                                                     strict,
                                                                     options,
@@ -106,12 +108,12 @@ public:
     return ds;
   }
 
-  CPLErr Delete( const char *utf8_path ) {
-    return GDALDeleteDataset( self, utf8_path );
+  CPLErr Delete( const char *path ) {
+    return GDALDeleteDataset( self, path );
   }
 
-%apply ( const char *utf8_path ) { ( const char *newName ) };
-%apply ( const char *utf8_path ) { ( const char *oldName ) };
+%apply ( const char *utf8_string ) { ( const char *newName ) };
+%apply ( const char *utf8_string ) { ( const char *oldName ) };
   CPLErr Rename( const char *newName, const char *oldName ) {
     return GDALRenameDataset( self, newName, oldName );
   }

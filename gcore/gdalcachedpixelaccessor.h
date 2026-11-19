@@ -40,6 +40,9 @@ class GDALCachedPixelAccessor
 
     struct CachedTile
     {
+        // Avoid a GCC 13.1 internal compiler error in C++20 aggregate initialization of the array.
+        CachedTile() = default;
+
         std::vector<Type> m_data{};
         int m_nTileX = -1;
         int m_nTileY = -1;
@@ -47,7 +50,8 @@ class GDALCachedPixelAccessor
     };
 
     int m_nCachedTileCount = 0;
-    std::array<CachedTile, CACHED_TILE_COUNT> m_aCachedTiles{};
+    std::array<CachedTile, static_cast<size_t>(CACHED_TILE_COUNT)>
+        m_aCachedTiles{};
 
     bool LoadTile(int nTileX, int nTileY);
     bool FlushTile(int iSlot);
@@ -235,13 +239,10 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::SetSlowPath(
         {
             cachedTile.m_data[nYInTile * TILE_SIZE + nXInTile] = val;
             cachedTile.m_bModified = true;
-            if (i > 0)
-            {
-                CachedTile tmp = std::move(m_aCachedTiles[i]);
-                for (int j = i; j >= 1; --j)
-                    m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
-                m_aCachedTiles[0] = std::move(tmp);
-            }
+            CachedTile tmp = std::move(m_aCachedTiles[i]);
+            for (int j = i; j >= 1; --j)
+                m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
+            m_aCachedTiles[0] = std::move(tmp);
             return true;
         }
     }
@@ -442,4 +443,4 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::FlushTile(
                TILE_SIZE * sizeof(Type), nullptr) == CE_None;
 }
 
-#endif  // GDAL_PIXEL_ACCESSOR_INCLUDED
+#endif  // GDAL_CACHED_PIXEL_ACCESSOR_INCLUDED

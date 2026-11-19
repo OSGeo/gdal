@@ -475,7 +475,7 @@ TEST(Viewshed, simple_height)
                                     ylen, GDT_Float64, 0, 0, nullptr);
         EXPECT_EQ(err, CE_None);
 
-        std::array<double, xlen *ylen> expected = observable;
+        std::array<double, xlen * ylen> expected = observable;
         // Double equality is fine here as all the values are small integers.
         EXPECT_EQ(dem, expected);
     }

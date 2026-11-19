@@ -2,7 +2,7 @@
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test basic read support for a all datatypes from a HDF file.
+# Purpose:  Test basic read support for all datatypes from a HDF file.
 # Author:   Andrey Kiselev, dron@remotesensing.org
 #
 ###############################################################################
@@ -110,10 +110,12 @@ def test_hdf4_more_than_32_files():
         "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tab = []
     for i in range(33):
         ds = gdal.Open(
-            'HDF4_EOS:EOS_SWATH:"tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst'
+            f'HDF4_EOS:EOS_SWATH:"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst'
         )
         assert ds, i
         tab.append(ds)
@@ -135,9 +137,11 @@ def test_hdf4_read_online_1():
         "A2004259075000.L2_LAC_SST.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "tmp/cache/A2004259075000.L2_LAC_SST.hdf",
+        f"{tmp_dir}/A2004259075000.L2_LAC_SST.hdf",
         1,
         28189,
         filename_absolute=1,
@@ -160,9 +164,11 @@ def test_hdf4_read_online_2():
         "A2006005182000.L2_LAC_SST.x.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13',
+        f'HDF4_SDS:UNKNOWN:"{tmp_dir}/A2006005182000.L2_LAC_SST.x.hdf":13',
         1,
         13209,
         filename_absolute=1,
@@ -170,13 +176,13 @@ def test_hdf4_read_online_2():
 
     tst.testOpen()
 
-    ds = gdal.Open('HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":13')
+    ds = gdal.Open(f'HDF4_SDS:UNKNOWN:"{tmp_dir}/A2006005182000.L2_LAC_SST.x.hdf":13')
     md = ds.GetMetadata("GEOLOCATION")
     ds = None
 
     assert (
         md["X_DATASET"]
-        == 'HDF4_SDS:UNKNOWN:"tmp/cache/A2006005182000.L2_LAC_SST.x.hdf":11'
+        == f'HDF4_SDS:UNKNOWN:"{tmp_dir}/A2006005182000.L2_LAC_SST.x.hdf":11'
     ), "Did not get expected X_DATASET"
 
 
@@ -194,9 +200,11 @@ def test_hdf4_read_online_3():
         "MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf",
+        f"{tmp_dir}/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf",
         1,
         34723,
         filename_absolute=1,
@@ -204,7 +212,7 @@ def test_hdf4_read_online_3():
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf")
+    ds = gdal.Open(f"{tmp_dir}/MO36MW14.chlor_MODIS.ADD2001089.004.2002186190207.hdf")
     gt = ds.GetGeoTransform()
     expected_gt = [-180.0, 0.3515625, 0.0, 90.0, 0.0, -0.3515625]
     for i in range(6):
@@ -232,9 +240,11 @@ def test_hdf4_read_online_4():
         "S2002196124536.L1A_HDUN.BartonBendish.extract.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf",
+        f"{tmp_dir}/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf",
         1,
         33112,
         filename_absolute=1,
@@ -242,7 +252,7 @@ def test_hdf4_read_online_4():
 
     tst.testOpen()
 
-    ds = gdal.Open("tmp/cache/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf")
+    ds = gdal.Open(f"{tmp_dir}/S2002196124536.L1A_HDUN.BartonBendish.extract.hdf")
     assert ds.RasterCount == 8, "did not get expected band number"
 
     ds = None
@@ -263,9 +273,11 @@ def test_hdf4_read_online_5():
         "199101.s04m1pfv50-sst-16b.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "tmp/cache/199101.s04m1pfv50-sst-16b.hdf",
+        f"{tmp_dir}/199101.s04m1pfv50-sst-16b.hdf",
         1,
         41173,
         filename_absolute=1,
@@ -289,10 +301,12 @@ def test_hdf4_read_online_6():
         "MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Test with quoting of components
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        'HDF4_EOS:EOS_GRID:"tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":"MODIS_NACP_EVI":"MODIS_EVI"',
+        f'HDF4_EOS:EOS_GRID:"{tmp_dir}/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf":"MODIS_NACP_EVI":"MODIS_EVI"',
         1,
         12197,
         filename_absolute=1,
@@ -301,11 +315,11 @@ def test_hdf4_read_online_6():
     tst.testOpen()
 
     ds = gdal.Open(
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf:MODIS_NACP_EVI:MODIS_EVI"
+        f"HDF4_EOS:EOS_GRID:{tmp_dir}/MOD09Q1G_EVI.A2006233.h07v03.005.2008338190308.hdf:MODIS_NACP_EVI:MODIS_EVI"
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 4800 and blocky == 4800, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -329,9 +343,11 @@ def test_hdf4_read_online_7():
         "MOD09A1.A2010041.h06v03.005.2010051001103.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01",
+        f"HDF4_EOS:EOS_GRID:{tmp_dir}/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01",
         1,
         54894,
         filename_absolute=1,
@@ -340,11 +356,11 @@ def test_hdf4_read_online_7():
     tst.testOpen()
 
     ds = gdal.Open(
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01"
+        f"HDF4_EOS:EOS_GRID:{tmp_dir}/MOD09A1.A2010041.h06v03.005.2010051001103.hdf:MOD_Grid_500m_Surface_Reflectance:sur_refl_b01"
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 2400 and blocky == 32, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -369,9 +385,11 @@ def test_hdf4_read_online_8():
         "MOD13Q1.A2006161.h34v09.061.2020265043931.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
         "HDF4Image",
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI",
+        f"HDF4_EOS:EOS_GRID:{tmp_dir}/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI",
         1,
         45111,
         filename_absolute=1,
@@ -380,14 +398,14 @@ def test_hdf4_read_online_8():
     tst.testOpen()
 
     ds = gdal.Open(
-        "HDF4_EOS:EOS_GRID:tmp/cache/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI"
+        f"HDF4_EOS:EOS_GRID:{tmp_dir}/MOD13Q1.A2006161.h34v09.061.2020265043931.hdf:MODIS_Grid_16DAY_250m_500m_VI:250m 16 days NDVI"
     )
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 45111, "did not get expected checksum"
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky == 1:
             print("blockx=%d, blocky=%d" % (blockx, blocky))
             pytest.fail("Did not get expected block size")
@@ -414,10 +432,12 @@ def test_hdf4_read_online_9():
         "L71002025_02520010722_HDF.L1G",
     )
 
-    f = open("tmp/cache/L71002025_02520010722_B10.L1G", "wb")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    f = open(f"{tmp_dir}/L71002025_02520010722_B10.L1G", "wb")
     f.close()
 
-    ds = gdal.Open('HDF4_SDS:UNKNOWN:"tmp/cache/L71002025_02520010722_HDF.L1G":0')
+    ds = gdal.Open(f'HDF4_SDS:UNKNOWN:"{tmp_dir}/L71002025_02520010722_HDF.L1G":0')
     gcp_count = ds.GetGCPCount()
     ds = None
 
@@ -438,12 +458,14 @@ def test_hdf4_read_online_10():
         "MOD16A2.A2000M01.h14v02.105.2010357183410.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        'HDF4_EOS:EOS_GRID:"tmp/cache/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf":MOD_Grid_MOD16A2:ET_1km'
+        f'HDF4_EOS:EOS_GRID:"{tmp_dir}/MOD16A2.A2000M01.h14v02.105.2010357183410.hdf":MOD_Grid_MOD16A2:ET_1km'
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 1200 and blocky == 833, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -466,18 +488,20 @@ def test_hdf4_read_online_11():
         "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        'HDF4_EOS:EOS_SWATH:"tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Ocean_products_quality_flag'
+        f'HDF4_EOS:EOS_SWATH:"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Ocean_products_quality_flag'
     )
 
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 7809, "did not get expected checksum"
 
-    ds = gdal.Open("tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf")
+    ds = gdal.Open(f"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf")
     assert len(ds.GetSubDatasets()) == 7
 
-    ds = gdal.OpenEx(
-        "tmp/cache/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
+    ds = gdal.Open(
+        f"{tmp_dir}/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
         open_options=["LIST_SDS=YES"],
     )
     assert len(ds.GetSubDatasets()) == 16
@@ -491,34 +515,9 @@ def test_hdf4_read_online_11():
     "filename,path_component",
     (
         (
-            'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
-            "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
-        ),
-        (
-            r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
-            r"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
-        ),
-        (
-            "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
-            "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
-        ),
-        (
-            r"HDF4_EOS:EOS_SWATH:C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
-            r"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
-        ),
-        (
-            r"HDF4_EOS:EOS_SWATH:C:/AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
-            r"C:/AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
-        ),
-        (
             r'HDF4_EOS:EOS_SWATH:"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5":Swath1:Low_res_sst',
             r"/vsicurl/http://www.my.com/OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5",
         ),
-        (
-            r"HDF4_EOS:EOS_SWATH:a:Swath1:Low_res_sst",
-            r"a",
-        ),
-        ("", ""),
     ),
 )
 def test_gdal_subdataset_get_filename(filename, path_component):
@@ -529,6 +528,26 @@ def test_gdal_subdataset_get_filename(filename, path_component):
     else:
         assert info.GetPathComponent() == path_component
         assert info.GetSubdatasetComponent() == "Swath1:Low_res_sst"
+
+
+@pytest.mark.parametrize(
+    "filename",
+    (
+        "/vsimem/DATA:TEST.hdf",
+        "/vsimem/DATA:TEST:DOUBLE.hdf",
+        '/vsimem/DATA:"TEST".hdf',
+    ),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(filename, open("data/General_RImages.hdf", "rb").read())
+    info = gdal.GetSubdatasetInfo(
+        f'HDF4_EOS:EOS_SWATH:"{filename}":/navigation_data/latitude'
+    )
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
 
 
 @pytest.mark.parametrize(
@@ -585,13 +604,39 @@ def test_hdf4_gcp_nodata():
         "MOD04_3K.NRT.ForGDALTest.zip",
     )
 
-    if not os.path.exists("tmp/cache/MOD04_3K.A2025284.0010.061.NRT.hdf"):
-        gdaltest.unzip("tmp/cache", "tmp/cache/MOD04_3K.NRT.ForGDALTest.zip")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    if not os.path.exists(f"{tmp_dir}/MOD04_3K.A2025284.0010.061.NRT.hdf"):
+        gdaltest.unzip(tmp_dir, f"{tmp_dir}/MOD04_3K.NRT.ForGDALTest.zip")
 
     ds = gdal.Open(
-        'HDF4_EOS:EOS_SWATH:"tmp/cache/MOD04_3K.A2025284.0010.061.NRT.hdf":mod04:BowTie_Flag'
+        f'HDF4_EOS:EOS_SWATH:"{tmp_dir}/MOD04_3K.A2025284.0010.061.NRT.hdf":mod04:BowTie_Flag'
     )
     gcp_count = ds.GetGCPCount()
     ds = None
 
     assert gcp_count == 72, "did not get expected gcp count"
+
+
+###############################################################################
+# Test bugfix for various crashes
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/hdf4/issue_14356.he4",
+        "data/hdf4/issue_14363.he4",
+        "data/hdf4/issue_14378.he4",
+        "data/hdf4/issue_14379.he4",
+        "data/hdf4/issue_14398.he4",
+        "data/hdf4/issue_14399.he4",
+    ],
+)
+def test_hdf4_gh_crashes(filename):
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        gdal.Open(filename)

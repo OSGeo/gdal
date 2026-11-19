@@ -337,7 +337,7 @@ OGRErr OGRODBCTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCTableLayer::TestCapability(const char *pszCap) const
+bool OGRODBCTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

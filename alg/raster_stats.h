@@ -28,6 +28,7 @@ struct RasterStatsOptions
         std::numeric_limits<float>::min();  // ~1e-38
 
     float min_coverage_fraction = min_coverage_fraction_default;
+    bool calc_median = false;
     bool calc_variance = false;
     bool store_histogram = false;
     bool store_values = false;
@@ -40,6 +41,7 @@ struct RasterStatsOptions
     bool operator==(const RasterStatsOptions &other) const
     {
         return min_coverage_fraction == other.min_coverage_fraction &&
+               calc_median == other.calc_median &&
                calc_variance == other.calc_variance &&
                store_histogram == other.store_histogram &&
                store_values == other.store_values &&
@@ -258,7 +260,7 @@ template <typename ValueType> class RasterStats
             entry.m_sum_ciwi += ciwi;
         }
 
-        if (m_options.store_values)
+        if (m_options.store_values || m_options.calc_median)
         {
             m_cell_values.push_back(val);
         }
@@ -283,6 +285,53 @@ template <typename ValueType> class RasterStats
         {
             return std::numeric_limits<double>::quiet_NaN();
         }
+    }
+
+    /** The median value of cells touched by this polygon. The cell
+     *  coverage fraction is not taken into account. */
+    double median() const
+    {
+        auto n = m_cell_values.size();
+        if (n == 0)
+        {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+        if (n == 1)
+        {
+            return static_cast<double>(m_cell_values[0]);
+        }
+        if (n == 2)
+        {
+            return 0.5 * (static_cast<double>(m_cell_values[0]) +
+                          static_cast<double>(m_cell_values[1]));
+        }
+
+        std::vector<ValueType> *values = nullptr;
+        std::unique_ptr<std::vector<ValueType>> values_copy;
+
+        if (m_options.store_values)
+        {
+            values_copy =
+                std::make_unique<std::vector<ValueType>>(m_cell_values);
+            values = values_copy.get();
+        }
+        else
+        {
+            values = const_cast<std::vector<ValueType> *>(&m_cell_values);
+        }
+
+        auto mid = std::next(values->begin(), n / 2);
+        std::nth_element(values->begin(), mid, values->end());
+
+        if (n % 2 != 0)
+        {
+            return static_cast<double>(*mid);
+        }
+
+        auto lhs_max = std::max_element(values->begin(), mid);
+
+        return 0.5 *
+               (static_cast<double>(*lhs_max) + static_cast<double>(*mid));
     }
 
     /**

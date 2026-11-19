@@ -24,7 +24,7 @@ differentiate is to add a field named PIXELTYPE with values of either
 FLOAT, SIGNEDINT or UNSIGNEDINT. In combination with the NBITS field it
 is possible to described all variations of pixel types.
 
-eg.
+e.g.,
 
 ::
 

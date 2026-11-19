@@ -122,6 +122,12 @@ recovered by untrusted code that would run in the same process as GDAL code.
 The same applies for connection strings to some drivers such as PostgreSQL, MySQL, etc.
 which may include passwords.
 
+Known issues in networking
+--------------------------
+
+See the :config:`CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED` configuration option
+to limit potential exfiltration of content from local files.
+
 Known issues in API
 -------------------
 
@@ -220,3 +226,10 @@ Same issues as the GDAL VRT driver.
 +++++++++++++++
 
 Similar issues as the GDAL VRT driver. ``<SrcSQL>`` could be used to modify data.
+
+Known issues in utilities
+-------------------------
+
+* The ``--calc`` argument of :ref:`gdal_calc` is evaluated with Python ``eval()``
+  method which can be used to run arbitrary code. Be careful when using ``gdal_calc``
+  in a context where users can control the expression.

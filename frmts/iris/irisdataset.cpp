@@ -560,12 +560,12 @@ void IRISDataset::LoadProjection() const
         if (poTransform == nullptr || !poTransform->Transform(1, &dfX2, &dfY2))
             CPLError(CE_Failure, CPLE_None, "Transformation Failed");
 
-        m_gt[0] = dfX - (dfRadarLocX * (dfX2 - dfX));
-        m_gt[1] = dfX2 - dfX;
-        m_gt[2] = 0.0;
-        m_gt[3] = dfY + (dfRadarLocY * (dfY2 - dfY));
-        m_gt[4] = 0.0;
-        m_gt[5] = -1 * (dfY2 - dfY);
+        m_gt.xorig = dfX - (dfRadarLocX * (dfX2 - dfX));
+        m_gt.xscale = dfX2 - dfX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = dfY + (dfRadarLocY * (dfY2 - dfY));
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -1 * (dfY2 - dfY);
 
         delete poTransform;
     }
@@ -576,23 +576,23 @@ void IRISDataset::LoadProjection() const
                          "degree", 0.0174532925199433);
         m_oSRS.SetAE(dfProjRefLat, dfProjRefLon, 0.0, 0.0);
 
-        m_gt[0] = -1 * (dfRadarLocX * dfScaleX);
-        m_gt[1] = dfScaleX;
-        m_gt[2] = 0.0;
-        m_gt[3] = dfRadarLocY * dfScaleY;
-        m_gt[4] = 0.0;
-        m_gt[5] = -1 * dfScaleY;
+        m_gt.xorig = -1 * (dfRadarLocX * dfScaleX);
+        m_gt.xscale = dfScaleX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = dfRadarLocY * dfScaleY;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -1 * dfScaleY;
         // When the projection is different from Mercator or Azimutal
         // equidistant, we set a standard geotransform.
     }
     else
     {
-        m_gt[0] = -1 * (dfRadarLocX * dfScaleX);
-        m_gt[1] = dfScaleX;
-        m_gt[2] = 0.0;
-        m_gt[3] = dfRadarLocY * dfScaleY;
-        m_gt[4] = 0.0;
-        m_gt[5] = -1 * dfScaleY;
+        m_gt.xorig = -1 * (dfRadarLocX * dfScaleX);
+        m_gt.xscale = dfScaleX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = dfRadarLocY * dfScaleY;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -1 * dfScaleY;
     }
 }
 

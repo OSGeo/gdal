@@ -34,11 +34,11 @@
 
 enum OGRSQLiteGeomFormat
 {
-    OSGF_None = 0,
-    OSGF_WKT = 1,
-    OSGF_WKB = 2,
-    OSGF_FGF = 3,
-    OSGF_SpatiaLite = 4
+    OSGF_WKT,
+    OSGF_WKB,
+    OSGF_FGF,
+    OSGF_SpatiaLite,
+    OSGF_Unknown,
 };
 
 /************************************************************************/
@@ -58,7 +58,7 @@ class OGRSQLiteGeomFieldDefn final : public OGRGeomFieldDefn
     int m_nSRSId = -1;
     int m_iCol; /* ordinal of geometry field in SQL statement */
     bool m_bTriedAsSpatiaLite = false;
-    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_None;
+    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_Unknown;
     OGREnvelope m_oCachedExtent{};
     bool m_bCachedExtentIsValid = false;
     bool m_bHasSpatialIndex = false;
@@ -216,7 +216,7 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void *GetInternalHandle(const char *) override;
 
@@ -257,12 +257,10 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     bool AreSpatialiteTriggersSafe();
 
     // sqlite3_prepare_v2 error logging wrapper
-    int
-    prepareSql(sqlite3 *db,           /* Database handle */
-               const char *zSql,      /* SQL statement, UTF-8 encoded */
-               int nByte,             /* Maximum length of zSql in bytes. */
-               sqlite3_stmt **ppStmt, /* OUT: Statement handle */
-               const char **pzTail /* OUT: Pointer to unused portion of zSql */
+    sqlite3_stmt *
+    prepareSql(sqlite3 *db,      /* Database handle */
+               const char *zSql, /* SQL statement, UTF-8 encoded */
+               int nByte = -1    /* Maximum length of zSql in bytes. */
     );
 
     GDALQueryLoggerFunc pfnQueryLoggerFunc = nullptr;
@@ -290,7 +288,7 @@ class IOGRSQLiteSelectLayer /* non final */
     virtual OGRFeature *BaseGetNextFeature() = 0;
     virtual OGRErr BaseSetAttributeFilter(const char *pszQuery) = 0;
     virtual GIntBig BaseGetFeatureCount(int bForce) = 0;
-    virtual int BaseTestCapability(const char *) const = 0;
+    virtual bool BaseTestCapability(const char *) const = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
                                  bool bForce) = 0;
     virtual bool ValidateGeometryFieldIndexForSetSpatialFilter(
@@ -331,7 +329,7 @@ class OGRSQLiteSelectLayerCommonBehaviour final
     GIntBig GetFeatureCount(int);
     OGRErr SetSpatialFilter(int iGeomField, const OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
-    int TestCapability(const char *) const;
+    bool TestCapability(const char *) const;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce);
 };
 
@@ -357,7 +355,7 @@ class OGRSQLiteSingleFeatureLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/

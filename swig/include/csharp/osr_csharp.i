@@ -13,6 +13,7 @@
 
 %include cpl_exceptions.i
 
+%include csharp_string_encoder.i
 %include typemaps_csharp.i
 
 %apply (int *hasval) {int* pnListCount};

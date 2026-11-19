@@ -80,7 +80,7 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
+bool OGRGeoRSSDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -281,11 +281,8 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
                  strstr(aBuf.data(), "<atom:feed")))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "XML parsing of GeoRSS file failed: "
-                         "%s at line %d, column %d",
-                         XML_ErrorString(XML_GetErrorCode(oParser)),
-                         static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                         static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+                         "XML parsing of GeoRSS file failed: %s",
+                         OGRExpatGetParseError(oParser));
             }
             validity = GEORSS_VALIDITY_INVALID;
             break;

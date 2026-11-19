@@ -28,15 +28,18 @@ service description XML file -- there are examples below for each of the
 supported image services. It is important that there be no spaces or
 other content before the ``<GDAL_WMS>`` element.
 
+.. tabularcolumns:: P{0.40\linewidth}p{0.60\linewidth}
+.. rst-class:: gdal-wrapped-table
+
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
 <GDAL_WMS>
 <Service name="WMS">                                                       Define what mini-driver to use, currently supported are: WMS, WorldWind, TileService, TMS, TiledWMS, VirtualEarth or AGS. (required)
 <Version>1.1.1</Version>                                                   WMS version. (optional, defaults to 1.1.1)
-<ServerUrl>http://host.domain.com/wms.cgi?</ServerUrl>                     WMS server URL. (required)
+<ServerUrl>http://host/wms.cgi?</ServerUrl>                                WMS server URL. (required)
 <SRS>EPSG:4326</SRS>                                                       Image projection (optional, defaults to EPSG:4326 in WMS and 102100 in AGS, WMS version 1.1.1 or below only and ArcGIS Server). For ArcGIS Server the spatial reference can be specified as either a well-known ID or as a `spatial reference json object <https://developers.arcgis.com/rest/services-reference/enterprise/geometry-objects/#spatial-reference>`__
 <CRS>CRS:83</CRS>                                                          Image projection (optional, defaults to EPSG:4326, WMS version 1.3.0 or above only)
 <ImageFormat>image/jpeg</ImageFormat>                                      Format in which to request data. Paletted formats like image/gif will be converted to RGB. (optional, defaults to image/jpeg)
-<Transparent>FALSE</Transparent>                                           Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE).  The request format and BandsCount need to support alpha.
+<Transparent>FALSE</Transparent>                                           Set to TRUE to include "transparent=TRUE" in the WMS GetMap request (optional defaults to FALSE). The request format and BandsCount need to support alpha.
 <Layers>modis%2Cglobal_mosaic</Layers>                                     A URL encoded, comma separated string of layers (required, except for TiledWMS)
 <TiledGroupName>Clementine</TiledGroupName>                                Comma separated list of layers. (required for TiledWMS)
 <Styles></Styles>                                                          Comma separated list of styles. (optional)
@@ -81,7 +84,8 @@ other content before the ``<GDAL_WMS>`` element.
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
 <VerifyAdviseRead>true</VerifyAdviseRead>                                  Open each downloaded image and do some basic checks before writing into cache. Disabling can save some CPU cycles if server is trusted to always return correct images. (optional, defaults to true)
 <ClampRequests>false</ClampRequests>                                       Should requests, that otherwise would be partially outside of defined data window, be clipped resulting in smaller than block size request. (optional, defaults to true)
-<UserAgent>GDAL WMS driver (https://gdal.org/frmt_wms.html)</UserAgent>    HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (https://gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+<UserAgent>GDAL WMS driver (https://gdal.org/frmt_wms.html)                HTTP User-agent string. Some servers might require a well-known user-agent such as "Mozilla/5.0" (optional, defaults to "GDAL WMS driver (https://gdal.org/frmt_wms.html)"). When used with some servers, like OpenStreetMap ones, it is highly recommended to put a custom user agent to avoid being blocked if the default user agent had to be blocked.
+</UserAgent>
 <Accept>mimetype>/Accept>                                                  HTTP Accept header to specify the MIME type of the expected output of the server. Empty by default
 <UserPwd>user:password</UserPwd>                                           User and Password for HTTP authentication (optional).
 <UnsafeSSL>true</UnsafeSSL>                                                Skip SSL certificate verification. May be needed if server is using a self signed certificate (optional, defaults to false).
@@ -89,7 +93,6 @@ other content before the ``<GDAL_WMS>`` element.
 <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>                           Comma separated list of HTTP response codes that will be interpreted as a 0 filled image (i.e. black for 3 bands, and transparent for 4 bands) instead of aborting the request. (optional, defaults to 204)
 <ZeroBlockOnServerException>true</ZeroBlockOnServerException>              Whether to treat a Service Exception returned by the server as a 0 filled image instead of aborting the request. (optional, defaults to false)
 </GDAL_WMS>
-\
 ========================================================================== ===============================================================================================================================================================================================================================================================================================================================
 
 Additional HTTP headers can be sent by setting the GDAL_HTTP_HEADER_FILE configuration option to point to a filename of a text file with “key: value” HTTP headers.

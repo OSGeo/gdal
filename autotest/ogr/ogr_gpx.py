@@ -18,6 +18,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("GPX")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
@@ -496,9 +497,7 @@ def test_ogr_gpx_creator(tmp_vsimem, options, expected):
 
 def test_ogr_gpx_ELE_AS_25D():
 
-    ds = gdal.OpenEx(
-        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["ELE_AS_25D=YES"]
-    )
+    ds = gdal.Open("data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["ELE_AS_25D=YES"])
     lyr = ds.GetLayerByName("waypoints")
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 0 2)"
@@ -514,7 +513,7 @@ def test_ogr_gpx_ELE_AS_25D():
 
 def test_ogr_gpx_SHORT_NAMES():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["SHORT_NAMES=YES"]
     )
     lyr = ds.GetLayerByName("track_points")
@@ -528,9 +527,7 @@ def test_ogr_gpx_SHORT_NAMES():
 
 def test_ogr_gpx_N_MAX_LINKS():
 
-    ds = gdal.OpenEx(
-        "data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["N_MAX_LINKS=3"]
-    )
+    ds = gdal.Open("data/gpx/test.gpx", gdal.OF_VECTOR, open_options=["N_MAX_LINKS=3"])
     lyr = ds.GetLayerByName("track_points")
     f = lyr.GetNextFeature()
     assert f["link3_href"] is None
@@ -553,3 +550,29 @@ def test_ogr_gpx_convert_to_gpkg(tmp_vsimem):
     assert f.GetFID() == 0
     f = lyr.GetNextFeature()
     assert f.GetFID() == 1
+
+
+###############################################################################
+# Test that <extensions> found at <trkpt> level are detected and read,
+# both with and without the GPX_USE_EXTENSIONS configuration option
+# (https://github.com/OSGeo/gdal/issues/15443)
+
+
+@pytest.mark.parametrize("use_extensions_config", [None, "YES"])
+def test_ogr_gpx_trkpt_extensions(use_extensions_config):
+
+    with gdal.config_option("GPX_USE_EXTENSIONS", use_extensions_config):
+        ds = ogr.Open("data/gpx/trkpt_extensions.gpx")
+
+    lyr = ds.GetLayerByName("track_points")
+    lyr_defn = lyr.GetLayerDefn()
+    assert lyr_defn.GetFieldIndex("gpxdata_hr") >= 0
+    assert lyr_defn.GetFieldIndex("gpxdata_cadence") >= 0
+
+    f = lyr.GetNextFeature()
+    assert f.GetFieldAsString("gpxdata_hr") == "91"
+    assert f.GetFieldAsString("gpxdata_cadence") == "81"
+
+    f = lyr.GetNextFeature()
+    assert f.GetFieldAsString("gpxdata_hr") == "92"
+    assert f.GetFieldAsString("gpxdata_cadence") == "82"

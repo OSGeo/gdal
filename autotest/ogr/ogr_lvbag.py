@@ -245,8 +245,8 @@ def test_ogr_lvbag_dataset_pnd():
 
     sr = lyr.GetSpatialRef()
 
-    assert sr.GetAuthorityName(None) == "EPSG"
-    assert sr.GetAuthorityCode(None) == "28992"
+    assert sr.GetAuthorityName() == "EPSG"
+    assert sr.GetAuthorityCode() == "28992"
 
     feat = lyr.GetNextFeature()
     if feat.GetField("oorspronkelijkBouwjaar") != 2009:
@@ -380,7 +380,7 @@ def test_ogr_lvbag_read_zip_4():
 @pytest.mark.require_geos(3, 8)
 def test_ogr_lvbag_fix_invalid_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/lvbag/inval_polygon.xml",
         gdal.OF_VECTOR,
         open_options=["AUTOCORRECT_INVALID_DATA=YES"],
@@ -409,7 +409,7 @@ def test_ogr_lvbag_fix_invalid_polygon():
 @pytest.mark.require_geos(3, 8)
 def test_ogr_lvbag_fix_invalid_polygon_to_polygon():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/lvbag/inval_polygon2.xml",
         gdal.OF_VECTOR,
         open_options=["AUTOCORRECT_INVALID_DATA=YES"],
@@ -459,13 +459,15 @@ def test_ogr_lvbag_fix_identificatie():
     assert feat.GetField("identificatie") == "NL.IMBAG.Pand.0571100000003518"
 
 
-def test_ogr_lvbag_old_schema():
+def test_ogr_lvbag_old_schema(tmp_vsimem):
 
-    ds = ogr.Open("data/lvbag/lig_old.xml")
+    gdal.CopyFile("data/lvbag/lig_old.xml", tmp_vsimem / "lig_old.xml")
+
+    ds = ogr.Open(tmp_vsimem / "lig_old.xml")
     assert ds is not None, "cannot open dataset"
     assert ds.GetLayerCount() == 0, "bad layer count"
     ds = None
-    gdal.Unlink("data/lvbag/lig_old.gfs")
+    gdal.Unlink(tmp_vsimem / "lig_old.gfs")
 
 
 def test_ogr_lvbag_stringlist_feat():
@@ -595,5 +597,5 @@ def test_ogr_lvbag_test_ogrsf_num():
 def test_ogr_lvbag_force_opening():
 
     # Would be opened by GML driver if not forced
-    ds = gdal.OpenEx("data/gml/empty.gml", allowed_drivers=["LVBAG"])
+    ds = gdal.Open("data/gml/empty.gml", allowed_drivers=["LVBAG"])
     assert ds.GetDriver().GetDescription() == "LVBAG"

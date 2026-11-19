@@ -98,19 +98,21 @@ def test_ogr_shape_sbn_1():
         "Cochiti_shapefiles.zip",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp")
+        os.stat(f"{tmp_dir}/CochitiDamShapeFiles/CochitiBoundary.shp")
     except OSError:
         try:
-            gdaltest.unzip("tmp/cache", "tmp/cache/Cochiti_shapefiles.zip")
+            gdaltest.unzip(tmp_dir, f"{tmp_dir}/Cochiti_shapefiles.zip")
             try:
-                os.stat("tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp")
+                os.stat(f"{tmp_dir}/CochitiDamShapeFiles/CochitiBoundary.shp")
             except OSError:
                 pytest.skip()
         except OSError:
             pytest.skip()
 
-    ds = ogr.Open("tmp/cache/CochitiDamShapeFiles")
+    ds = ogr.Open(f"{tmp_dir}/CochitiDamShapeFiles")
     for i in range(ds.GetLayerCount()):
         lyr = ds.GetLayer(i)
         search_all_features(lyr)

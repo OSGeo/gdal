@@ -16,12 +16,16 @@
 /*                            OGRJSonParse()                            */
 /************************************************************************/
 
-bool OGRJSonParse(const char *pszText, json_object **ppoObj, bool bVerboseError)
+bool OGRJSonParse(const char *pszText, json_object **ppoObj, bool bVerboseError,
+                  int nInputLength)
 {
     if (ppoObj == nullptr)
         return false;
     json_tokener *jstok = json_tokener_new();
-    const int nLen = pszText == nullptr ? 0 : static_cast<int>(strlen(pszText));
+    const int nLen =
+        nInputLength != -1
+            ? nInputLength
+            : (pszText == nullptr ? 0 : static_cast<int>(strlen(pszText)));
     *ppoObj = json_tokener_parse_ex(jstok, pszText, nLen);
     if (jstok->err != json_tokener_success)
     {

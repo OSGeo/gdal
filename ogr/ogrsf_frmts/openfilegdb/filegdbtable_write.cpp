@@ -946,11 +946,8 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     {
                         const int nNumPoints = poLS->getNumPoints();
                         m_anNumberPointsPerPart.push_back(nNumPoints);
-                        const bool bIsClockwise =
-                            CPL_TO_BOOL(poLS->isClockwise());
-                        const bool bReverseOrder =
-                            (bFirstRing && !bIsClockwise) ||
-                            (!bFirstRing && bIsClockwise);
+                        const bool bIsClockwise = poLS->isClockwise();
+                        const bool bReverseOrder = bFirstRing != bIsClockwise;
                         bFirstRing = false;
                         for (int i = 0; i < nNumPoints; ++i)
                         {
@@ -971,11 +968,8 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     bool bFirstRing = true;
                     for (const auto *poRing : *poCurvePoly)
                     {
-                        const bool bIsClockwise =
-                            CPL_TO_BOOL(poRing->isClockwise());
-                        const bool bReverseOrder =
-                            (bFirstRing && !bIsClockwise) ||
-                            (!bFirstRing && bIsClockwise);
+                        const bool bIsClockwise = poRing->isClockwise();
+                        const bool bReverseOrder = bFirstRing != bIsClockwise;
                         bFirstRing = false;
                         if (auto poCC =
                                 dynamic_cast<const OGRCompoundCurve *>(poRing))

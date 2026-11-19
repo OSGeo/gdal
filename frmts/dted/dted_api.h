@@ -187,16 +187,6 @@ typedef enum
 char *DTEDGetMetadata(DTEDInfo *, DTEDMetaDataCode);
 int DTEDSetMetadata(DTEDInfo *, DTEDMetaDataCode, const char *);
 
-/* -------------------------------------------------------------------- */
-/*      Point stream writer API.                                        */
-/* -------------------------------------------------------------------- */
-void *DTEDCreatePtStream(const char *pszPath, int nLevel);
-int DTEDWritePt(void *hStream, double dfLong, double dfLat, double dfElev);
-void DTEDFillPtStream(void *hStream, int nPixelSearchDist);
-void DTEDPtStreamSetMetadata(void *hStream, DTEDMetaDataCode, const char *);
-void DTEDClosePtStream(void *hStream);
-void DTEDPtStreamTrimEdgeOnlyTiles(void *hStream);
-
 CPL_C_END
 
 #endif /* ndef DTED_API_H_INCLUDED */

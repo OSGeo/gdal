@@ -264,7 +264,8 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
                 CPLString osURL = OGRLIBKMLReplaceLevelXYInURL(pszURL, 0, 0, 0);
                 if (strstr(osURL, ".kmz/"))
                     osURL = "/vsizip/" + osURL;
-                GDALDatasetH hDS = GDALOpen(osURL, GA_ReadOnly);
+                GDALDatasetH hDS = GDALDataset::ToHandle(GDALDataset::Open(
+                    osURL, GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR));
                 if (hDS != nullptr)
                 {
                     nTileSize = GDALGetRasterXSize(hDS);

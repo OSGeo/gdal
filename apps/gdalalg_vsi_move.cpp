@@ -58,9 +58,10 @@ bool GDALVSIMoveAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (VSIMove(m_source.c_str(), m_destination.c_str(), nullptr, pfnProgress,
                 pProgressData) != 0)
     {
-        VSIStatBufL statBufSrc;
-        VSIErrorReset();
         const auto nOldErrorNum = VSIGetLastErrorNo();
+        VSIErrorReset();
+
+        VSIStatBufL statBufSrc;
         const bool srcExists = VSIStatL(m_source.c_str(), &statBufSrc) == 0;
         if (!srcExists)
         {

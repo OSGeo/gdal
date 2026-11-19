@@ -96,31 +96,33 @@ The following configuration options are available:
 Examples
 --------
 
-Listing all the records of a CSW server:
+.. example::
+   :title: Listing all the records of a CSW server
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw
+      ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw
 
-Listing all the records of a CSW server with spatial and an attribute
-filter on a give field:
+.. example::
+   :title: Listing records of a CSW server matching a spatial and attribute filter:
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "subject LIKE '%mineralogy%'"
+      ogrinfo -ro -al -noextent CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "subject LIKE '%mineralogy%'"
 
-Listing all the records of a CSW server that matches a text on any text
-field:
+.. example::
+   :title: Listing all the records of a CSW server that match a text on any text field
 
-::
+   .. code-block::
 
-   ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "anytext LIKE '%France%'"
+      ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -spat 2 49 2 49 -where "anytext LIKE '%France%'"
 
-Listing all the records of a CSW server as ISO 19115/19119:
+.. example::
+   :title: Listing all the records of a CSW server as ISO 19115/19119
 
-::
-
-   ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -oo OUTPUT_SCHEMA=gmd
+   .. code-block:: bash
+   
+      ogrinfo -ro -al -q CSW:http://catalog.data.gov/csw -oo OUTPUT_SCHEMA=gmd
 
 See Also
 --------

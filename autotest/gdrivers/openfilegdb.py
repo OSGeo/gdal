@@ -34,13 +34,13 @@ def test_openfilegb_raster_subdatasets():
     assert ds.RasterXSize == 20
     assert ds.RasterYSize == 20
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/filegdb/gdal_test_data.gdb.zip", gdal.OF_RASTER | gdal.OF_VECTOR
     )
     assert ds
 
     with pytest.raises(Exception):
-        gdal.OpenEx("data/filegdb/gdal_test_data.gdb.zip", gdal.OF_VECTOR)
+        gdal.Open("data/filegdb/gdal_test_data.gdb.zip", gdal.OF_VECTOR)
 
 
 ###############################################################################
@@ -230,7 +230,7 @@ def test_openfilegb_raster_int8():
     assert ds.RasterYSize == 20
     assert ds.RasterCount == 1
     assert ds.GetGeoTransform() == (440720, 60, 0, 3751320, 0, -60)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
     assert ds.GetMetadata("IMAGE_STRUCTURE") == {"COMPRESSION": "DEFLATE"}
     assert ds.GetMetadata("xml:definition")[0].startswith("<DERasterDataset ")
     assert ds.GetMetadata("xml:documentation")[0].startswith("<metadata ")
@@ -286,7 +286,7 @@ def test_openfilegb_raster_rat():
     assert ds.RasterYSize == 20
     assert ds.RasterCount == 1
     assert ds.GetGeoTransform() == (440720, 60, 0, 3751320, 0, -60)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
     assert ds.GetMetadata("IMAGE_STRUCTURE") == {"COMPRESSION": "DEFLATE"}
     band = ds.GetRasterBand(1)
     assert band.DataType == gdal.GDT_Int8
@@ -416,7 +416,7 @@ def test_openfilegb_v9():
     assert ds.RasterXSize == 2552
     assert ds.RasterYSize == 3612
 
-    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    ds = gdal.Open(filename, gdal.OF_VECTOR)
     assert set([ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]) == set(
         [
             "contour_10f_3m",

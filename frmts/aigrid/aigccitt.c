@@ -4074,7 +4074,7 @@ CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
     DecoderState(sp)->runs = NULL;
     DecoderState(sp)->fill = aig_TIFFFax3fillruns;
 
-    if (sizeof(runs_buf) < (size_t)(nBlockXSize * 2 + 3))
+    if (sizeof(runs_buf) / sizeof(GUInt32) < (size_t)(nBlockXSize * 2 + 3))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Run buffer too small");
         return CE_Failure;

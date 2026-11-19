@@ -41,6 +41,11 @@ Description
 
 Return the list of layers of a PDF file, as a JSON array or a text list.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

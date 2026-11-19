@@ -1,5 +1,7 @@
 .. _gdal_raster_calc:
 
+.. program:: gdal_raster_calc
+
 ================================================================================
 ``gdal raster calc``
 ================================================================================
@@ -39,7 +41,8 @@ spatial resolution. The spatial extent check can be disabled with :option:`--no-
 in which case the inputs must have the same dimensions. The spatial reference system check can be
 disabled with :option:`--no-check-crs`.
 
-Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
+Since GDAL 3.12, this algorithm can form the initial step of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
+Starting with GDAL 3.14, this algorithm can be an intermediate step of a pipeline.
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
@@ -97,7 +100,7 @@ Program-Specific Options
     such as latitude-based corrections, solar angle approximations, or zonal masks.
 
     See :example:`raster-calc-center-y` for a usage example.
- 
+
     Note: To work with longitude/latitude values, the input dataset must be in a
     geographic coordinate reference system (for example, EPSG:4326).
 
@@ -172,6 +175,11 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -235,3 +243,29 @@ Examples
            --calc="sin(_CENTER_Y_ * 0.0174533)" \
            -o output.tif
 
+.. example::
+   :title: Create 10-foot contours from a DEM in meters, using a pipeline
+
+   .. code-block:: bash
+
+       gdal raster pipeline ! \
+           read dem_meters.tif ! \
+           calc --calc "3.28084 * X" ! \
+           contour --interval 10 ! \
+           write contours_feet.shp
+
+.. example::
+   :title: Calculate the difference of each band from the mean
+
+       Given a netCDF file with mean monthly temperatures for the month of November over 86 years, this command
+       outputs an 86-band :ref:`raster.vrt` expressing the temperature as a difference from the mean temperature. The
+       :option:`--flatten` option indicates that the ``avg`` function should be applied to all bands as an aggregate,
+       rather than to each band individually.
+
+       .. code-block:: bash
+         
+           gdal raster calc \
+               --input era5_t2m_nov.nc \
+               --output era5_t2m_nov_anom.vrt \
+               --calc "X - avg(X)" \
+               --flatten

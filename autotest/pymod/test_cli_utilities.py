@@ -60,7 +60,7 @@ def get_cli_utility_path_internal(cli_utility_name):
 
 
 def get_cli_utility_path(cli_utility_name):
-    global cli_exe_path
+
     if cli_utility_name in cli_exe_path:
         return cli_exe_path[cli_utility_name]
     cli_exe_path[cli_utility_name] = get_cli_utility_path_internal(cli_utility_name)

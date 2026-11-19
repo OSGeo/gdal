@@ -41,7 +41,7 @@ def test_gdalmdimtranslate_1(gdalmdimtranslate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "out.vrt")
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         f"{gdalmdimtranslate_path} data/mdim.vrt {dst_vrt}"
     )
     assert err is None or err == "", "got error/warning"
@@ -60,7 +60,7 @@ def test_gdalmdimtranslate_if(gdalmdimtranslate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "out.vrt")
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         f"{gdalmdimtranslate_path} -if VRT data/mdim.vrt {dst_vrt}"
     )
     assert err is None or err == "", "got error/warning"
@@ -71,7 +71,7 @@ def test_gdalmdimtranslate_if_error(gdalmdimtranslate_path, tmp_path):
 
     dst_vrt = str(tmp_path / "out.vrt")
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         f"{gdalmdimtranslate_path} -if i_do_not_exist data/mdim.vrt {dst_vrt}"
     )
     assert "i_do_not_exist is not a recognized driver" in err

@@ -30,7 +30,7 @@
 #define MITAB_VERSION_INT 2000000 /* version x.y.z -> xxxyyyzzz */
 
 #ifndef ROUND_INT
-#define ROUND_INT(dX) static_cast<int>((dX) < 0.0 ? (dX)-0.5 : (dX) + 0.5)
+#define ROUND_INT(dX) static_cast<int>((dX) < 0.0 ? (dX) - 0.5 : (dX) + 0.5)
 #endif
 
 #define MITAB_AREA(x1, y1, x2, y2)                                             \
@@ -114,7 +114,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *pszCap) const override = 0;
+    bool TestCapability(const char *pszCap) const override = 0;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override = 0;
 
@@ -180,7 +180,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     void SetEncoding(const char *);
     const char *GetEncoding() const;
     virtual void SetStrictLaundering(bool);
-    int TestUtf8Capability() const;
+    bool TestUtf8Capability() const;
     CPLString NormalizeFieldName(const char *pszName) const;
     ///////////////
     // semi-private.
@@ -281,7 +281,7 @@ class TABFile final : public IMapInfoFile
     }
 
     void ResetReading() override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -454,7 +454,7 @@ class TABView final : public IMapInfoFile
     }
 
     void ResetReading() override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -595,7 +595,7 @@ class TABSeamless final : public IMapInfoFile
                                      const OGRGeometry *poGeom) override;
 
     void ResetReading() override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -755,7 +755,7 @@ class MIFFile final : public IMapInfoFile
     ///////////////
     // Private Write access specific stuff
     //
-    GBool m_bPreParsed;
+    bool m_bPreParsed;
     GBool m_bHeaderWrote;
 
     int WriteMIFHeader();
@@ -788,7 +788,7 @@ class MIFFile final : public IMapInfoFile
         return m_poDefn ? m_poDefn->GetName() : "";
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce) override;
     void ResetReading() override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,

@@ -505,14 +505,14 @@ def test_gdalalg_raster_neighbors_complete():
     if gdal_path is None:
         pytest.skip("gdal binary missing")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster neighbors --kernel"
-    ).split(" ")
+    )
     assert "sharpen" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster neighbors --kernel ["
-    ).split(" ")
+    )
     assert "sharpen" not in out
 
 

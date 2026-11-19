@@ -285,11 +285,11 @@ CPLErr PCRasterRasterBand::IWriteBlock(CPL_UNUSED int nBlockXoff,
         GDALGeoTransform gt;
         if (this->poDS->GetGeoTransform(gt) == CE_None)
         {
-            if (gt[2] == 0.0 && gt[4] == 0.0)
+            if (gt.xrot == 0.0 && gt.yrot == 0.0)
             {
-                west = static_cast<REAL8>(gt[0]);
-                north = static_cast<REAL8>(gt[3]);
-                cellSize = static_cast<REAL8>(gt[1]);
+                west = static_cast<REAL8>(gt.xorig);
+                north = static_cast<REAL8>(gt.yorig);
+                cellSize = static_cast<REAL8>(gt.xscale);
             }
         }
         (void)RputXUL(d_dataset->map(), west);

@@ -64,7 +64,7 @@ void generate(int nBands, uint16_t nPhotometric, uint16_t nBitsPerSample)
         papszOpts = CSLSetNameValue(papszOpts, "PHOTOMETRIC", "CMYK");
     papszOpts = CSLSetNameValue(papszOpts, "BLOCKYSIZE", "16");
     if (nBitsPerSample == 12)
-        papszOpts = CSLSetNameValue(papszOpts, "NBITS", "12");
+        papszOpts = CSLSetNameValue(papszOpts, GDALMD_NBITS, "12");
 
     CPLString osTmpFilename;
     osTmpFilename.Printf("gtiffdataset_guess_jpeg_quality_tmp");

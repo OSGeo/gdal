@@ -23,6 +23,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PDS4")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -48,10 +49,12 @@ def validate_xml(filename):
         force_download=True,
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
-    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
+    with open(f"{tmp_dir}/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "rb") as f:
         data = f.read().replace(b"|[-]|", b"|[\\-]|")
-    with open("tmp/cache/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
+    with open(f"{tmp_dir}/pds.nasa.gov_pds4_pds_v1_PDS4_PDS_1O00.xsd", "wb") as f:
         f.write(data)
 
     gdaltest.download_or_skip(
@@ -74,9 +77,13 @@ def validate_xml(filename):
     )
 
     # Fix issue in schema (cf https://github.com/pds-data-dictionaries/PDS4-LDD-Issue-Repo/issues/344)
-    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb") as f:
+    with open(
+        f"{tmp_dir}/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "rb"
+    ) as f:
         data = f.read().replace(b"|[-]|", b"|[\\-]|")
-    with open("tmp/cache/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb") as f:
+    with open(
+        f"{tmp_dir}/pds.nasa.gov_pds4_geom_v1_PDS4_GEOM_1O00_19A0.xsd", "wb"
+    ) as f:
         f.write(data)
 
     # for GDAL 3.4 / PDS4_PDS_1G00
@@ -164,12 +171,12 @@ def validate_xml(filename):
         force_download=True,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "GMLAS:" + filename,
         open_options=[
             "VALIDATE=YES",
             "FAIL_IF_VALIDATION_ERROR=YES",
-            "CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>tmp/cache</Directory></SchemaCache></Configuration>",
+            f"CONFIG_FILE=<Configuration><AllowRemoteSchemaDownload>false</AllowRemoteSchemaDownload><SchemaCache><Directory>{tmp_dir}</Directory></SchemaCache></Configuration>",
         ],
     )
     assert ds is not None
@@ -741,7 +748,7 @@ def test_pds4_10():
 def test_pds4_11():
 
     filename = "/vsimem/out.xml"
-    for (dt, data) in [
+    for dt, data in [
         (gdal.GDT_UInt8, struct.pack("B", 255)),
         (gdal.GDT_Int8, struct.pack("b", -128)),
         (gdal.GDT_UInt16, struct.pack("H", 65535)),
@@ -885,11 +892,15 @@ def test_pds4_13():
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.Open("PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:3:1")
+        ds = gdal.Open(
+            "PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:3:1", gdal.OF_RASTER
+        )
     assert ds is None
 
     with gdal.quiet_errors():
-        ds = gdal.Open("PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:1:3")
+        ds = gdal.Open(
+            "PDS4:data/pds4/byte_pds4_cart_1700_multi_sds.xml:1:3", gdal.OF_RASTER
+        )
     assert ds is None
 
 
@@ -980,7 +991,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(
@@ -1017,7 +1028,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(
@@ -1049,7 +1060,7 @@ def test_pds4_14():
 </Product_Observational>""",
     )
     with gdal.quiet_errors():
-        ds = gdal.Open(filename)
+        ds = gdal.Open(filename, gdal.OF_RASTER)
     assert ds is None
 
     gdal.FileFromMemBuffer(
@@ -1636,7 +1647,7 @@ def test_pds4_createlabelonly_gtiff():
 
 
 ###############################################################################
-# Test CREATE_LABEL_ONLY=YES with a tiled GTiff (incompatible of raw binary layout)
+# Test CREATE_LABEL_ONLY=YES with a tiled GTiff (incompatible with raw binary layout)
 
 
 def test_pds4_createlabelonly_gtiff_error():
@@ -1706,22 +1717,24 @@ def test_pds4_createlabelonly_vicar():
 # Test CREATE_LABEL_ONLY=YES with FITS
 
 
-def test_pds4_createlabelonly_fits():
+def test_pds4_createlabelonly_fits(tmp_path):
 
     fits_drv = gdal.GetDriverByName("FITS")
     if not fits_drv:
         pytest.skip()
 
-    fits_drv.CreateCopy("tmp/input.fits", gdal.Open("../gcore/data/int16.tif"))
+    fits_drv.CreateCopy(
+        str(tmp_path / "input.fits"), gdal.Open("../gcore/data/int16.tif")
+    )
 
-    src_ds = gdal.Open("tmp/input.fits")
+    src_ds = gdal.Open(str(tmp_path / "input.fits"))
     return _test_createlabelonly(
         src_ds,
         expected_content=[
             "<parsing_standard_id>FITS 3.0</parsing_standard_id>",
             "<disp:vertical_display_direction>Bottom to Top</disp:vertical_display_direction>",
         ],
-        filename="tmp/out.xml",
+        filename=str(tmp_path / "out.xml"),
     )
 
 
@@ -2004,3 +2017,36 @@ def test_pds4_array_3D_with_untypical_band_names(tmp_vsimem):
     assert ds.RasterXSize == 4
     assert ds.GetRasterBand(1).GetNoDataValue() == -999.0
     assert ds.GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE") == "BAND"
+
+
+###############################################################################
+# Test support for browse products
+
+
+@pytest.mark.require_driver("PNG")
+def test_pds4_browse_product_png():
+
+    ds = gdal.Open("data/pds4/M044416018SE_browse.xml")
+    assert ds.RasterXSize == 10
+    assert ds.RasterYSize == 20
+    assert ds.GetRasterBand(1).Checksum() == 2435
+    assert len(ds.GetFileList()) == 2
+    assert ds.GetMetadata("xml:PDS4") is not None
+    assert ds.GetGeoTransform(can_return_null=True) is None
+    assert ds.GetSpatialRef() is None
+
+
+###############################################################################
+# Test support for browse products
+
+
+@pytest.mark.require_driver("GTIFF")
+def test_pds4_browse_product_tiff():
+
+    ds = gdal.Open("data/pds4/M044416018S_map_raw.xml")
+    assert ds.RasterXSize == 26454
+    assert ds.RasterYSize == 82056
+    assert len(ds.GetFileList()) == 2
+    assert ds.GetMetadata("xml:PDS4") is not None
+    assert ds.GetGeoTransform(can_return_null=True) is not None
+    assert ds.GetSpatialRef() is not None

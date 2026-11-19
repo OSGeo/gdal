@@ -19,6 +19,8 @@
 #include "cpl_string.h"
 #include "gdal_utils.h"
 
+#include <functional>
+
 /* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp */
 
 CPL_C_START
@@ -262,6 +264,13 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                                    const char *const *papszSrcDSNames,
                                    const GDALTileIndexOptions *psOptionsIn,
                                    int *pbUsageError);
+
+class OGRSpatialReference;
+
+void EmitTextDisplayOfCRS(
+    const OGRSpatialReference *poSRS, const std::string &osCRSFormat,
+    const std::string &osIntroText,
+    std::function<void(const std::string &)> printFunction);
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

@@ -1,5 +1,7 @@
 .. _gdal_raster_proximity:
 
+.. program:: gdal_raster_proximity
+
 ================================================================================
 ``gdal raster proximity``
 ================================================================================
@@ -20,7 +22,7 @@ Synopsis
 Description
 -----------
 
-:program:`gdal raster proximity` generates a raster proximity map indicating the Cartesian distance from
+:program:`gdal raster proximity` generates a raster proximity map indicating approximate Cartesian distance from
 the center of each pixel to the center of the nearest pixel identified as a target pixel.
 Target pixels are those in the source raster for which the raster pixel value is in the set of
 target pixel values.
@@ -57,12 +59,13 @@ Program-Specific Options
     Maximum distance to search for a target pixel. The NoData value will be output if no target pixel is found within this distance.
     Distance is interpreted in pixels unless `--distance-units geo` is specified.
 
-.. option:: --nodata <NODATA>
+.. option:: --output-nodata <NODATA>
 
-    Nodata value for the output raster. If not specified, the NoData value of the input band will be used.
-    If the output band does not have a NoData value, then the value 65535 will be used for floating point
-    output types and the maximum value that can be stored will be used for the integer output types.
+    NoData value for the output raster. If not specified, the value NaN will be used for floating point
+    output types and the maximum value that can be stored will be used for integer output types.
 
+    Due to an implementation detail of the proximity algorithm, the NoData value must be 
+    representable as a 32-bit floating point number.
 
 .. option:: --target-values <TARGET-VALUES>
 
@@ -87,14 +90,39 @@ Standard Options
 
 .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
 
 .. example::
-
    :title: Proximity map of a raster with max distance of 3 pixels
 
     .. code-block:: bash
 
-        $ gdal raster proximity --max-distance 3  input.tif output.tif
+        gdal raster proximity --max-distance 3 input.tif output.tif
+
+    Pixels exceeding the specified maximum distance of 3 are marked as NoData.
+    Because :option:`--target-values` was not specified, all nonzero pixels are
+    considered targets.
+    Note the pixel in the 4th row and 4th column whose value is 3 rather than
+    the exact distance of 2.83; this is a consequence of the approximation
+    algorithm used by :program:`gdal raster proximity`.
+
+    .. image:: ../../images/programs/gdal_raster_proximity_1.svg
+        :width: 800px
+        :alt: Plot of command inputs and outputs
+
+
+.. example::
+   :title: Proximity map of a two-band raster with different target values for each band using a pipeline stack
+
+    .. code-block:: bash
+
+        $ gdal raster pipeline stack \
+               [ read input.tif ! proximity -b 1 --target-values 1,2,3 ] \
+               [ read input.tif ! proximity -b 2 --target-values 4,5,6 ] ! \
+               write output.tif

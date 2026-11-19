@@ -14,6 +14,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
+
 /************************************************************************/
 /*                   OGROCIArcCenterFromEdgePoints()                    */
 /*                                                                      */
@@ -117,7 +119,7 @@ static void OGROCIStrokeArcToOGRGeometry_Angles(
     nVertexCount =
         (int)ceil(fabs(dfEndAngle - dfStartAngle) / dfMaxAngleStepSizeDegrees) +
         1;
-    nVertexCount = MAX(2, nVertexCount);
+    nVertexCount = std::max(2, nVertexCount);
     dfSlice = (dfEndAngle - dfStartAngle) / (nVertexCount - 1);
     iAppendLocation = poLine->getNumPoints();
 

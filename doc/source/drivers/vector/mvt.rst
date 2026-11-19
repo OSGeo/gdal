@@ -455,13 +455,17 @@ The following layer creation options are supported:
 Examples
 --------
 
-::
+.. example::
 
-   ogrinfo MVT:https://free.tilehosting.com/data/v3/1 -oo tile_extension="pbf.pict?key=${YOUR_KEY}" --debug on -oo metadata_file="https://free.tilehosting.com/data/v3.json?key=${YOUR_KEY}"
+   .. code-block:: bash
 
-::
+      ogrinfo MVT:https://free.tilehosting.com/data/v3/1 -oo tile_extension="pbf.pict?key=${YOUR_KEY}" --debug on -oo metadata_file="https://free.tilehosting.com/data/v3.json?key=${YOUR_KEY}"
 
-   ogr2ogr -f MVT mytileset source.gpkg -dsco MAXZOOM=10
+.. example::
+
+  .. code-block:: bash
+
+      ogr2ogr -f MVT mytileset source.gpkg -dsco MAXZOOM=10
 
 See Also:
 

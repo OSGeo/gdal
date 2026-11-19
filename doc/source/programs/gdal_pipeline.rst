@@ -1,5 +1,7 @@
 .. _gdal_pipeline:
 
+.. program:: gdal_pipeline
+
 ================================================================================
 ``gdal pipeline``
 ================================================================================
@@ -29,9 +31,10 @@ Synopsis
 
 .. program-output:: gdal pipeline --help-doc=main
 
-A pipeline chains several steps, separated with the `!` (exclamation mark) character.
+A pipeline chains several steps, separated with the ``!`` (exclamation mark) character.
+Including a ``!`` between ``gdal pipeline`` and the first step is optional.
 The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``,
-and the last one ``info``, ``tile`` or ``write``.
+and the last one ``export-schema``, ``info``, ``tile`` or ``write``.
 Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack``, ``info``, ``tile``, ``partition`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
@@ -43,44 +46,93 @@ all other steps can potentially be used several times in a pipeline.
 
         $ gdal pipeline ! read in.tif ! footprint ! buffer 20 ! write out.gpkg --overwrite
 
+Steps
+-----
+
 For steps that have both *raster* data type as input and output, consult :ref:`gdal_raster_pipeline`.
 For steps that have both *vector* data type as input and output, consult :ref:`gdal_vector_pipeline`.
 
-The following steps accept raster input and generate vector output:
+The table below lists steps that convert between raster and vector data.
 
-* contour
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Step
+     - Direction
+   * - :ref:`contour <pipeline-contour>`
+     - Raster → Vector
+   * - :ref:`footprint <pipeline-footprint>`
+     - Raster → Vector
+   * - :ref:`pixel-info <pipeline-pixel-info>`
+     - Raster → Vector
+   * - :ref:`polygonize <pipeline-polygonize>`
+     - Raster → Vector
+   * - :ref:`grid <pipeline-grid>`
+     - Vector → Raster
+   * - :ref:`rasterize <pipeline-rasterize>`
+     - Vector → Raster
+   * - :ref:`tee <pipeline-tee>`
+     - Vector → Raster
+
+.. _pipeline-contour:
+
+contour
+*******
 
 .. program-output:: gdal pipeline --help-doc=contour
 
 Details for options can be found in :ref:`gdal_raster_contour`.
 
-* footprint
+.. _pipeline-footprint:
+
+footprint
+*********
 
 .. program-output:: gdal pipeline --help-doc=footprint
 
 Details for options can be found in :ref:`gdal_raster_footprint`.
 
-* polygonize
+.. _pipeline-grid:
 
-.. program-output:: gdal pipeline --help-doc=polygonize
-
-Details for options can be found in :ref:`gdal_raster_polygonize`.
-
-The following steps accept raster vector and generate raster output:
-
-* grid
+grid
+****
 
 .. program-output:: gdal pipeline --help-doc=grid
 
 Details for options can be found in :ref:`gdal_vector_grid`.
 
-* rasterize
+.. _pipeline-pixel-info:
+
+pixel-info
+**********
+
+.. program-output:: gdal pipeline --help-doc=pixel-info
+
+Details for options can be found in :ref:`gdal_raster_pixel_info`.
+
+.. _pipeline-polygonize:
+
+polygonize
+**********
+
+.. program-output:: gdal pipeline --help-doc=polygonize
+
+Details for options can be found in :ref:`gdal_raster_polygonize`.
+
+.. _pipeline-rasterize:
+
+rasterize
+*********
 
 .. program-output:: gdal pipeline --help-doc=rasterize
 
 Details for options can be found in :ref:`gdal_vector_rasterize`.
 
-* tee
+.. _pipeline-tee:
+
+tee
+***
 
 .. program-output:: gdal pipeline --help-doc=tee-raster
 
@@ -141,7 +193,7 @@ Let's imagine we have a :file:`raster_reproject.gdalg.json` with the following c
 
     {
         "type": "gdal_streamed_alg",
-        "command_line": "gdal pipeline ! read in.tif ! reproject --dst-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
+        "command_line": "gdal pipeline ! read in.tif ! reproject --output-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
     }
 
 It is possible to run it with the following command line, overriding the
@@ -171,7 +223,7 @@ For example, given:
 
     {
         "type": "gdal_streamed_alg",
-        "command_line": "gdal pipeline ! read in.tif ! edit --metadata=before=value ! reproject --dst-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
+        "command_line": "gdal pipeline ! read in.tif ! edit --metadata=before=value ! reproject --output-crs=EPSG:4326 ! edit --metadata=CHANGES=reprojected"
     }
 
 the following command line may be used:
@@ -187,6 +239,41 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
+.. _gdal_pipeline_pipe:
+
+Placeholder dataset name ``_PIPE_``
+-----------------------------------
+
+.. versionadded:: 3.13
+
+By default, in a pipeline step that accepts multiple input dataset arguments,
+the first positional argument, ``input``, is implicitly set to the output
+dataset from the previous step. In some cases, it might be desirable to pipe
+the output dataset from the previous step into one of the other input dataset
+arguments instead.
+
+This can be achieved by using the placeholder dataset name ``_PIPE_`` (PIPE with
+leading and trailing underscore character) as
+the value for the alternate dataset argument, while explicitly specifying the
+input positional dataset argument.
+
+.. example::
+   :title: Summarize mean elevation within 200m of points of interest
+
+   .. code-block:: bash
+
+      gdal pipeline read points.geojson ! buffer 200 ! \
+          zonal-stats \
+            --input dem.tif
+            --zones _PIPE_ \
+            --stat mean ! \
+          write \
+            --output-format CSV \
+            --output /vsistdout/
+
+
+It is also possible to achieve the same result by using a input nested pipeline
+as described below.
 
 .. _gdal_nested_pipeline:
 
@@ -216,6 +303,22 @@ an output-generating step like ``info``, ``tile`` or ``write``
 
 In the above example, the value of the ``overlay`` argument of the ``blend``
 step is set as the output of the nested pipeline ``read n43.tif ! hillshade -z 30``.
+
+.. only:: html
+
+   .. image:: ../../images/programs/gdal_pipeline_input_nested.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/gdal_pipeline_input_nested.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/gdal_pipeline_input_nested.svg
 
 .. _gdal_output_nested_pipeline:
 
@@ -260,6 +363,28 @@ with one of them being an output nested pipeline inside an input nested pipeline
                             [ read n43.tif ! hillshade -z 30  ! tee [ write hillshade.tif --overwrite ] ] ! \
                         write colored-hillshade.tif --overwrite
 
+.. only:: html
+
+   .. image:: ../../images/programs/gdal_pipeline_output_nested.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/gdal_pipeline_output_nested.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/gdal_pipeline_output_nested.svg
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
+
 Examples
 --------
 
@@ -275,11 +400,108 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --dst-crs EPSG:4326 ! write out.tif --overwrite
+        $ gdal pipeline ! read in.gpkg ! rasterize --size 1000,1000 ! reproject --output-crs EPSG:4326 ! write out.tif --overwrite
 
 .. example::
    :title: Use an existing pipeline that rasterizes and reprojects, but change its input file and target CRS, and specify the output file
 
    .. code-block:: bash
 
-        $ gdal pipeline raster_reproject.gdalg.json --input=my.gpkg --output=out.tif --dst-crs=EPSG:32631
+        $ gdal pipeline raster_reproject.gdalg.json --input=my.gpkg --output=out.tif --output-crs=EPSG:32631
+
+.. example::
+   :title: Buffer a line dataset to create a new polygon dataset
+   :id: gdal-pipeline-buffer-line
+
+   This example uses a ``lines.gpkg`` dataset containing a single layer named ``lines``,
+   with a geometry field named ``geom`` and an integer attribute named ``width``. The value
+   of this attribute is used as the buffer distance for each feature.
+
+   .. code-block:: bash
+
+        gdal vector pipeline \
+            ! read lines.gpkg \
+            ! sql "SELECT fid, ST_Buffer(geom, width) AS geom FROM lines" \
+            ! set-geom-type --geometry-type Polygon \
+            ! write buffered-lines.gpkg --output-layer=BufferedLines --overwrite --overwrite-layer
+
+   .. note::
+
+      When creating derived geometries using SQL, avoid using ``SELECT *``.
+      Including the original geometry field will result in multiple geometry
+      columns in the output. Instead, explicitly list the required attributes
+      and return a single geometry column.
+
+.. example::
+   :title: Clip a raster dataset using a nested vector pipeline
+   :id: gdal-pipeline-mixed-nested
+
+   This pipeline uses a raster input dataset, and clips it using a buffered geometry coming from a nested vector pipeline.
+   The resulting clipped raster is then resized and written to disk, and shown in the image below.
+
+   .. image:: ../../images/programs/romania.png
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal pipeline \
+            ! read "NE2_50M_SR_W.tif" \
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ] \
+            ! resize --size=70%,70% -r average \
+            ! write romania.png --overwrite
+
+      .. code-tab:: ps1
+
+        gdal pipeline `
+            ! read "NE2_50M_SR_W.tif" `
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ] `
+            ! resize --size=70%,70% -r average `
+            ! write romania.png --overwrite
+
+.. only:: html
+
+   .. image:: ../../images/programs/gdal_mixed_pipeline_nested.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/gdal_mixed_pipeline_nested.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/gdal_mixed_pipeline_nested.svg
+
+.. example::
+   :title: Clip a raster dataset with vector features using ``_PIPE_``
+   :id: gdal-pipeline-mixed-pipe
+
+   This pipeline produces the same result as :example:`gdal-pipeline-mixed-nested`,
+   but instead of using a nested pipeline for the clipping geometry,
+   it uses the special placeholder dataset name :ref:`__PIPE__ <gdal_pipeline_pipe>`
+   to pass the output of the buffering step to ``clip``.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal pipeline \
+          ! read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" \
+          ! filter --where "ADMIN='Romania'" \
+          ! buffer --distance=1 \
+          ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ \
+          ! resize --size=70%,70% -r average \
+          ! write romania.png --overwrite
+
+      .. code-tab:: ps1
+
+        gdal pipeline `
+          ! read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" `
+          ! filter --where "ADMIN='Romania'" `
+          ! buffer --distance=1 `
+          ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ `
+          ! resize --size=70%,70% -r average `
+          ! write romania.png --overwrite

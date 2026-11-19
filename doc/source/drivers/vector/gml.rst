@@ -672,7 +672,7 @@ The following open options are supported:
       :since: 3.11.0
 
       Partially or totally overrides the auto-detected schema to use for creating the layer.
-      The overrides are applied to the schema detected from the GML file or the `.xsd` or the `.gfs`` file if present.
+      The overrides are applied to the schema detected from the GML file or the ``.xsd`` or the ``.gfs`` file if present.
       The overrides are defined as a JSON list of field definitions.
       This can be a filename, a URL or JSON string conformant with the `ogr_fields_override.schema.json schema <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
 
@@ -1396,19 +1396,19 @@ Example:
 Examples
 --------
 
-The ogr2ogr utility can be used to dump the results of a Oracle query to
-GML:
+.. example::
+   :title: Writing the results of an Oracle query to GML
 
-::
+   .. code-block:: bash
+   
+      ogr2ogr -f GML output.gml OCI:usr/pwd@db my_feature -where "id = 0"
 
-   ogr2ogr -f GML output.gml OCI:usr/pwd@db my_feature -where "id = 0"
+.. example::
+   :title: Writing the results of a PostGIS query to GML
 
-The ogr2ogr utility can be used to dump the results of a PostGIS query
-to GML:
+   .. code-block:: bash
 
-::
-
-   ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+      ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 
 See Also
 --------

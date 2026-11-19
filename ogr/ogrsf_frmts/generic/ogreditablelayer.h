@@ -96,7 +96,7 @@ class CPL_DLL OGREditableLayer /* non final */ : public OGRLayerDecorator
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;

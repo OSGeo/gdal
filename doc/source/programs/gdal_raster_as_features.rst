@@ -1,5 +1,7 @@
 .. _gdal_raster_as_features:
 
+.. program:: gdal_raster_as_features
+
 ================================================================================
 ``gdal raster as-features``
 ================================================================================
@@ -24,7 +26,7 @@ Description
 Features may be created as polygons, points, or with no geometry at all.
 Unlike :ref:`gdal_raster_polygonize`, adjacent pixels having the same values are not combined.
 
-This algorithm can be part of a :ref:`gdal_pipeline` or :ref:`gdal_raster_pipeline`.
+This algorithm can be part of a :ref:`gdal_pipeline`.
 
 Program-Specific Options
 ------------------------
@@ -78,6 +80,11 @@ Standard Options
 
    .. include:: gdal_options/update.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -86,17 +93,17 @@ Examples
 
    .. code-block:: bash
 
-       gdal pipeline read input.tif ! 
+       gdal pipeline read input.tif !
                 reclassify -m "[-inf, 150)=1; DEFAULT=NO_DATA" !
-                as-features --geometry-type point --skip-nodata ! 
+                as-features --geometry-type point --skip-nodata !
                 write out.shp
 
 
 .. example::
    :title: Create a polygon grid dividing the globe into 1-degree chunks
-   
+
    .. code-block:: bash
 
-       gdal pipeline create --bbox -180,-90,180,90 --size 360,180 ! 
+       gdal pipeline create --bbox -180,-90,180,90 --size 360,180 !
                 as-features --geometry-type polygon !
                 write grid.shp

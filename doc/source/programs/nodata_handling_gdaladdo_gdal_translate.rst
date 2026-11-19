@@ -1,5 +1,3 @@
-:orphan:
-
 .. ==================================================
 .. Handling NoData with gdaladdo or gdal_translate
 .. ==================================================
@@ -12,7 +10,7 @@ The details of how it is taken into account depends on the resampling kernel:
 
 - for bilinear, cubic, cubicspline and lanczos, for each target pixel, the weights
   of contributing source pixels is set to zero to ignore them when they are masked.
-  There is an extra specificity for cubic: given that some of the weights in the
+  There is an extra specificity for cubic and lanczos: given that some of the weights in the
   kernel are negative, such strategy could lead to strong overshoot/undershoot
   when there is an alternance of valid and invalid pixels. Consequently, if any
   of the horizontal or vertical direction, if the maximum number of valid source

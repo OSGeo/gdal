@@ -76,7 +76,7 @@ HDF4Dataset::~HDF4Dataset()
 char **HDF4Dataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "SUBDATASETS", nullptr);
+                                   TRUE, GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -86,7 +86,7 @@ char **HDF4Dataset::GetMetadataDomainList()
 CSLConstList HDF4Dataset::GetMetadata(const char *pszDomain)
 
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALDataset::GetMetadata(pszDomain);
@@ -938,7 +938,7 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
                 for (int32 j = 0; j < nFields; j++)
                 {
                     SWfieldinfo(hSW, papszFields[j], &iRank, aiDimSizes,
-                                &iNumType, nullptr);
+                                &iNumType, nullptr, 0);
 
                     if (iRank < 2)
                         continue;
@@ -1246,8 +1246,8 @@ GDALDataset *HDF4Dataset::Open(GDALOpenInfo *poOpenInfo)
         delete poDS;
         poDS = nullptr;
 
-        GDALDataset *poRetDS =
-            GDALDataset::FromHandle(GDALOpen(pszSDSName, poOpenInfo->eAccess));
+        GDALOpenInfo oOpenInfo(pszSDSName, poOpenInfo->eAccess);
+        GDALDataset *poRetDS = HDF4ImageDataset::Open(&oOpenInfo);
         CPLFree(pszSDSName);
 
         CPLAcquireMutex(hHDF4Mutex, 1000.0);

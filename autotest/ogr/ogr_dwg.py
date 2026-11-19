@@ -38,7 +38,7 @@ pytestmark = pytest.mark.require_driver("DWG")
 
 def test_ogr_dwg_1():
 
-    ds = gdal.OpenEx("data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"])
+    ds = gdal.Open("data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"])
 
     assert ds is not None
 
@@ -75,7 +75,7 @@ def test_ogr_dwg_2():
 
     with gdaltest.config_option("DWG_INLINE_BLOCKS", "FALSE"):
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
         )
 
@@ -116,7 +116,7 @@ def test_ogr_dwg_3():
 
     with gdaltest.config_option("DWG_INLINE_BLOCKS", "FALSE"):
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
         )
 
@@ -154,7 +154,7 @@ def test_ogr_dwg_4():
         {"DWG_INLINE_BLOCKS": "FALSE", "DWG_ATTRIBUTES": "TRUE"}
     ):
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/cad/Building_A_Floor_0_Mapwize.dwg", allowed_drivers=["DWG"]
         )
 
@@ -195,7 +195,7 @@ def test_ogr_dwg_5():
         }
     ):
 
-        ds = gdal.OpenEx("data/cad/attribs.dwg", allowed_drivers=["DWG"])
+        ds = gdal.Open("data/cad/attribs.dwg", allowed_drivers=["DWG"])
 
         assert ds is not None
 
@@ -213,7 +213,7 @@ def test_ogr_dwg_5():
         {"DWG_INLINE_BLOCKS": "FALSE", "DWG_ATTRIBUTES": "TRUE"}
     ):
 
-        ds = gdal.OpenEx("data/cad/attribs.dwg", allowed_drivers=["DWG"])
+        ds = gdal.Open("data/cad/attribs.dwg", allowed_drivers=["DWG"])
 
         assert ds is not None
 

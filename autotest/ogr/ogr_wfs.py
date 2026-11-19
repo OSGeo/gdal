@@ -29,6 +29,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("WFS")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -498,16 +499,16 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 @pytest.mark.parametrize("using_wfs_prefix", [True, False])
 def test_ogr_wfs_fake_wfs_server(using_wfs_prefix):
 
-    (process, port) = webserver.launch(handler=WFSHTTPHandler)
+    process, port = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
 
     try:
         with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
             if using_wfs_prefix:
-                ds = gdal.OpenEx("WFS:http://127.0.0.1:%d/fakewfs" % port)
+                ds = gdal.Open("WFS:http://127.0.0.1:%d/fakewfs" % port)
             else:
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     "http://127.0.0.1:%d/fakewfs" % port, allowed_drivers=["WFS"]
                 )
 
@@ -751,23 +752,23 @@ def test_ogr_wfs_xmldescriptionfile_requires_csv():
 
 
 @pytest.mark.skip("FIXME: re-enable after adapting test")
-def test_ogr_wfs_xmldescriptionfile_to_be_updated():
+def test_ogr_wfs_xmldescriptionfile_to_be_updated(tmp_path):
 
     if not gdaltest.geoserver_wfs:
         pytest.skip()
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "wt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "wt")
     f.write("<OGRWFSDataSource>\n")
     f.write("<URL>http://demo.opengeo.org/geoserver/wfs</URL>\n")
     f.write("</OGRWFSDataSource>\n")
     f.close()
 
     # Should only emit GetCapabilities and serialize it
-    ds = ogr.Open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    ds = ogr.Open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
     assert ds is not None
     ds = None
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
     content = f.read()
     assert (
         content.find("WFS_Capabilities") != -1
@@ -778,19 +779,19 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
     f.close()
 
     # Should emit DescribeFeatureType and serialize its result
-    ds = ogr.Open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    ds = ogr.Open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
     assert ds is not None
     ds.GetLayerByName("za:za_points").GetLayerDefn()
     ds = None
 
-    f = open("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
+    f = open(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rt")
     content = f.read()
     assert (
         content.find('<OGRWFSLayer name="za:za_points">') != -1
     ), "XML description file was not filled as expected"
     f.close()
 
-    os.unlink("tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
+    os.unlink(tmp_path / "ogr_wfs_xmldescriptionfile_to_be_updated.xml")
 
 
 ###############################################################################
@@ -798,17 +799,12 @@ def test_ogr_wfs_xmldescriptionfile_to_be_updated():
 # The following test should issue 0 WFS http request
 
 
-def test_ogr_wfs_getcapabilitiesfile():
+def test_ogr_wfs_getcapabilitiesfile(tmp_path):
 
-    ds = ogr.Open("data/wfs/getcapabilities_wfs.xml")
+    gdal.CopyFile("data/wfs/getcapabilities_wfs.xml", tmp_path / "tmp.xml")
 
-    if ds is None:
-        gdal.Unlink("data/wfs/getcapabilities_wfs.gfs")
-        pytest.fail()
-
-    ds = None
-
-    gdal.Unlink("data/wfs/getcapabilities_wfs.gfs")
+    ds = ogr.Open(tmp_path / "tmp.xml")
+    assert ds
 
 
 ###############################################################################
@@ -1321,9 +1317,11 @@ def wfs110_onelayer_describefeaturetype():
           <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="long" nillable="true" type="xsd:long"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime"/>
+          <xsd:element maxOccurs="1" minOccurs="0" name="date" nillable="true" type="xsd:date"/>
           <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType"/>
         </xsd:sequence>
       </xsd:extension>
@@ -1348,31 +1346,31 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_describefeaturetype(
     lyr = ds.GetLayer(0)
 
     lyr_defn = lyr.GetLayerDefn()
-    assert lyr_defn.GetFieldCount() == 8
+    assert lyr_defn.GetFieldCount() == 10
     assert lyr_defn.GetGeomFieldCount() == 1
 
-    ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
+    ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    assert lyr_defn.GetFieldCount() == 7
+    assert lyr_defn.GetFieldCount() == 9
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "YES"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=NO"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    assert lyr_defn.GetFieldCount() == 7
+    assert lyr_defn.GetFieldCount() == 9
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint", open_options=["EXPOSE_GML_ID=YES"])
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    assert lyr_defn.GetFieldCount() == 8
+    assert lyr_defn.GetFieldCount() == 10
 
     with gdal.config_option("GML_EXPOSE_GML_ID", "NO"):
-        ds = gdal.OpenEx("WFS:/vsimem/wfs_endpoint")
+        ds = gdal.Open("WFS:/vsimem/wfs_endpoint")
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    assert lyr_defn.GetFieldCount() == 7
+    assert lyr_defn.GetFieldCount() == 9
 
 
 ###############################################################################
@@ -1394,9 +1392,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
         data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
         gdal.VSIFCloseL(f)
-        assert (
-            data
-            == """<OGRWFSDataSource>
+        assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1408,19 +1404,16 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
   </WFS_Capabilities>
 </OGRWFSDataSource>
 """
-        )
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
-        assert lyr.GetLayerDefn().GetFieldCount() == 8
+        assert lyr.GetLayerDefn().GetFieldCount() == 10
         ds = None
 
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
         data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
         gdal.VSIFCloseL(f)
-        assert (
-            data
-            == """<OGRWFSDataSource>
+        assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1441,9 +1434,11 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
               <xsd:element maxOccurs="1" minOccurs="0" name="boolean" nillable="true" type="xsd:boolean" />
               <xsd:element maxOccurs="1" minOccurs="0" name="short" nillable="true" type="xsd:short" />
               <xsd:element maxOccurs="1" minOccurs="0" name="int" nillable="true" type="xsd:int" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="long" nillable="true" type="xsd:long" />
               <xsd:element maxOccurs="1" minOccurs="0" name="float" nillable="true" type="xsd:float" />
               <xsd:element maxOccurs="1" minOccurs="0" name="double" nillable="true" type="xsd:double" />
               <xsd:element maxOccurs="1" minOccurs="0" name="dt" nillable="true" type="xsd:dateTime" />
+              <xsd:element maxOccurs="1" minOccurs="0" name="date" nillable="true" type="xsd:date" />
               <xsd:element maxOccurs="1" minOccurs="0" name="shape" nillable="true" type="gml:PointPropertyType" />
             </xsd:sequence>
           </xsd:extension>
@@ -1454,11 +1449,10 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
   </OGRWFSLayer>
 </OGRWFSDataSource>
 """
-        )
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
-        assert lyr.GetLayerDefn().GetFieldCount() == 8
+        assert lyr.GetLayerDefn().GetFieldCount() == 10
         ds = None
 
         with gdaltest.tempfile(
@@ -2011,7 +2005,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_getextent_optimized(
             got_extent = lyr.GetExtent()
         assert got_extent == (0.0, 0.0, 0.0, 0.0)
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "WFS:/vsimem/wfs_endpoint", open_options=["TRUST_CAPABILITIES_BOUNDS=YES"]
         )
         lyr = ds.GetLayer(1)
@@ -2492,7 +2486,10 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f = lyr.GetNextFeature()
         assert f is not None
 
-    with gdaltest.tempfile(three_intersects_request, content,), ds.ExecuteSQL(
+    with gdaltest.tempfile(
+        three_intersects_request,
+        content,
+    ), ds.ExecuteSQL(
         "SELECT * FROM my_layer WHERE ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))')) OR "
         + "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 4326)) OR "
         + "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 'EPSG:4326'))"
@@ -3017,8 +3014,12 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(
   <wfs:Insert>
     <feature:my_layer xmlns:feature="http://foo">
       <feature:str>foo</feature:str>
+      <feature:boolean>true</feature:boolean>
       <feature:int>123456789</feature:int>
-      <feature:double>2.34</feature:double>
+      <feature:long>123456789123456789</feature:long>
+      <feature:double>2.5</feature:double>
+      <feature:dt>2026-03-19T12:34:56Z</feature:dt>
+      <feature:date>2026-03-19</feature:date>
       <feature:shape><gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos></gml:Point></feature:shape>
     </feature:my_layer>
   </wfs:Insert>
@@ -3038,8 +3039,12 @@ def test_ogr_wfs_vsimem_wfs110_insertfeature(
     ):
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetField("str", "foo")
+        f.SetField("boolean", True)
         f.SetField("int", 123456789)
-        f.SetField("double", 2.34)
+        f.SetField("long", 123456789123456789)
+        f.SetField("double", 2.5)
+        f.SetField("dt", "2026-03-19T12:34:56Z")
+        f.SetField("date", "2026-03-19")
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
         ret = lyr.CreateFeature(f)
         assert ret == 0
@@ -3103,6 +3108,9 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(
       <wfs:Name>int</wfs:Name>
     </wfs:Property>
     <wfs:Property>
+      <wfs:Name>long</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
       <wfs:Name>float</wfs:Name>
     </wfs:Property>
     <wfs:Property>
@@ -3110,6 +3118,9 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(
     </wfs:Property>
     <wfs:Property>
       <wfs:Name>dt</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>date</wfs:Name>
     </wfs:Property>
     <ogc:Filter>
       <ogc:GmlObjectId gml:id="my_layer.1"/>
@@ -3187,14 +3198,20 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(
       <wfs:Value>123456789</wfs:Value>
     </wfs:Property>
     <wfs:Property>
+      <wfs:Name>long</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
       <wfs:Name>float</wfs:Name>
     </wfs:Property>
     <wfs:Property>
       <wfs:Name>double</wfs:Name>
-      <wfs:Value>2.34</wfs:Value>
+      <wfs:Value>2.5</wfs:Value>
     </wfs:Property>
     <wfs:Property>
       <wfs:Name>dt</wfs:Name>
+    </wfs:Property>
+    <wfs:Property>
+      <wfs:Name>date</wfs:Name>
     </wfs:Property>
     <ogc:Filter>
       <ogc:GmlObjectId gml:id="my_layer.1"/>
@@ -3207,7 +3224,7 @@ def test_ogr_wfs_vsimem_wfs110_updatefeature(
         f.SetField("gml_id", "my_layer.1")
         f.SetField("str", "foo")
         f.SetField("int", 123456789)
-        f.SetField("double", 2.34)
+        f.SetField("double", 2.5)
         f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 49)"))
         ret = lyr.SetFeature(f)
         assert ret == 0
@@ -5156,9 +5173,9 @@ def test_ogr_wfs_vsimem_wfs200_supported_crs():
         supported_srs_list = lyr.GetSupportedSRSList()
         assert supported_srs_list is not None
         assert len(supported_srs_list) == 3
-        assert supported_srs_list[0].GetAuthorityCode(None) == "4326"
-        assert supported_srs_list[1].GetAuthorityCode(None) == "3857"
-        assert supported_srs_list[2].GetAuthorityCode(None) == "4258"
+        assert supported_srs_list[0].GetAuthorityCode() == "4326"
+        assert supported_srs_list[1].GetAuthorityCode() == "3857"
+        assert supported_srs_list[2].GetAuthorityCode() == "4258"
 
         # Test changing active SRS
         assert lyr.SetActiveSRS(0, supported_srs_list[1]) == ogr.OGRERR_NONE
@@ -5208,7 +5225,7 @@ def test_ogr_wfs_vsimem_wfs200_supported_crs():
                 (-10.0, 40.0, 15.0, 50.0),
                 abs=1e-3,
             )
-            assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4258"
+            assert lyr.GetSpatialRef().GetAuthorityCode() == "4258"
             f = lyr.GetNextFeature()
             assert f is not None
             assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"

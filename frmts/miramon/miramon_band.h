@@ -63,14 +63,20 @@ enum class MMBytesPerPixel
 class MMRBand final
 {
   public:
-    MMRBand(MMRRel &pfRel, const CPLString &osSection);
+    MMRBand(MMRRel &pfRel, const CPLString &osSection);  // Used at reading part
+    MMRBand(GDALProgressFunc pfnProgress, void *pProgressData,
+            GDALDataset &oSrcDS, int nIBand, const CPLString &osDestPath,
+            GDALRasterBand &papoBand,  // Used at writing part
+            bool bCompress, bool bCategorical, const CPLString &osPattern,
+            const CPLString &osBandSection, bool bNeedOfNomFitxer);
     MMRBand(const MMRBand &) =
         delete;  // I don't want to construct a MMRBand from another MMRBand (effc++)
+    MMRBand(MMRBand &&) = default;
     MMRBand &operator=(const MMRBand &) =
         delete;  // I don't want to assign a MMRBand to another MMRBand (effc++)
     ~MMRBand();
 
-    const CPLString GetRELFileName() const;
+    const CPLString &GetRELFileName() const;
     CPLErr GetRasterBlock(int nXBlock, int nYBlock, void *pData, int nDataSize);
 
     void UpdateGeoTransform();
@@ -103,6 +109,24 @@ class MMRBand final
     const CPLString &GetFriendlyDescription() const
     {
         return m_osFriendlyDescription;
+    }
+
+    MMDataType GeteMMNCDataType() const
+    {
+        // Gets not compressed data type
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_BYTE_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_BYTE;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_INTEGER;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_UINTEGER;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_LONG_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_LONG;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_REAL_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_REAL;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_DOUBLE;
+        return m_eMMDataType;
     }
 
     MMDataType GeteMMDataType() const
@@ -210,7 +234,91 @@ class MMRBand final
         return m_bIsValid;
     }
 
+    CPLString GetColor_Const() const
+    {
+        return m_osColor_Const;
+    }
+
+    GDALColorEntry GetConstantColorRGB() const
+    {
+        return m_sConstantColorRGB;
+    }
+
+    bool ValidConstantColorRGB() const
+    {
+        return m_osValidColorConst;
+    }
+
+    const CPLString &GetColor_Paleta() const
+    {
+        return m_osColor_Paleta;
+    }
+
+    const CPLString &GetColor_TractamentVariable() const
+    {
+        return m_osColor_TractamentVariable;
+    }
+
+    const CPLString &GetTractamentVariable() const
+    {
+        return m_osTractamentVariable;
+    }
+
+    const CPLString &GetColor_EscalatColor() const
+    {
+        return m_osColor_EscalatColor;
+    }
+
+    const CPLString &GetColor_N_SimbolsALaTaula() const
+    {
+        return m_osColor_N_SimbolsALaTaula;
+    }
+
+    const CPLString &GetShortRATName() const
+    {
+        return m_osShortRATName;
+    }
+
+    const CPLString &GetAssociateREL() const
+    {
+        return m_osAssociateREL;
+    }
+
+    const CPLString &GetUnits() const
+    {
+        return m_osBandUnitType;
+    }
+
+    bool IsCategorical() const
+    {
+        return m_bIsCategorical;
+    }
+
+    const CPLString &GetColorTableNameFile() const
+    {
+        return m_osCTName;
+    }
+
+    const CPLString &GetAttributeTableDBFNameFile() const
+    {
+        return m_osRATDBFName;
+    }
+
+    const CPLString &GetAttributeTableRELNameFile() const
+    {
+        return m_osRATRELName;
+    }
+
     GDALGeoTransform m_gt{};  // Bounding box for this band
+
+    // Writing part
+    CPLString GetRELDataType() const;
+    bool WriteBandFile(GDALDataset &oSrcDS, int nNBands, int nIBand);
+    static size_t CompressRowType(MMDataType nDataType, const void *pRow,
+                                  int nCol, void *pBuffer);
+    template <typename T>
+    static size_t CompressRowTypeTpl(const T *pRow, int nCol,
+                                     void *pBufferVoid);
 
   private:
     bool Get_ATTRIBUTE_DATA_or_OVERVIEW_ASPECTES_TECNICS_int(
@@ -219,13 +327,16 @@ class MMRBand final
     static bool GetDataTypeAndBytesPerPixel(const char *pszCompType,
                                             MMDataType *nCompressionType,
                                             MMBytesPerPixel *nBytesPerPixel);
-    bool UpdateDataTypeFromREL(const CPLString osSection);
+    bool UpdateDataTypeFromREL(const CPLString &osSection);
     bool UpdateColumnsNumberFromREL(const CPLString &osSection);
     bool UpdateRowsNumberFromREL(const CPLString &osSection);
     void UpdateNoDataValue(const CPLString &osSection);
     void UpdateBoundingBoxFromREL(const CPLString &osSection);
+    void UpdateSimbolizationInfo(const CPLString &osSection);
+    void UpdateRATInfo(const CPLString &osSection);
     void UpdateReferenceSystemFromREL();
     void UpdateMinMaxValuesFromREL(const CPLString &osSection);
+    void UpdateUnitTypeValueFromREL(const CPLString &osSection);
     void UpdateMinMaxVisuValuesFromREL(const CPLString &osSection);
     void UpdateFriendlyDescriptionFromREL(const CPLString &osSection);
 
@@ -235,6 +346,46 @@ class MMRBand final
     int PositionAtStartOfRowOffsetsInFile();
     bool FillRowOffsets();
     vsi_l_offset GetFileSize();
+
+    // Writing part
+    bool WriteRowOffsets();
+    bool UpdateDataTypeAndBytesPerPixelFromRasterBand(GDALRasterBand &papoBand);
+    void UpdateNoDataValueFromRasterBand(GDALRasterBand &papoBand);
+    void UpdateRowMinMax(const void *pBuffer);
+
+    template <typename T> void UpdateRowMinMax(const void *pBufferT)
+    {
+        const T *pBuffer = static_cast<const T *>(pBufferT);
+
+        if (!m_nWidth)
+            return;
+
+        for (int nICol = 0; nICol < m_nWidth; nICol++)
+        {
+            double value = static_cast<double>(pBuffer[nICol]);
+            if (m_bNoDataSet && m_dfNoData == value)
+                continue;
+
+            if (value <= m_dfMin)  // "=" just in case of the minimum case
+            {
+                m_bMinSet = true;
+                m_dfMin = value;
+            }
+
+            if (value >= m_dfMax)  // "=" just in case of the maximum case
+            {
+                m_bMaxSet = true;
+                m_dfMax = value;
+            }
+        }
+    }
+
+    int WriteColorTable(GDALDataset &oSrcDS);
+    int WriteColorTableFromRAT(GDALDataset &oSrcDS);
+    int WriteAttributeTable(GDALDataset &oSrcDS);
+
+    GDALProgressFunc m_pfnProgress = nullptr;  // Inherited from DataSet
+    void *m_pProgressData = nullptr;           // Inherited from DataSet
 
     bool m_bIsValid =
         false;  // Determines if the created object is valid or not.
@@ -257,6 +408,9 @@ class MMRBand final
     // Assigned Subdataset for this band.
     int m_nAssignedSDS = 0;
 
+    // Band index in RasterBand list
+    int m_nIBand = 0;  // Index in MMRBand (0-indexed)
+
     // Section in REL file that give information about the band
     CPLString m_osBandSection;
     // File name relative to REL file with banda data
@@ -275,6 +429,9 @@ class MMRBand final
     int m_nDataTypeSizeBytes = 0;
 
     bool m_bIsCompressed = false;
+    bool m_bIsCategorical = false;
+
+    CPLString m_osBandUnitType = "";
 
     // Min and Max values from metadata:  This value should correspond
     // to the actual minimum and maximum, not to an approximation.
@@ -305,6 +462,33 @@ class MMRBand final
     // Nodata stuff
     bool m_bNoDataSet = false;  // There is nodata?
     double m_dfNoData = 0.0;    // Value of nodata
+
+    // Color table information
+    CPLString m_osColor_Const = "";
+    GDALColorEntry m_sConstantColorRGB = {0, 0, 0, 255};
+    bool m_osValidColorConst = false;
+    CPLString m_osColor_Paleta = "";
+    CPLString m_osColor_TractamentVariable = "";
+    CPLString m_osTractamentVariable = "";
+    CPLString m_osColor_EscalatColor = "";
+    CPLString m_osColor_N_SimbolsALaTaula = "";
+
+    // Attribute table information
+    // Table name
+    CPLString m_osShortRATName = "";
+    // Field in the table that is used as VALUE
+    CPLString m_osAssociateREL = "";
+
+    // Color table in writing part of the driver
+    GDALColorTable *m_poCT = nullptr;
+    CPLString m_osCTName = "";
+
+    // Attributte table in writing part of the driver
+    GDALRasterAttributeTable *m_poRAT = nullptr;
+    CPLString m_osRATDBFName = "";
+    CPLString m_osRATRELName = "";
+    // Name of the column that relates the band with the RAT
+    CPLString m_osValue = "";
 };
 
 #endif /* ndef MM_BAND_INCLUDED */

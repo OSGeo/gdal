@@ -76,7 +76,7 @@ class GDALVectorSimplifyCoverageOutputLayer final
         return OGRLayer::GetFeatureCount(bForce);
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCFastFeatureCount))
         {
@@ -96,7 +96,7 @@ class GDALVectorSimplifyCoverageOutputLayer final
         return false;
     }
 
-    bool ProcessGeos() override
+    bool ProcessGeos(GDALProgressFunc pfnProgress, void *pProgressData) override
     {
         // Perform coverage simplification
         GEOSGeometry *coll = GEOSGeom_createCollection_r(
@@ -109,6 +109,9 @@ class GDALVectorSimplifyCoverageOutputLayer final
         }
 
         m_apoGeosInputs.clear();
+
+        GDALGEOSProgressReporter oReporter(m_poGeosContext, pfnProgress,
+                                           pProgressData);
 
         m_poGeosResultAsCollection = GEOSCoverageSimplifyVW_r(
             m_poGeosContext, coll, m_opts.tolerance, m_opts.preserveBoundary);
@@ -130,13 +133,14 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
     GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
+    auto poDstDS =
+        std::make_unique<GDALVectorNonStreamingAlgorithmDataset>(*poSrcDS);
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 
     for (auto &&poSrcLayer : poSrcDS->GetLayers())
     {
-        if (m_activeLayer.empty() ||
+        if ((m_activeLayer.empty() && poSrcLayer->GetGeomType() != wkbNone) ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
             progressHelper.AddProcessedLayer(*poSrcLayer);
@@ -147,7 +151,7 @@ bool GDALVectorSimplifyCoverageAlgorithm::RunStep(
         }
     }
 
-    if (!progressHelper.HasProcessedLayers())
+    if (!m_activeLayer.empty() && !progressHelper.HasProcessedLayers())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
                     "Specified layer '%s' was not found",

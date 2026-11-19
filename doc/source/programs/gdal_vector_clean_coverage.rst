@@ -1,5 +1,7 @@
 .. _gdal_vector_clean_coverage:
 
+.. program:: gdal_vector_clean_coverage
+
 ================================================================================
 ``gdal vector clean-coverage``
 ================================================================================
@@ -47,7 +49,7 @@ Program-Specific Options
 .. option:: --maximum-gap-width <MAXIMUM-GAP-WIDTH>
 
     Defines the largest area that should be considered a "gap" and merged into
-    an adjacent polygon. Gaps will be merged unless a circle with radius larger 
+    an adjacent polygon. Gaps will be merged unless a circle with radius larger
     than the specified tolerance can be inscribed within the gap. The default
     maximum gap width is zero, meaning that gaps are not closed.
 
@@ -59,6 +61,7 @@ Program-Specific Options
 .. option:: --merge-strategy <MERGE-STRATEGY>
 
     Method by which overlaps or gaps should be added to adjacent polygons. Options include:
+
     - longest-border (default): add areas to the polygon with which the longest border is shared
     - max-area: add areas to the largest adjacent polygon
     - min-area: add areas to the smallest adjacent polygon
@@ -73,7 +76,7 @@ Program-Specific Options
    Specifies the name of the layer to which features will be written.
    By default, the names of the output layers will be the same as the
    names of the input layers.
-   
+
 .. option:: --snapping-distance <SNAPPING-DISTANCE>
 
     Controls the node snapping step, when nearby vertices are snapped together.
@@ -115,6 +118,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

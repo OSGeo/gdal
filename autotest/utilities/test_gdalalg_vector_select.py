@@ -21,12 +21,17 @@ def get_select_alg():
     return gdal.GetGlobalAlgorithmRegistry()["vector"]["select"]
 
 
-def test_gdalalg_vector_select_fields():
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields(use_deprecated_fields):
 
     select_alg = get_select_alg()
+    if use_deprecated_fields:
+        select_alg["fields"] = ["EAS_ID", "_ogr_geometry_"]
+    else:
+        select_alg["field"] = "EAS_ID"
+        select_alg["geometry-field"] = "_ogr_geometry_"
     assert select_alg.ParseCommandLineArguments(
         [
-            "--fields=EAS_ID,_ogr_geometry_",
             "--of=stream",
             "../ogr/data/poly.shp",
             "streamed_output",
@@ -73,7 +78,64 @@ def test_gdalalg_vector_select_fields():
     lyr.SetSpatialFilter(None)
 
 
-def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
+def test_gdalalg_vector_select_geom():
+
+    alg = get_select_alg()
+
+    alg["geometry"] = True
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetLayerDefn().GetFieldCount() == 0
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+
+
+def test_gdalalg_vector_select_named_geom():
+
+    alg = get_select_alg()
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("lyr", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("custom_geom", ogr.wkbLineString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (0 0, 1 1)"))
+    src_lyr.CreateFeature(f)
+
+    alg["geometry"] = True
+    alg["input"] = src_ds
+    alg["output-format"] = "stream"
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+    dst_lyr = dst_ds.GetLayer(0)
+
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef() is not None
+    assert dst_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "custom_geom"
+
+
+def test_gdalalg_vector_select_no_fields_or_geom():
+
+    alg = get_select_alg()
+
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(
+        Exception, match="Must specify --field, --geometry-field and/or --geometry"
+    ):
+        alg.Run()
+
+
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem, use_deprecated_fields):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone, srs=None)
@@ -84,7 +146,9 @@ def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
     select_alg = get_select_alg()
     select_alg["input"] = src_ds
     select_alg["output"] = out_filename
-    select_alg["fields"] = ["geom_field2"]
+    select_alg["fields" if use_deprecated_fields else "geometry-field"] = [
+        "geom_field2"
+    ]
     assert select_alg.ParseCommandLineArguments(["--of", "MEM"])
     assert select_alg.Run()
 
@@ -94,56 +158,70 @@ def test_gdalalg_vector_select_fields_geom_named(tmp_vsimem):
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "geom_field2"
 
 
-def test_gdalalg_vector_select_fields_non_existing(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_non_existing(tmp_vsimem, use_deprecated_fields):
 
     out_filename = str(tmp_vsimem / "out.shp")
 
     select_alg = get_select_alg()
+    select_alg["fields" if use_deprecated_fields else "field"] = [
+        "EAS_ID",
+        "i_do_not_exist",
+    ]
     with pytest.raises(
         Exception,
         match="Field 'i_do_not_exist' does not exist in layer 'poly'. You may specify --ignore-missing-fields to skip it",
     ):
-        select_alg.ParseRunAndFinalize(
-            ["--fields=EAS_ID,i_do_not_exist", "../ogr/data/poly.shp", out_filename]
-        )
+        select_alg.ParseRunAndFinalize(["../ogr/data/poly.shp", out_filename])
 
 
-def test_gdalalg_vector_select_fields_non_existing_ignore_missing_fields(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_non_existing_ignore_missing_fields(
+    tmp_vsimem, use_deprecated_fields
+):
 
     out_filename = str(tmp_vsimem / "out.shp")
 
     select_alg = get_select_alg()
+    select_alg["fields" if use_deprecated_fields else "geometry-field"] = [
+        "EAS_ID",
+        "_ogr_geometry_",
+        "i_do_not_exist",
+    ]
     with gdaltest.error_handler():
         assert select_alg.ParseRunAndFinalize(
             [
                 "--ignore-missing-fields",
-                "--fields=EAS_ID,_ogr_geometry_,i_do_not_exist",
                 "../ogr/data/poly.shp",
                 out_filename,
             ]
         )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
 
 
-def test_gdalalg_vector_select_fields_exclude(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_exclude(tmp_vsimem, use_deprecated_fields):
 
     out_filename = str(tmp_vsimem / "out.shp")
 
     select_alg = get_select_alg()
+    select_alg["fields" if use_deprecated_fields else "field"] = [
+        "EAS_ID",
+        "i_do_not_exist",
+    ]
     assert select_alg.ParseRunAndFinalize(
         [
             "--exclude",
-            "--fields=EAS_ID,i_do_not_exist",
             "../ogr/data/poly.shp",
             out_filename,
         ]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -152,16 +230,22 @@ def test_gdalalg_vector_select_fields_exclude(tmp_vsimem):
         assert lyr_defn.GetGeomFieldCount() == 1
 
 
-def test_gdalalg_vector_select_fields_exclude_ogr_geometry(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_exclude_ogr_geometry(
+    tmp_vsimem, use_deprecated_fields
+):
 
     out_filename = str(tmp_vsimem / "out.dbf")
 
     select_alg = get_select_alg()
+    select_alg["fields" if use_deprecated_fields else "geometry-field"] = [
+        "_ogr_geometry_"
+    ]
     assert select_alg.ParseRunAndFinalize(
-        ["--exclude", "--fields=_ogr_geometry_", "../ogr/data/poly.shp", out_filename]
+        ["--exclude", "../ogr/data/poly.shp", out_filename]
     )
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -171,7 +255,10 @@ def test_gdalalg_vector_select_fields_exclude_ogr_geometry(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_exclude_name_geom_fields(
+    tmp_vsimem, use_deprecated_fields
+):
 
     tmp_filename = str(tmp_vsimem / "tmp.gpkg")
     out_filename = str(tmp_vsimem / "out.dbf")
@@ -179,11 +266,10 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
     gdal.VectorTranslate(tmp_filename, "../ogr/data/poly.shp")
 
     select_alg = get_select_alg()
-    assert select_alg.ParseRunAndFinalize(
-        ["--exclude", "--fields=geom", tmp_filename, out_filename]
-    )
+    select_alg["fields" if use_deprecated_fields else "geometry-field"] = ["geom"]
+    assert select_alg.ParseRunAndFinalize(["--exclude", tmp_filename, out_filename])
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -193,7 +279,10 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_vsimem):
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(
+    tmp_vsimem, use_deprecated_fields
+):
 
     tmp_filename = str(tmp_vsimem / "tmp.gpkg")
     out_filename = str(tmp_vsimem / "out.dbf")
@@ -201,11 +290,14 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
     gdal.VectorTranslate(tmp_filename, "../ogr/data/poly.shp")
 
     select_alg = get_select_alg()
-    assert select_alg.ParseRunAndFinalize(
-        ["--exclude", "--fields=i_do_not_exist", tmp_filename, out_filename]
-    )
+    if use_deprecated_fields:
+        select_alg["fields"] = "i_do_not_exist"
+    else:
+        select_alg["field"] = "i_do_not_exist"
+        select_alg["geometry-field"] = "i_do_not_exist"
+    assert select_alg.ParseRunAndFinalize(["--exclude", tmp_filename, out_filename])
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
         assert [
@@ -214,7 +306,8 @@ def test_gdalalg_vector_select_fields_exclude_name_geom_fields_not_excluded(tmp_
         assert lyr_defn.GetGeomFieldCount() == 1
 
 
-def test_gdalalg_vector_select_active_layer():
+@pytest.mark.parametrize("use_deprecated_fields", [True, False])
+def test_gdalalg_vector_select_active_layer(use_deprecated_fields):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("the_layer")
@@ -230,8 +323,9 @@ def test_gdalalg_vector_select_active_layer():
     select_alg["input"] = src_ds
     select_alg["active-layer"] = "the_layer"
 
+    select_alg["fields" if use_deprecated_fields else "field"] = "b"
     assert select_alg.ParseCommandLineArguments(
-        ["--fields=b", "--of", "MEM", "--output", "memory_ds"]
+        ["--of", "MEM", "--output", "memory_ds"]
     )
     assert select_alg.Run()
 
@@ -241,3 +335,89 @@ def test_gdalalg_vector_select_active_layer():
 
     out_lyr = out_ds.GetLayer(1)
     assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+
+
+def test_gdalalg_vector_select_pipeline_output_layer():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! select --output-layer foo --fields EAS_ID"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+
+def test_gdalalg_vector_select_pipeline_output_layer_multiple_input_layers():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("a").CreateField(ogr.FieldDefn("x"))
+    src_ds.CreateLayer("b")
+
+    with pytest.raises(
+        Exception,
+        match="Argument 'output-layer' cannot be used when the input dataset has multiple layers, unless argument 'active-layer' is specified",
+    ):
+        gdal.alg.vector.pipeline(
+            input=src_ds, pipeline="read ! select --output-layer foo --fields x"
+        )
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline="read ! select --active-layer a --output-layer foo --fields x",
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
+
+        lyr = ds.GetLayer(1)
+        assert lyr.GetDescription() == "b"
+        assert lyr.GetLayerDefn().GetName() == "b"
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_select_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! select --fields osm_id,highway,_ogr_geometry_ ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"
+
+
+def test_gdalalg_vector_select_multiple_geometries():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_a"))
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom_b"))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["geom_a"] = ogr.CreateGeometryFromWkt("POINT (0 1)")
+    f["geom_b"] = ogr.CreateGeometryFromWkt("POINT (2 3)")
+    src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.select(
+        input=src_ds, output="", output_format="MEM", fields="geom_b"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "geom_b"
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 3)"
+
+    with gdal.alg.vector.select(
+        input=src_ds, output="", output_format="MEM", fields="geom_a", exclude=True
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
+        assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetName() == "geom_b"
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (2 3)"

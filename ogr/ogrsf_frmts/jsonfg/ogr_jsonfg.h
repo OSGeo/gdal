@@ -124,7 +124,7 @@ class OGRJSONFGStreamedLayer final
         return poFeatureDefn_;
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     GIntBig GetFeatureCount(int bForce) override;
 
@@ -204,7 +204,7 @@ class OGRJSONFGWriteLayer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     OGRErr SyncToDisk() override;
 
@@ -297,7 +297,7 @@ class OGRJSONFGDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     OGRErr SyncToDiskInternal();
 

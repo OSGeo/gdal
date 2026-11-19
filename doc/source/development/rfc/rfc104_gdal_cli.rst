@@ -481,8 +481,8 @@ Detailed usage help message of "gdal vector pipeline"
     Reproject.
 
     Options:
-      -s, --src-crs <SRC-CRS>                              Source CRS
-      -d, --dst-crs <DST-CRS>                              Destination CRS [required]
+      -s, --input-crs <INPUT-CRS>                          Input CRS
+      -d, --output-crs <OUTPUT-CRS>                        Output CRS
 
     * write [OPTIONS] <OUTPUT>
     --------------------------
@@ -533,8 +533,8 @@ subcommands, in which case they are augmented with the options of the 'read' and
       --overwrite-layer                                    Whether overwriting existing layer is allowed
       --append                                             Whether appending to existing layer is allowed
       --output-layer <OUTPUT-LAYER>                        Output layer name
-      -s, --src-crs <SRC-CRS>                              Source CRS
-      -d, --dst-crs <DST-CRS>                              Destination CRS [required]
+      -s, --input-crs <INPUT-CRS>                          Input CRS
+      -d, --output-crs <OUTPUT-CRS>                        Output CRS [required]
 
     Advanced Options:
       --if, --input-format <INPUT-FORMAT>                  Input formats [may be repeated]
@@ -644,9 +644,9 @@ it must be with their below semantics and syntax.
 * ``--bbox <xmin>,<ymin>,<xmax>,<ymax>``: as used by ``gdal vector info``,
   ``gdal vector convert``, ``gdal raster convert``
 
-* ``--src-crs <crs_spec>``: Override source CRS specification. Accept ``--s_srs`` as hidden alias for old CLI compatibility.
+* ``--input-crs <crs_spec>``: Override source CRS specification. Accept ``--s_srs`` as hidden alias for old CLI compatibility.
 
-* ``--dst-crs <crs_spec>``: Define target CRS specification. Accept ``--t_srs`` as hidden alias for old CLI compatibility.
+* ``--output-crs <crs_spec>``: Define target CRS specification. Accept ``--t_srs`` as hidden alias for old CLI compatibility.
 
 * ``--override-crs <crs_spec>``: Override CRS without reprojection. Accept ``--a_srs`` as hidden alias for old CLI compatibility.
 
@@ -992,7 +992,7 @@ A GDALAlgorithm has the following main methods:
   our existing CLI utilities. I have come to this conclusion because some of
   the behavior I needed to implement would have been to complicate to integrate
   within argparser, some behavior being very GDAL specific (dealing with dataset
-  objects, various syntaxic sugar), with a very low chance of being candidates
+  objects, various syntactic sugar), with a very low chance of being candidates
   for argparser upstream inclusion (or accepted by upstream).
   Extending argparser was felt more difficult to actually re-implement the
   functionality we needed.

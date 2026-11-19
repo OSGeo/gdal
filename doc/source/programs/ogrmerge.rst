@@ -182,6 +182,11 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
     content is determined by ``layer_name_template``. The syntax of
     ``layer_name_template`` is the same as for :option:`-nln`.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -190,7 +195,7 @@ Examples
 
    .. code-block:: bash
 
-       ogrmerge -f VRT -o merged.vrt *.shp
+       ogrmerge -o merged.vrt *.shp
 
 
 .. example::
@@ -198,7 +203,7 @@ Examples
 
    .. code-block:: bash
 
-       ogrmerge -f GPKG -o merged.gpkg *.shp
+       ogrmerge -o merged.gpkg *.shp
 
 .. example::
    :title: Adding a field to indicate the source layer

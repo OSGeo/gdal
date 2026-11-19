@@ -82,15 +82,16 @@ int BitMask::CountValidBits() const
   const Byte numBitsHB[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
   const Byte* ptr = m_pBits;
   int sum = 0;
-  int i = Size();
-  while (i--)
+  size_t i = Size();
+  while (i)
   {
+    --i;
     sum += numBitsHB[*ptr & 15] + numBitsHB[*ptr >> 4];
     ptr++;
   }
 
   // subtract undefined bits potentially contained in the last byte
-  for (int k = m_nCols * m_nRows; k < Size() * 8; k++)
+  for (int k = m_nCols * m_nRows; static_cast<size_t>(k) < Size() * 8; k++)
     if (IsValid(k))
       sum--;
 

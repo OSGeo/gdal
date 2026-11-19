@@ -101,7 +101,7 @@ enum class AWSCredentialsSource
 {
     UNINITIALIZED,
     NO_SIGN_REQUEST,
-    REGULAR,       // credentials from env variables or ~/.aws/crediential
+    REGULAR,       // credentials from env variables or ~/.aws/credential
     EC2,           // credentials from EC2 private networking
     WEB_IDENTITY,  // credentials from Web Identity Token
                    // See
@@ -115,6 +115,7 @@ enum class AWSCredentialsSource
     // credentials from credential_process command
     // See https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html
     CREDENTIAL_PROCESS,
+    NASA_EARTHDATA,  // credentials from Nasa Earthdata login mechanism
 };
 
 class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
@@ -252,6 +253,26 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         return m_osRegion;
     }
 
+    const std::string &GetAccessKeyId() const
+    {
+        return m_osAccessKeyId;
+    }
+
+    const std::string &GetSecretAccessKey() const
+    {
+        return m_osSecretAccessKey;
+    }
+
+    const std::string &GetSessionToken() const
+    {
+        return m_osSessionToken;
+    }
+
+    AWSCredentialsSource GetCredentialsSource() const
+    {
+        return m_eCredentialsSource;
+    }
+
     const std::string &GetRequestPayer() const
     {
         return m_osRequestPayer;
@@ -260,6 +281,11 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     bool GetVirtualHosting() const
     {
         return m_bUseVirtualHosting;
+    }
+
+    bool GetUseHTTPS() const
+    {
+        return m_bUseHTTPS;
     }
 
     void SetEndpoint(const std::string &osStr);

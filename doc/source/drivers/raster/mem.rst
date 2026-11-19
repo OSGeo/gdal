@@ -58,7 +58,7 @@ or
 -  LINES: Height of raster in lines. (required)
 -  BANDS: Number of bands, defaults to 1. (optional)
 -  DATATYPE: Name of the data type, as returned by GDALGetDataTypeName()
-   (eg. Byte, Int16) Defaults to Byte. (optional)
+   (e.g., Byte, Int16) Defaults to Byte. (optional)
 -  PIXELOFFSET: Offset in bytes between the start of one pixel and the
    next on the same scanline. (optional)
 -  LINEOFFSET: Offset in bytes between the start of one scanline and the
@@ -73,7 +73,7 @@ or
    :ref:`gdal_translate`. If the passed string includes comma or double-quote characters (typically WKT),
    it should be surrounded by double-quote characters and the double-quote characters inside it
    should be escaped with anti-slash.
-   e.g ``SPATIALREFERENCE="GEOGCRS[\"WGS 84\",[... snip ...],ID[\"EPSG\",4326]]"``
+   e.g., ``SPATIALREFERENCE="GEOGCRS[\"WGS 84\",[... snip ...],ID[\"EPSG\",4326]]"``
 
 .. warning::
 

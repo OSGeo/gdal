@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -18,6 +19,12 @@ from osgeo import gdal, ogr
 
 def get_alg():
     return gdal.GetGlobalAlgorithmRegistry()["raster"]["polygonize"]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def set_cpl_tmpdir(tmp_path_factory):
+    with gdaltest.set_cpl_tmpdir(tmp_path_factory, "test_gdalalg_raster_polygonize"):
+        yield
 
 
 def test_gdalalg_raster_polygonize():
@@ -36,7 +43,7 @@ def test_gdalalg_raster_polygonize():
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("polygonize")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 281
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "DN"
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
@@ -304,3 +311,21 @@ def test_gdalalg_raster_polygonize_no_next_usable_step_in_pipeline(tmp_vsimem):
 
     with ogr.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 281
+
+
+def test_gdalalg_raster_polygonize_pipeline_output_layer(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! polygonize --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "foo"
+
+
+def test_gdalalg_raster_polygonize_pipeline(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! polygonize --output-layer foo ! write --output-format=MEM --output="
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "polygonize"

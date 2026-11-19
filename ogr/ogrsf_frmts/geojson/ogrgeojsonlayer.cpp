@@ -507,7 +507,7 @@ OGRErr OGRGeoJSONLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONLayer::TestCapability(const char *pszCap) const
+bool OGRGeoJSONLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCCurveGeometries))

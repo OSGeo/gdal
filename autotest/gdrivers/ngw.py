@@ -40,6 +40,7 @@ pytestmark = [
     ),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():
@@ -63,7 +64,6 @@ def startup_and_cleanup():
         )
 
     gdaltest.ngw_ds = None
-    gdaltest.clean_tmp()
 
     try:
         shutil.rmtree("gdalwmscache")
@@ -86,7 +86,7 @@ def get_new_name():
 
 
 def check_tms(sub):
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         sub[0],
         gdal.OF_RASTER,
         open_options=[
@@ -227,7 +227,7 @@ def test_ngw_5():
         pytest.skip()
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         url,
         gdal.OF_RASTER,
         open_options=[
@@ -258,7 +258,7 @@ def test_ngw_6():
         pytest.skip()
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster2_id
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         url,
         gdal.OF_RASTER,
         open_options=[
@@ -289,7 +289,7 @@ def test_ngw_7():
         pytest.skip()
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         url,
         gdal.OF_RASTER,
         open_options=[
@@ -318,7 +318,7 @@ def test_ngw_8():
         pytest.skip()
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.raster1_id
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         url,
         gdal.OF_RASTER,
         open_options=[

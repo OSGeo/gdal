@@ -54,7 +54,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
     bool Create(const char *pszName, CSLConstList papszOptions);
@@ -119,7 +119,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     }
 
     GIntBig GetFeatureCount(int) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *, int) override;
 
@@ -284,7 +284,7 @@ OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONSeqDataSource::TestCapability(const char *pszCap) const
+bool OGRGeoJSONSeqDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return eAccess == GA_Update;
@@ -536,7 +536,7 @@ json_object *OGRGeoJSONSeqLayer::GetNextObject(bool bLooseIdentification)
         }
         else
         {
-            // No separator ? then accummulate
+            // No separator ? then accumulate
             m_osFeatureBuffer.append(m_osBuffer.data() + m_nPosInBuffer,
                                      m_nBufferValidSize - m_nPosInBuffer);
             if (m_nMaxObjectSize > 0 &&
@@ -666,7 +666,7 @@ GIntBig OGRGeoJSONSeqLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoJSONSeqLayer::TestCapability(const char *pszCap) const
+bool OGRGeoJSONSeqLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))
         return true;
@@ -843,8 +843,8 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
         }
         else
         {
-            CPLHTTPResult *pResult =
-                GeoJSONHTTPFetchWithContentTypeHeader(pszUnprefixedFilename);
+            CPLHTTPResult *pResult = GeoJSONHTTPFetchWithContentTypeHeader(
+                pszUnprefixedFilename, false, nullptr);
             if (!pResult)
             {
                 return FALSE;

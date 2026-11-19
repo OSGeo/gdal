@@ -725,7 +725,7 @@ int ILI2Reader::SaveClasses(const char *pszFile = nullptr)
     catch (const DOMException &toCatch)
     {
         // Can happen with createElement() in ILI2Handler::startElement()
-        CPLError(CE_Failure, CPLE_AppDefined, "DOMException: %s\n",
+        CPLError(CE_Failure, CPLE_AppDefined, "DOMException: %s",
                  transcode(toCatch.getMessage()).c_str());
         VSIFCloseL(fp);
         OGRDestroyXercesInputSource(is);
@@ -733,7 +733,7 @@ int ILI2Reader::SaveClasses(const char *pszFile = nullptr)
     }
     catch (const SAXException &toCatch)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Parsing failed: %s\n",
+        CPLError(CE_Failure, CPLE_AppDefined, "Parsing failed: %s",
                  transcode(toCatch.getMessage()).c_str());
         VSIFCloseL(fp);
         OGRDestroyXercesInputSource(is);

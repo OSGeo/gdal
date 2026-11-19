@@ -32,6 +32,9 @@ CURVEPOLYGON, MULTICURVE and MULTISURFACE
 GeoPackage raster/tiles are supported. See the
 :ref:`GeoPackage raster <raster.gpkg>` documentation page.
 
+Validation whether a GeoPackage file conforms to the GeoPackage specification
+can be done with :ref:`gdal_driver_gpkg_validate`.
+
 Driver capabilities
 -------------------
 
@@ -525,7 +528,11 @@ The following configuration options are available:
 
 - :copy-config:`OGR_SQLITE_CACHE`
 
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
 - :copy-config:`OGR_SQLITE_SYNCHRONOUS`
+
+  see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
 
 - :copy-config:`OGR_SQLITE_LOAD_EXTENSIONS`
 
@@ -675,7 +682,7 @@ custom entry of srs_id=99999 with the following properties:
 
 Note that the use of a LOCAL_CS / EngineeringCRS is mostly to provide a valid
 CRS definition to comply with the requirements of the GeoPackage specification
-and to be compatible of other applications (or GDAL 3.8 or earlier), but the
+and to be compatible with other applications (or GDAL 3.8 or earlier), but the
 semantics of that entry is intended to be "undefined SRS of any kind".
 
 Level of support of GeoPackage Extensions
@@ -796,44 +803,57 @@ The same performance hints apply as those mentioned for the
 Examples
 --------
 
--  Simple translation of a single shapefile into GeoPackage. The table
+.. example::
+   :title: Simple translation of a single shapefile into GeoPackage
+
+   The table
    'abc' will be created with the features from abc.shp and attributes
    from abc.dbf. The file ``filename.gpkg`` must **not** already exist,
    as it will be created. For adding new layers into existing geopackage
    run ogr2ogr with **-update**.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg abc.shp
 
--  Update of an existing GeoPackage file – e.g. a GeoPackage template –
+.. example::
+   :title: Updating an existing GeoPackage file
+
+   Updates an existing file – e.g. a GeoPackage template –
    by adding features to it from another GeoPackage file containing
    features according to the same or a backwards compatible database
    schema.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -append output.gpkg input.gpkg
 
--  Translation of a directory of shapefiles into a GeoPackage. Each file
+.. example::
+   :title: Converting a directory of shapefiles into a GeoPackage
+
+   Each file
    will end up as a new table within the GPKG file. The file
    ``filename.gpkg`` must **not** already exist, as it will be created.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg ./path/to/dir
 
--  Translation of a PostGIS database into a GeoPackage. Each table in
+.. example::
+   :title: Converting  a PostGIS database into a GeoPackage
+
+   Each table in
    the database will end up as a table in the GPKG file. The file
    ``filename.gpkg`` must **not** already exist, as it will be created.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
 
-- Perform a join between 2 GeoPackage databases:
+.. example::
+   :title: Performing a join between two GeoPackage databases
 
-    ::
+    .. code-block:: bash
 
       ogrinfo my_spatial.gpkg \
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \

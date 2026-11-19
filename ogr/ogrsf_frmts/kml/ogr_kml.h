@@ -35,6 +35,11 @@ class OGRKMLLayer final : public OGRLayer
                 bool bWriter, OGRwkbGeometryType eType, OGRKMLDataSource *poDS);
     ~OGRKMLLayer() override;
 
+    OGRFeatureDefn *GetLayerDefn()
+    {
+        return poFeatureDefn_;
+    }
+
     //
     // OGRLayer Interface
     //
@@ -45,7 +50,7 @@ class OGRKMLLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override;
 
@@ -105,7 +110,7 @@ class OGRKMLDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     //
     // OGRKMLDataSource Interface
@@ -134,7 +139,7 @@ class OGRKMLDataSource final : public GDALDataset
 
     void GrowExtents(OGREnvelope *psGeomBounds);
 #ifdef HAVE_EXPAT
-    KML *GetKMLFile()
+    KMLVector *GetKMLFile()
     {
         return poKMLFile_;
     }
@@ -152,7 +157,7 @@ class OGRKMLDataSource final : public GDALDataset
 
   private:
 #ifdef HAVE_EXPAT
-    KML *poKMLFile_ = nullptr;
+    KMLVector *poKMLFile_ = nullptr;
 #endif
 
     OGRKMLLayer **papoLayers_ = nullptr;

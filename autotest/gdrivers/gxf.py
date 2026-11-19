@@ -73,7 +73,9 @@ gxf_list = [
 def test_gxf(downloadURL, fileName, checksum, download_size):
     gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
-    ds = gdal.Open("tmp/cache/" + fileName)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(tmp_dir + "/" + fileName)
 
     assert (
         ds.GetRasterBand(1).Checksum() == checksum

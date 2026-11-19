@@ -454,12 +454,12 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bHasMinX && bHasMinY && bHasMaxX && bHasMaxY)
     {
         poDS->bGotTransform = true;
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[1] = (dfMaxX - dfMinX) / nCols;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -(dfMaxY - dfMinY) / nRows;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.xscale = (dfMaxX - dfMinX) / nCols;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -(dfMaxY - dfMinY) / nRows;
     }
 
     if (!osDescription.empty())

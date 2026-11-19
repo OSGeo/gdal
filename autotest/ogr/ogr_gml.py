@@ -26,6 +26,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GML")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -59,10 +60,12 @@ def have_gml_validation():
         "http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip", "SCHEMAS_OPENGIS_NET.zip"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = ogr.Open("data/gml/expected_gml_gml3.gml")
 
     with gdal.config_option(
-        "GDAL_OPENGIS_SCHEMAS", "/vsizip/./tmp/cache/SCHEMAS_OPENGIS_NET.zip"
+        "GDAL_OPENGIS_SCHEMAS", f"/vsizip/{tmp_dir}/SCHEMAS_OPENGIS_NET.zip"
     ):
         with ds.ExecuteSQL("SELECT ValidateSchema()") as lyr:
 
@@ -408,24 +411,31 @@ def test_ogr_gml_10(tmp_path):
 # Test reading a geometry element specified with <GeometryElementPath>
 
 
-def test_ogr_gml_11():
+def test_ogr_gml_11(tmp_path):
+
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gml", tmp_path / "testgeometryelementpath.gml"
+    )
+    gdal.CopyFile(
+        "data/gml/testgeometryelementpath.gfs", tmp_path / "testgeometryelementpath.gfs"
+    )
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testgeometryelementpath.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testgeometryelementpath.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testgeometryelementpath.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testgeometryelementpath.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testgeometryelementpath.gfs", "rb+")
+        f = open(tmp_path / "testgeometryelementpath.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testgeometryelementpath.gml")
+    ds = ogr.Open(tmp_path / "testgeometryelementpath.gml")
     lyr = ds.GetLayer(0)
     assert (
         lyr.GetGeometryColumn() == "location1container|location1"
@@ -521,31 +531,33 @@ def test_ogr_gml_14():
     for f in files:
         gdaltest.download_or_skip("http://download.osgeo.org/gdal/data/gml/" + f, f)
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     with gdal.config_options(
         {
             "GML_SKIP_RESOLVE_ELEMS": "NONE",
-            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink1resolved.gml",
+            "GML_SAVE_RESOLVED_TO": f"{tmp_dir}/xlink1resolved.gml",
         }
     ):
         with gdal.quiet_errors():
-            gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+            gml_ds = ogr.Open(f"{tmp_dir}/xlink1.gml")
     gml_ds = None
 
     with gdal.config_options(
         {
             "GML_SKIP_RESOLVE_ELEMS": "gml:directedNode",
-            "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink2resolved.gml",
+            "GML_SAVE_RESOLVED_TO": f"{tmp_dir}/xlink2resolved.gml",
         }
     ):
-        gml_ds = ogr.Open("tmp/cache/xlink1.gml")
+        gml_ds = ogr.Open(f"{tmp_dir}/xlink1.gml")
         del gml_ds
 
     try:
-        fp = open("tmp/cache/xlink1resolved.gml", "r")
+        fp = open(f"{tmp_dir}/xlink1resolved.gml", "r")
         text = fp.read()
         fp.close()
-        os.remove("tmp/cache/xlink1resolved.gml")
-        fp = open("tmp/cache/expected1.gml", "r")
+        os.remove(f"{tmp_dir}/xlink1resolved.gml")
+        fp = open(f"{tmp_dir}/expected1.gml", "r")
         expectedtext = fp.read()
         fp.close()
     except (IOError, OSError):
@@ -554,11 +566,11 @@ def test_ogr_gml_14():
     assert text == expectedtext, "Problem with file 1"
 
     try:
-        fp = open("tmp/cache/xlink2resolved.gml", "r")
+        fp = open(f"{tmp_dir}/xlink2resolved.gml", "r")
         text = fp.read()
         fp.close()
-        os.remove("tmp/cache/xlink2resolved.gml")
-        fp = open("tmp/cache/expected2.gml", "r")
+        os.remove(f"{tmp_dir}/xlink2resolved.gml")
+        fp = open(f"{tmp_dir}/expected2.gml", "r")
         expectedtext = fp.read()
         fp.close()
     except (IOError, OSError):
@@ -975,7 +987,7 @@ def test_ogr_gml_26(tmp_path):
 
     lyr = ds.GetLayer(0)
 
-    assert lyr.GetGeomType() == ogr.wkbPolygon25D
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
 
     ds = None
 
@@ -1008,7 +1020,7 @@ def test_ogr_gml_27(tmp_path):
 
     lyr = ds.GetLayer(0)
 
-    assert lyr.GetGeomType() == ogr.wkbPolygon25D
+    assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
 
     ds = None
 
@@ -1292,7 +1304,7 @@ def test_ogr_gml_36(tmp_path, GML_FACE_HOLE_NEGATIVE, skip_resolve_as_open_optio
                 "GML_FACE_HOLE_NEGATIVE": GML_FACE_HOLE_NEGATIVE,
             }
         ):
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 tmp_path / "GmlTopo-sample.xml",
                 open_options=["SKIP_RESOLVE_ELEMS=NONE"],
             )
@@ -1343,7 +1355,7 @@ def test_ogr_gml_38(tmp_path, resolver, skip_resolve_as_open_option):
     )
 
     if skip_resolve_as_open_option:
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_path / "sample_gml_face_hole_negative_no.xml",
             open_options=[f"SKIP_RESOLVE_ELEMS={resolver}"],
         )
@@ -1394,7 +1406,7 @@ def test_ogr_gml_huge_resolver_same_nested_property_name(
     check_ds(ds)
 
     if skip_resolve_as_open_option:
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_path / "same_nested_property_name.gml",
             open_options=["SKIP_RESOLVE_ELEMS=HUGE"],
         )
@@ -1426,24 +1438,26 @@ def test_ogr_gml_40():
 def validate(filename):
 
     # if gdal.GetDriverByName('GMLAS'):
-    #    assert gdal.OpenEx('GMLAS:' + filename, open_options=['VALIDATE=YES', 'FAIL_IF_VALIDATION_ERROR=YES']) is not None
+    #    assert gdal.Open('GMLAS:' + filename, open_options=['VALIDATE=YES', 'FAIL_IF_VALIDATION_ERROR=YES']) is not None
     #    return
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.mkdir("tmp/cache/SCHEMAS_OPENGIS_NET")
+        os.mkdir(f"{tmp_dir}/SCHEMAS_OPENGIS_NET")
     except OSError:
         pass
 
     try:
-        os.stat("tmp/cache/SCHEMAS_OPENGIS_NET/gml")
+        os.stat(f"{tmp_dir}/SCHEMAS_OPENGIS_NET/gml")
     except OSError:
         gdaltest.unzip(
-            "tmp/cache/SCHEMAS_OPENGIS_NET", "tmp/cache/SCHEMAS_OPENGIS_NET.zip"
+            f"{tmp_dir}/SCHEMAS_OPENGIS_NET", f"{tmp_dir}/SCHEMAS_OPENGIS_NET.zip"
         )
 
     ds = ogr.Open(filename)
 
-    with gdal.config_option("GDAL_OPENGIS_SCHEMAS", "./tmp/cache/SCHEMAS_OPENGIS_NET"):
+    with gdal.config_option("GDAL_OPENGIS_SCHEMAS", f"{tmp_dir}/SCHEMAS_OPENGIS_NET"):
         lyr = ds.ExecuteSQL("SELECT ValidateSchema()")
 
     feat = lyr.GetNextFeature()
@@ -1792,7 +1806,7 @@ def test_ogr_gml_50(tmp_vsimem):
 )
 def test_ogr_gml_read_FeaturePropertyList_in_gfs(open_options):
 
-    ds = gdal.OpenEx("data/gml/testfeaturepropertylist.gml", open_options=open_options)
+    ds = gdal.Open("data/gml/testfeaturepropertylist.gml", open_options=open_options)
     assert ds.GetLayerCount() == 2
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -1821,7 +1835,7 @@ def test_ogr_gml_read_FeaturePropertyList_in_gfs(open_options):
 )
 def test_ogr_gml_read_FeatureProperty_in_gfs(open_options):
 
-    ds = gdal.OpenEx("data/gml/testfeaturepropertylist2.xml", open_options=open_options)
+    ds = gdal.Open("data/gml/testfeaturepropertylist2.xml", open_options=open_options)
     assert ds.GetLayerCount() == 3
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -2141,7 +2155,7 @@ def test_ogr_gml_58(tmp_path):
         ("administrativeUnit_href", "#AU.1"),
         ("zoning_href", "#CZ.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2166,7 +2180,7 @@ def test_ogr_gml_58(tmp_path):
         ("administrativeUnit_href", None),
         ("zoning_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2201,7 +2215,7 @@ def test_ogr_gml_58a(tmp_path):
         ("endLifespanVersion", "2003-01-01T00:00:00.0Z"),
         ("administrativeUnit_href", "#AU.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
 
     feat = lyr.GetNextFeature()
@@ -2218,7 +2232,7 @@ def test_ogr_gml_58a(tmp_path):
         ("endLifespanVersion", None),
         ("administrativeUnit_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     feat = None
     lyr = None
@@ -2249,7 +2263,7 @@ def test_ogr_gml_58b(tmp_path):
         ("validTo", "2003-01-01T00:00:00.0Z"),
         ("parcel_href", ["#Parcel.1", "#Parcel.2"]),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert feat.GetGeomFieldRef(0).ExportToWkt() == "LINESTRING (2 49,3 50)"
 
@@ -2266,7 +2280,7 @@ def test_ogr_gml_58b(tmp_path):
         ("validTo", None),
         ("parcel_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert feat.GetGeomFieldRef(0).ExportToWkt() == "LINESTRING (2 49,3 50)"
     feat = None
@@ -2311,7 +2325,7 @@ def test_ogr_gml_58c(tmp_path):
         ("validTo", "2003-01-01T00:00:00.0Z"),
         ("upperLevelUnit_href", "#ulu.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2343,7 +2357,7 @@ def test_ogr_gml_58c(tmp_path):
         ("validTo", None),
         ("upperLevelUnit_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2359,24 +2373,27 @@ def test_ogr_gml_58c(tmp_path):
 # Test GFS conditions
 
 
-def test_ogr_gml_59():
+def test_ogr_gml_59(tmp_path):
+
+    gdal.CopyFile("data/gml/testcondition.gml", tmp_path / "testcondition.gml")
+    gdal.CopyFile("data/gml/testcondition.gfs", tmp_path / "testcondition.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/testcondition.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/testcondition.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "testcondition.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "testcondition.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/testcondition.gfs", "rb+")
+        f = open(tmp_path / "testcondition.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/testcondition.gml")
+    ds = ogr.Open(tmp_path / "testcondition.gml")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
     expected = [
@@ -2385,7 +2402,7 @@ def test_ogr_gml_59():
         ("name_others_lang", ["de"]),
         ("name_others", ["Deutsche name"]),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     feat = None
     lyr = None
@@ -2418,24 +2435,27 @@ def test_ogr_gml_60(tmp_path):
 # Test reading a element specified with a full path in <ElementPath>
 
 
-def test_ogr_gml_61():
+def test_ogr_gml_61(tmp_path):
+
+    gdal.CopyFile("data/gml/gmlsubfeature.gml", tmp_path / "gmlsubfeature.gml")
+    gdal.CopyFile("data/gml/gmlsubfeature.gfs", tmp_path / "gmlsubfeature.gfs")
 
     # Make sure the .gfs file is more recent that the .gml one
     try:
-        gml_mtime = os.stat("data/gml/gmlsubfeature.gml").st_mtime
-        gfs_mtime = os.stat("data/gml/gmlsubfeature.gfs").st_mtime
+        gml_mtime = os.stat(tmp_path / "gmlsubfeature.gml").st_mtime
+        gfs_mtime = os.stat(tmp_path / "gmlsubfeature.gfs").st_mtime
         touch_gfs = gfs_mtime <= gml_mtime
     except Exception:
         touch_gfs = True
     if touch_gfs:
         print("Touching .gfs file")
-        f = open("data/gml/gmlsubfeature.gfs", "rb+")
+        f = open(tmp_path / "gmlsubfeature.gfs", "rb+")
         data = f.read(1)
         f.seek(0, 0)
         f.write(data)
         f.close()
 
-    ds = ogr.Open("data/gml/gmlsubfeature.gml")
+    ds = ogr.Open(tmp_path / "gmlsubfeature.gml")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2, "did not get expected geometry column name"
 
@@ -2581,10 +2601,12 @@ def test_ogr_gml_64(parser):
 @pytest.mark.parametrize("parser", ("XERCES", "EXPAT"))
 def test_ogr_gml_billion_laugh(parser):
 
+    # Expat's limit may abort before GDAL's own limit.
+    # If Xerces is not available, Expat is used as a fallback.
     with gdal.config_option("GML_PARSER", parser), pytest.raises(
-        Exception, match="File probably corrupted"
+        Exception, match="File probably corrupted|limit on input amplification factor"
     ):
-        with gdal.OpenEx("data/gml/billionlaugh.gml") as ds:
+        with gdal.Open("data/gml/billionlaugh.gml") as ds:
             assert ds.GetDriver().GetDescription() == "GML"
             for lyr in ds:
                 for f in lyr:
@@ -3193,7 +3215,7 @@ def test_ogr_gml_69(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(tmp_vsimem / "ogr_gml_69.gml", open_options=["EMPTY_AS_NULL=NO"])
+    ds = gdal.Open(tmp_vsimem / "ogr_gml_69.gml", open_options=["EMPTY_AS_NULL=NO"])
     lyr = ds.GetLayerByName("test")
     assert (
         lyr.GetLayerDefn()
@@ -3325,7 +3347,7 @@ def test_ogr_gml_71bis(tmp_path):
     shutil.copy("data/gml/wfsjointlayer.gml", tmp_path)
 
     # With .xsd but that is only partially understood
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "wfsjointlayer.gml",
         open_options=["XSD=data/gml/wfsjointlayer_not_understood.xsd"],
     )
@@ -3411,7 +3433,7 @@ def test_ogr_gml_73(tmp_path):
 def test_ogr_gml_74(tmp_path):
 
     # With .xsd
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gml/expected_gml_gml32.gml", open_options=["FORCE_SRS_DETECTION=YES"]
     )
     lyr = ds.GetLayer(0)
@@ -3420,7 +3442,7 @@ def test_ogr_gml_74(tmp_path):
 
     shutil.copy("data/gml/expected_gml_gml32.gml", tmp_path / "ogr_gml_74.gml")
     # Without .xsd or .gfs
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "ogr_gml_74.gml", open_options=["FORCE_SRS_DETECTION=YES"]
     )
     lyr = ds.GetLayer(0)
@@ -3428,7 +3450,7 @@ def test_ogr_gml_74(tmp_path):
     assert lyr.GetFeatureCount() == 2, "did not get expected feature count"
 
     # With .gfs
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "ogr_gml_74.gml", open_options=["FORCE_SRS_DETECTION=YES"]
     )
     lyr = ds.GetLayer(0)
@@ -3525,17 +3547,13 @@ def test_ogr_gml_77(tmp_vsimem):
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     ds = None
 
-    ds = gdal.OpenEx(
-        tmp_vsimem / "ogr_gml_77.xml", open_options=["SWAP_COORDINATES=YES"]
-    )
+    ds = gdal.Open(tmp_vsimem / "ogr_gml_77.xml", open_options=["SWAP_COORDINATES=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     ds = None
 
-    ds = gdal.OpenEx(
-        tmp_vsimem / "ogr_gml_77.xml", open_options=["SWAP_COORDINATES=NO"]
-    )
+    ds = gdal.Open(tmp_vsimem / "ogr_gml_77.xml", open_options=["SWAP_COORDINATES=NO"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (49 2)"
@@ -3572,17 +3590,13 @@ def test_ogr_gml_78(tmp_vsimem):
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     ds = None
 
-    ds = gdal.OpenEx(
-        tmp_vsimem / "ogr_gml_78.xml", open_options=["SWAP_COORDINATES=YES"]
-    )
+    ds = gdal.Open(tmp_vsimem / "ogr_gml_78.xml", open_options=["SWAP_COORDINATES=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (49 2)"
     ds = None
 
-    ds = gdal.OpenEx(
-        tmp_vsimem / "ogr_gml_78.xml", open_options=["SWAP_COORDINATES=NO"]
-    )
+    ds = gdal.Open(tmp_vsimem / "ogr_gml_78.xml", open_options=["SWAP_COORDINATES=NO"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
@@ -3619,7 +3633,7 @@ def test_ogr_gml_SWAP_COORDINATES_no_srs(tmp_vsimem):
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml",
         open_options=["SWAP_COORDINATES=YES"],
     )
@@ -3628,7 +3642,7 @@ def test_ogr_gml_SWAP_COORDINATES_no_srs(tmp_vsimem):
     assert f.GetGeometryRef().ExportToWkt() == "POINT (49 2)"
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_vsimem / "test_ogr_gml_SWAP_COORDINATES_no_srs.xml",
         open_options=["SWAP_COORDINATES=NO"],
     )
@@ -3652,7 +3666,7 @@ def test_ogr_gml_79(tmp_vsimem):
         ["OGC_URN", "urn:ogc:def:crs:EPSG::4326", "49 2"],
         ["OGC_URL", "http://www.opengis.net/def/crs/EPSG/0/4326", "49 2"],
     ]
-    for (srsname_format, expected_srsname, expected_coords) in tests:
+    for srsname_format, expected_srsname, expected_coords in tests:
 
         ds = ogr.GetDriverByName("GML").CreateDataSource(
             tmp_vsimem / "ogr_gml_79.xml",
@@ -3877,7 +3891,7 @@ def test_ogr_gml_unique(tmp_vsimem, have_gml_validation, gml_format, constraint_
     f = None
     ds = None
 
-    ds = gdal.OpenEx(tmp_vsimem / "test_ogr_gml_unique.gml")
+    ds = gdal.Open(tmp_vsimem / "test_ogr_gml_unique.gml")
     lyr = ds.GetLayerByName("test")
     assert (
         lyr.GetLayerDefn()
@@ -3911,13 +3925,11 @@ def test_ogr_gml_write_gfs_no(tmp_vsimem):
         tmp_vsimem / "test.gml", open("data/gml/expected_gml_gml32.gml", "rb").read()
     )
 
-    assert gdal.OpenEx(tmp_vsimem / "test.gml") is not None
+    assert gdal.Open(tmp_vsimem / "test.gml") is not None
     assert gdal.VSIStatL(tmp_vsimem / "test.gfs") is not None
     gdal.Unlink(tmp_vsimem / "test.gfs")
 
-    assert (
-        gdal.OpenEx(tmp_vsimem / "test.gml", open_options=["WRITE_GFS=NO"]) is not None
-    )
+    assert gdal.Open(tmp_vsimem / "test.gml", open_options=["WRITE_GFS=NO"]) is not None
     assert gdal.VSIStatL(tmp_vsimem / "test.gfs") is None
 
 
@@ -3933,11 +3945,11 @@ def test_ogr_gml_write_gfs_yes(tmp_vsimem):
         tmp_vsimem / "test.xsd", open("data/gml/expected_gml_gml32.xsd", "rb").read()
     )
 
-    assert gdal.OpenEx(tmp_vsimem / "test.gml") is not None
+    assert gdal.Open(tmp_vsimem / "test.gml") is not None
     assert gdal.VSIStatL(tmp_vsimem / "test.gfs") is None
 
     assert (
-        gdal.OpenEx(tmp_vsimem / "test.gml", open_options=["WRITE_GFS=YES"]) is not None
+        gdal.Open(tmp_vsimem / "test.gml", open_options=["WRITE_GFS=YES"]) is not None
     )
     assert gdal.VSIStatL(tmp_vsimem / "test.gfs") is not None
 
@@ -3951,7 +3963,7 @@ def test_ogr_gml_no_gfs_rewriting(tmp_vsimem):
         tmp_vsimem / "test.gml", open("data/gml/expected_gml_gml32.gml", "rb").read()
     )
 
-    assert gdal.OpenEx(tmp_vsimem / "test.gml") is not None
+    assert gdal.Open(tmp_vsimem / "test.gml") is not None
     assert gdal.VSIStatL(tmp_vsimem / "test.gfs") is not None
 
     f = gdal.VSIFOpenL(tmp_vsimem / "test.gfs", "rb+")
@@ -3961,7 +3973,7 @@ def test_ogr_gml_no_gfs_rewriting(tmp_vsimem):
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    assert gdal.OpenEx(tmp_vsimem / "test.gml") is not None
+    assert gdal.Open(tmp_vsimem / "test.gml") is not None
 
     f = gdal.VSIFOpenL(tmp_vsimem / "test.gfs", "rb+")
     data = gdal.VSIFReadL(1, 10000, f)
@@ -4079,7 +4091,7 @@ def test_ogr_gml_srs_name_in_xsd(tmp_vsimem, gml_format):
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "MULTIPOLYGON (((2 49,2 50,3 50,2 49)))"
@@ -4128,18 +4140,18 @@ def test_ogr_gml_first_feature_without_geometry(tmp_vsimem):
 def test_ogr_gml_force_srs_detection_multiple_geom_fields():
 
     # With .xsd
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gml/multiple_geometry_fields_srs_detection.gml",
         open_options=["FORCE_SRS_DETECTION=YES"],
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     assert (
-        lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef().GetAuthorityCode(None)
+        lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef().GetAuthorityCode()
         == "32631"
     )
     assert (
-        lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().GetAuthorityCode(None)
+        lyr.GetLayerDefn().GetGeomFieldDefn(2).GetSpatialRef().GetAuthorityCode()
         == "32632"
     )
     assert lyr.GetLayerDefn().GetGeomFieldDefn(3).GetSpatialRef() is None
@@ -4152,7 +4164,7 @@ def test_ogr_gml_force_srs_detection_multiple_geom_fields():
 
 def test_ogr_gml_read_feature_with_gml_description():
 
-    ds = gdal.OpenEx("data/gml/feature_with_gml_description.gml")
+    ds = gdal.Open("data/gml/feature_with_gml_description.gml")
     assert ds.GetMetadataItem("DESCRIPTION") == "toplevel description"
     assert ds.GetMetadataItem("NAME") == "toplevel name"
     lyr = ds.GetLayer(0)
@@ -4174,7 +4186,7 @@ def test_ogr_gml_read_feature_with_gml_description():
 
 def test_ogr_gml_read_srsDimension_3_on_top_gml_Envelope():
 
-    ds = gdal.OpenEx("data/gml/global_srsDimension_3.gml")
+    ds = gdal.Open("data/gml/global_srsDimension_3.gml")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert (
@@ -4194,7 +4206,7 @@ def test_ogr_gml_read_boundedby_only(tmp_path):
     shutil.copy("data/gml/only_boundedby.gml", gml_fname)
 
     def check_no_options():
-        ds = gdal.OpenEx(gml_fname)
+        ds = gdal.Open(gml_fname)
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbNone
         ds = None
@@ -4204,7 +4216,7 @@ def test_ogr_gml_read_boundedby_only(tmp_path):
     assert gml_fname.with_suffix(".gfs").exists()
 
     def check():
-        ds = gdal.OpenEx(tmp_path / "only_boundedby.gml", open_options=["USE_BBOX=YES"])
+        ds = gdal.Open(tmp_path / "only_boundedby.gml", open_options=["USE_BBOX=YES"])
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
         assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -4236,7 +4248,7 @@ def test_ogr_gml_read_boundedby_only_gml_null_only(tmp_path):
     shutil.copy("data/gml/only_boundedby_only_null.gml", tmp_path)
 
     def check():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_path / "only_boundedby_only_null.gml", open_options=["USE_BBOX=YES"]
         )
         lyr = ds.GetLayer(0)
@@ -4264,7 +4276,7 @@ def test_ogr_gml_read_bbox_and_several_geom_elements(tmp_path):
     shutil.copy("data/gml/bbox_and_several_geom_elements.gml", tmp_path)
 
     def check():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             tmp_path / "bbox_and_several_geom_elements.gml",
             open_options=["USE_BBOX=YES"],
         )
@@ -4295,7 +4307,7 @@ def test_ogr_gml_read_bbox_and_several_geom_elements(tmp_path):
 def test_ogr_gml_read_boundedby_invalid():
 
     with gdal.quiet_errors():
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "data/gml/only_boundedby_invalid.gml", open_options=["USE_BBOX=YES"]
         )
         lyr = ds.GetLayer(0)
@@ -4309,7 +4321,7 @@ def test_ogr_gml_read_boundedby_invalid():
 
 def test_ogr_gml_read_boundedby_repeated():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gml/only_boundedby_repeated.gml", open_options=["USE_BBOX=YES"]
     )
     lyr = ds.GetLayer(0)
@@ -4344,7 +4356,7 @@ def test_ogr_gml_field_comment(tmp_vsimem):
         lyr.CreateField(field_defn)
     ds = None
 
-    ds = gdal.OpenEx(tmp_vsimem / "test_ogr_gml_field_comment.gml")
+    ds = gdal.Open(tmp_vsimem / "test_ogr_gml_field_comment.gml")
     lyr = ds.GetLayer(0)
     for i in range(1, lyr.GetLayerDefn().GetFieldCount()):
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetComment() == "comment <>"
@@ -4357,7 +4369,7 @@ def test_ogr_gml_field_comment(tmp_vsimem):
 
 def test_ogr_gml_field_comment_from_gfs():
 
-    ds = gdal.OpenEx("data/gml/testcomment.gml")
+    ds = gdal.Open("data/gml/testcomment.gml")
     lyr = ds.GetLayer(0)
     assert (
         lyr.GetLayerDefn()
@@ -4486,7 +4498,7 @@ def test_ogr_gml_geom_coord_precision(tmp_vsimem):
 
 def test_ogr_gml_geom_link_to_immediate_child():
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/gml/link_to_immediate_child.gml", open_options=["WRITE_GFS=NO"]
     )
     assert ds
@@ -4597,7 +4609,7 @@ def test_ogr_gml_USE_SCHEMA_IMPORT_NO(tmp_path):
     shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
     shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=NO"]
     )
     layer_count = ds.GetLayerCount()
@@ -4619,7 +4631,7 @@ def test_ogr_gml_USE_SCHEMA_IMPORT_YES(tmp_path):
     shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
     shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
     )
 
@@ -4686,7 +4698,7 @@ def test_ogr_gml_get_layers_by_name_from_imported_schema(tmp_path):
     shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
     shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
     )
     layer_count = ds.GetLayerCount()
@@ -4726,7 +4738,7 @@ def test_ogr_gml_get_layers_by_name_from_imported_schema_more_tests(tmp_path):
     shutil.copy("data/gml/min_example/minimal_example.xsd", tmp_path)
     shutil.copy("data/gml/min_example/minimal_example.gml", tmp_path)
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         tmp_path / "minimal_example.gml", open_options=["USE_SCHEMA_IMPORT=YES"]
     )
 
@@ -4773,7 +4785,7 @@ def test_ogr_gml_force_opening(tmp_vsimem):
 
     # Would be opened by NAS driver if not forced
     with gdal.config_option("NAS_GFS_TEMPLATE", ""):
-        ds = gdal.OpenEx(filename, allowed_drivers=["GML"])
+        ds = gdal.Open(filename, allowed_drivers=["GML"])
         assert ds.GetDriver().GetDescription() == "GML"
 
 
@@ -4972,7 +4984,7 @@ def test_ogr_gml_type_override(
 
         # Check error if expected_field_types is empty
         if not expected_field_types:
-            ds = gdal.OpenEx(
+            ds = gdal.Open(
                 tmp_path / "test_point.gml",
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,
@@ -4984,7 +4996,7 @@ def test_ogr_gml_type_override(
             assert ds is None
         else:
 
-            with gdal.OpenEx(
+            with gdal.Open(
                 tmp_path / "test_point.gml",
                 gdal.OF_VECTOR | gdal.OF_READONLY,
                 open_options=open_options,
@@ -5127,7 +5139,7 @@ def test_ogr_gml_skip_corrupted_features(tmp_vsimem):
         assert f is None
 
     with gdal.config_option("GML_SKIP_CORRUPTED_FEATURES", "NO"):
-        ds = gdal.OpenEx(filename, open_options=["SKIP_CORRUPTED_FEATURES=YES"])
+        ds = gdal.Open(filename, open_options=["SKIP_CORRUPTED_FEATURES=YES"])
         layer = ds.GetLayer(0)
         f = layer.GetNextFeature()
         assert f is None
@@ -5137,7 +5149,7 @@ def test_ogr_gml_skip_corrupted_features(tmp_vsimem):
             Exception,
             match="You may set the GML_SKIP_CORRUPTED_FEATURES configuration option to YES to skip to the next feature",
         ):
-            ds = gdal.OpenEx(filename, open_options=["SKIP_CORRUPTED_FEATURES=NO"])
+            ds = gdal.Open(filename, open_options=["SKIP_CORRUPTED_FEATURES=NO"])
             layer = ds.GetLayer(0)
             layer.GetNextFeature()
 
@@ -5201,7 +5213,7 @@ def test_ogr_gml_citygml3(tmp_vsimem, skip_resolve_as_open_option):
     )
 
     if skip_resolve_as_open_option:
-        ds = gdal.OpenEx(filename, open_options=["SKIP_RESOLVE_ELEMS=NONE"])
+        ds = gdal.Open(filename, open_options=["SKIP_RESOLVE_ELEMS=NONE"])
     else:
         with gdal.config_option("GML_SKIP_RESOLVE_ELEMS", "NONE"):
             ds = ogr.Open(filename)
@@ -5432,3 +5444,13 @@ def test_ogr_gml_multiple_geom_elements_different_last_element(tmp_vsimem):
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (7 8)"
+
+
+###############################################################################
+# Test that we don't leak memory on that invalid file
+
+
+def test_ogr_gml_ossfuzz_487160964():
+
+    with gdal.quiet_errors():
+        ogr.Open("data/gml/ossfuzz_487160964.gml")

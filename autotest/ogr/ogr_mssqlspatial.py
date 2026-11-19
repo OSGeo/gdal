@@ -21,6 +21,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MSSQLSpatial")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -38,11 +39,14 @@ def mssql_ds():
     val = gdal.GetConfigOption("OGR_MSSQL_CONNECTION_STRING", None)
     if val is None:
         # localhost doesn't work under chroot
-        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
+        dsname = "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 18 for SQL Server;UID=SA;PWD=DummyPassw0rd;TrustServerCertificate=yes;"
     else:
         dsname = val
 
-    ds = ogr.Open(dsname, update=1)
+    try:
+        ds = ogr.Open(dsname, update=1)
+    except RuntimeError:
+        ds = None
 
     if ds is None:
         if val is None:
@@ -96,6 +100,8 @@ def tpoly(mssql_ds):
     # Create Layer
     sql_lyr = mssql_ds.CreateLayer("tpoly", srs=shp_lyr.GetSpatialRef())
 
+    assert sql_lyr
+
     ######################################################
     # Setup Schema
     ogrtest.quick_create_layer_def(
@@ -132,7 +138,7 @@ def tpoly(mssql_ds):
 
     got_srs = sql_lyr.GetSpatialRef()
     expected_srs = shp_lyr.GetSpatialRef()
-    assert got_srs.GetAuthorityCode(None) == expected_srs.GetAuthorityCode(
+    assert got_srs.GetAuthorityCode() == expected_srs.GetAuthorityCode(
         None
     ), "not matching spatial ref"
 
@@ -146,7 +152,7 @@ def tpoly(mssql_ds):
 
 
 @pytest.mark.usefixtures("tpoly")
-def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
+def test_ogr_mssqlspatial_3(mssql_ds, multipoly_feat):
 
     mssqlspatial_lyr = mssql_ds.GetLayerByName("tpoly")
     assert mssqlspatial_lyr.GetDataset().GetDescription() == mssql_ds.GetDescription()
@@ -164,8 +170,8 @@ def test_ogr_mssqlspatial_3(mssql_ds, poly_feat):
 
     mssqlspatial_lyr.ResetReading()
 
-    for i in range(len(poly_feat)):
-        orig_feat = poly_feat[i]
+    for i in range(len(multipoly_feat)):
+        orig_feat = multipoly_feat[i]
         read_feat = mssqlspatial_lyr.GetNextFeature()
 
         ogrtest.check_feature_geometry(
@@ -419,7 +425,7 @@ def test_ogr_mssqlspatial_datatypes(mssql_ds):
         f["time"] = "12:34:56"
         f["datetime"] = "2021/12/11 12:34:56"
         f["uid"] = "6F9619FF-8B86-D011-B42D-00C04FC964FF"
-        f["binary"] = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+        f["binary"] = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
         lyr.CreateFeature(f)
         lyr.CommitTransaction()
 
@@ -543,7 +549,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 
     with gdal.config_option("MSSQLSPATIAL_BCP_SIZE", "2"):
 
-        source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
+        source_ds = gdal.Open("data/poly.shp", gdal.OF_VECTOR)
 
         assert source_ds
 
@@ -572,7 +578,7 @@ def test_ogr_mssqlspatial_bulk_insert(mssql_ds):
 def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
     """Test issue GH https://github.com/OSGeo/gdal/issues/1128"""
 
-    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
+    source_ds = gdal.Open("data/shp/testpoly.shp", gdal.OF_VECTOR)
 
     assert source_ds
 
@@ -581,7 +587,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order(mssql_ds):
             ds = gdal.VectorTranslate(
                 mssql_ds.GetDescription(),
                 "data/shp/testpoly.shp",
-                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY -makevalid",
             )
 
             lyr = ds.GetLayerByName("poly_vertex_order")
@@ -626,7 +632,7 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     f["strfield"] = "some text"
     f["intfield"] = 1
     src_lyr.CreateFeature(f)
@@ -640,14 +646,14 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
-    f["binfield"] = b"\xFF\x00\x7F\xFF\x00\x7F"
+    f["binfield"] = b"\xff\x00\x7f\xff\x00\x7f"
     f["strfield"] = "some text"
     f["intfield"] = 3
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(4 5)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     # leave str undefined
     f["intfield"] = 4
     src_lyr.CreateFeature(f)
@@ -726,3 +732,28 @@ def test_geometry_column_identification(mssql_ds):
 
     finally:
         mssql_ds.ExecuteSQL("DROP TABLE poly_shape")
+
+
+###############################################################################
+# Test SetFeature() updating the geometry of an existing feature using the
+# native geometry format
+
+
+@pytest.mark.usefixtures("tpoly")
+def test_ogr_mssqlspatial_setfeature_native_geometry(mssql_ds):
+
+    mssqlspatial_lyr = mssql_ds.GetLayer("tpoly")
+
+    mssqlspatial_lyr.ResetReading()
+    feat = mssqlspatial_lyr.GetNextFeature()
+    assert feat is not None
+    fid = feat.GetFID()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 10,10 10,10 0,0 0))")
+    feat.SetGeometryDirectly(geom)
+    assert mssqlspatial_lyr.SetFeature(feat) == ogr.OGRERR_NONE
+
+    mssqlspatial_lyr.ResetReading()
+    feat_read = mssqlspatial_lyr.GetFeature(fid)
+    assert feat_read is not None
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)

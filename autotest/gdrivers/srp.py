@@ -12,7 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
+import shutil
 
 import gdaltest
 import pytest
@@ -20,18 +20,6 @@ import pytest
 from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("SRP")
-
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_and_cleanup():
-
-    yield
-
-    try:
-        os.unlink("data/srp/USRP_PCB0/TRANSH01.THF.aux.xml")
-    except OSError:
-        pass
-
 
 ###############################################################################
 # Read USRP dataset with PCB=0
@@ -74,7 +62,7 @@ def test_srp_1(pcb):
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key, value) = md.split("=")
+        key, value = md.split("=")
         assert key in got_md and got_md[key] == value, "did not find %s" % md
 
 
@@ -92,18 +80,22 @@ def test_srp_4():
 # Read from TRANSH01.THF file (without "optimization" for single GEN in THF)
 
 
-def test_srp_5():
+def test_srp_5(tmp_path):
 
-    with gdal.config_option("SRP_SINGLE_GEN_IN_THF_AS_DATASET", "FALSE"):
-        ds = gdal.Open("data/srp/USRP_PCB0/TRANSH01.THF")
+    shutil.copytree("data/srp/USRP_PCB0", tmp_path / "USRP_PCB0")
+
+    with gdal.config_options({"SRP_SINGLE_GEN_IN_THF_AS_DATASET": "FALSE"}):
+        ds = gdal.Open(tmp_path / "USRP_PCB0" / "TRANSH01.THF")
     subdatasets = ds.GetMetadata("SUBDATASETS")
-    assert (
-        subdatasets["SUBDATASET_1_NAME"].replace("\\", "/")
-        == "SRP:data/srp/USRP_PCB0/FKUSRP01.GEN,data/srp/USRP_PCB0/FKUSRP01.IMG"
+    assert subdatasets["SUBDATASET_1_NAME"].replace(
+        "\\", "/"
+    ) == f"SRP:{tmp_path}/USRP_PCB0/FKUSRP01.GEN,{tmp_path}/USRP_PCB0/FKUSRP01.IMG".replace(
+        "\\", "/"
     )
-    assert (
-        subdatasets["SUBDATASET_1_DESC"].replace("\\", "/")
-        == "SRP:data/srp/USRP_PCB0/FKUSRP01.GEN,data/srp/USRP_PCB0/FKUSRP01.IMG"
+    assert subdatasets["SUBDATASET_1_DESC"].replace(
+        "\\", "/"
+    ) == f"SRP:{tmp_path}/USRP_PCB0/FKUSRP01.GEN,{tmp_path}/USRP_PCB0/FKUSRP01.IMG".replace(
+        "\\", "/"
     )
 
     expected_md = [
@@ -115,7 +107,7 @@ def test_srp_5():
 
     got_md = ds.GetMetadata()
     for md in expected_md:
-        (key, value) = md.split("=")
+        key, value = md.split("=")
         assert key in got_md and got_md[key] == value, "did not find %s" % md
 
 

@@ -401,14 +401,14 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     return $jnicall;
   }
 
-
 /***************************************************************
- * Typemaps for  (const char *utf8_path, vsi_l_offset *length)
+ * Typemaps for  (const char *utf8_string, vsi_l_offset *length)
+ * Used only for wrapper_VSIGetMemFileBuffer
  ***************************************************************/
 
-%typemap(in) (const char *utf8_path, vsi_l_offset *length) (vsi_l_offset length)
+%typemap(in) (const char *utf8_string, vsi_l_offset *length) (vsi_l_offset length)
 {
-    /* %typemap(in) (const char *utf8_path, vsi_l_offset *length) */
+    /* %typemap(in) (const char *utf8_string, vsi_l_offset *length) */
     if ($input)
     {
         $1 = (char *)jenv->GetStringUTFChars($input, 0);
@@ -420,9 +420,9 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     $2 = &length;
 }
 
-%typemap(argout) (const char *utf8_path, vsi_l_offset *length)
+%typemap(argout) (const char *utf8_string, vsi_l_offset *length)
 {
-    /* %typemap(argout) (const char *utf8_path, vsi_l_offset *length) */
+    /* %typemap(argout) (const char *utf8_string, vsi_l_offset *length) */
     if ($input)
     {
         jenv->ReleaseStringUTFChars($input, (char*)$1);
@@ -432,11 +432,11 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     // Do not free result, as it is owned by the /vsimem/ file
 }
 
-%typemap(jni) (const char *utf8_path, vsi_l_offset *length) "jstring"
-%typemap(jtype) (const char *utf8_path, vsi_l_offset *length) "String"
-%typemap(jstype) (const char *utf8_path, vsi_l_offset *length) "String"
-%typemap(javain) (const char *utf8_path, vsi_l_offset *length) "$javainput"
-%typemap(javaout) (const char *utf8_path, vsi_l_offset *length) {
+%typemap(jni) (const char *utf8_string, vsi_l_offset *length) "jstring"
+%typemap(jtype) (const char *utf8_string, vsi_l_offset *length) "String"
+%typemap(jstype) (const char *utf8_string, vsi_l_offset *length) "String"
+%typemap(javain) (const char *utf8_string, vsi_l_offset *length) "$javainput"
+%typemap(javaout) (const char *utf8_string, vsi_l_offset *length) {
     return $jnicall;
   }
 
@@ -1476,7 +1476,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 %typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
-  CPLFree(*$1);
+  if ( $1 ) CPLFree(*$1);
 }
 
 %typemap(jni) (double *argout[ANY]) "jdoubleArray"
@@ -1548,7 +1548,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 %typemap(freearg) (double argout[ANY])
 {
   /* %typemap(freearg) (double argout[ANY]) */
-  jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, 0);
+  if ( $1 ) jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, 0);
 }
 
 %typemap(jni) (double argout[ANY]) "jdoubleArray"
@@ -1587,10 +1587,12 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 
 %typemap(freearg) char ** {
     /* %typemap(freearg) char ** */
-    int i;
-    for (i=0; i<size$argnum-1; i++)
-      free($1[i]);
-    free($1);
+    if ( $1 ) {
+      int i;
+      for (i=0; i<size$argnum-1; i++)
+        free($1[i]);
+      free($1);
+    }
 }
 
 /* This allows a C function to return a char ** as a Java String array */
@@ -1684,7 +1686,7 @@ GetCSLStringAsHashTable(JNIEnv *jenv, char **stringarray, bool bFreeCSL ) {
 
 %typemap(freearg) (ctype *regularArrayOut, size_t nRegularArraySizeOut)
 {
-  if (result == CE_None)  // testing the CPL result
+  if ($1 && result == CE_None)  // testing the CPL result
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
@@ -1754,7 +1756,7 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *regularArrayIn, size_t nRegularArraySizeIn)
 {
-  jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
+  if ( $1 ) jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
 }
 
 
@@ -1822,7 +1824,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(freearg) (ctype *arrayOut, size_t arraySize)
 {
-  if (result)  // testing the boolean function result
+  if ($1 && result)  // testing the boolean function result
     jenv->element_setter($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
@@ -1892,7 +1894,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *arrayIn, size_t arraySize)
 {
-  jenv->element_releaser($input, (jtype*) $1, JNI_ABORT);
+  if ( $1 ) jenv->element_releaser($input, (jtype*) $1, JNI_ABORT);
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
@@ -2192,8 +2194,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(freearg) (int* pnCountOut, int** outErrorCodes)
 {
   /* %typemap(freearg) (int* pnCountOut, int** outErrorCodes) */
-  int* errorCodes = *($2);
-  VSIFree(errorCodes);
+  if ( $2 ) VSIFree(*($2));
 }
 
 %typemap(jni) (int* pnCountOut, int** outErrorCodes) "jintArray"
@@ -2293,8 +2294,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
     /* %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ) */
-    VSIFree(*$2);
-    VSIFree(*$3);
+    if ( $2 ) VSIFree(*$2);
+    if ( $3 ) VSIFree(*$3);
 }
 
 %typemap(argout) (retGetPoints*)
@@ -2645,3 +2646,50 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (OGRCodedValue*) {
     return $jnicall;
   }
+
+
+/***************************************************
+ * Typemaps for SpatialReference.FindMatches()
+ *
+ * C signature (see osr.i):
+ *   OSRSpatialReferenceShadow** FindMatches(
+ *       char** options, int* nvalues, int** confidence_values)
+ *
+ * Resulting Java signature:
+ *   public SpatialReference[] FindMatches(Vector options, int[][] confidenceValuesOut)
+ *
+ * nvalues (arg position 3) is fully hidden from Java -- it only exists to
+ * carry the match count between the two output-producing typemaps.
+ * confidence_values (arg position 4) is surfaced as an int[][] "out box":
+ * caller passes a 1-element int[][] and this typemap fills element [0]
+ * with a freshly allocated int[] parallel to the returned SpatialReference[].
+
+ ***************************************************/
+
+%typemap(out) (OSRSpatialReferenceShadow**)
+{
+  /* %typemap(out) (OSRSpatialReferenceShadow**) -- builds the returned SpatialReference[] */
+  /* nLen3 is hardcoded, $argnum is not useful in out typemaps.
+     nLen was declared under the separate typemap (argument
+     position 3). If FindMatches's parameter order ever
+     changes, re-check the generated osr_wrap.cpp and update this suffix
+     to match. */
+  const jclass srsClass = jenv->FindClass("org/gdal/osr/SpatialReference");
+  const jmethodID srsCtor = jenv->GetMethodID(srsClass, "<init>", "(JZ)V");
+
+  jresult = jenv->NewObjectArray(nLen3, srsClass, NULL);
+  for (int i = 0; i < nLen3; i++) {
+    OSRReference(result[i]);
+    jobject srsObj = jenv->NewObject(srsClass, srsCtor, (jlong)result[i], (jboolean)true);
+    jenv->SetObjectArrayElement(jresult, i, srsObj);
+    jenv->DeleteLocalRef(srsObj);
+  }
+  OSRFreeSRSArray(result);
+}
+
+%typemap(jni) OSRSpatialReferenceShadow** "jobjectArray"
+%typemap(jtype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(jstype) OSRSpatialReferenceShadow** "org.gdal.osr.SpatialReference[]"
+%typemap(javaout) OSRSpatialReferenceShadow** {
+    return $jnicall;
+}

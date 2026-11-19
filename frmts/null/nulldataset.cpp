@@ -41,7 +41,7 @@ class GDALNullDataset final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
@@ -157,7 +157,7 @@ class GDALNullLayer final : public OGRLayer
     {
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRFeature *GetNextFeature() override
     {
@@ -286,7 +286,7 @@ OGRLayer *GDALNullDataset::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALNullDataset::TestCapability(const char *pszCap) const
+bool GDALNullDataset::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
@@ -409,7 +409,7 @@ GDALNullLayer::~GDALNullLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int GDALNullLayer::TestCapability(const char *pszCap) const
+bool GDALNullLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite))

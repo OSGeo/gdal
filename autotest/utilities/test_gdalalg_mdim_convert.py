@@ -105,6 +105,59 @@ def test_gdalalg_mdim_convert_multidim_to_classic(tmp_vsimem):
 ###############################################################################
 
 
+def test_gdalalg_mdim_convert_multidim_to_classic_explicit_format(tmp_vsimem):
+
+    tmpfile = tmp_vsimem / "out.tif"
+
+    alg = get_mdim_convert_alg()
+    alg["input"] = "data/mdim.vrt"
+    alg["output"] = tmpfile
+    alg["output-format"] = "GTiff"
+    alg["array"] = ["/my_subgroup/array_in_subgroup"]
+    assert alg.Run()
+
+
+###############################################################################
+
+
+def test_gdalalg_mdim_convert_classic_to_classic_explicit_formats(tmp_vsimem):
+
+    tmpfile = tmp_vsimem / "out.tif"
+
+    alg = get_mdim_convert_alg()
+    alg["input"] = "../gcore/data/byte.tif"
+    alg["input-format"] = ["GTiff"]
+    alg["output"] = tmpfile
+    alg["output-format"] = "GTiff"
+    assert alg.Run()
+    assert alg.Finalize()
+
+    with gdal.Open(tmpfile) as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+
+
+def test_gdalalg_mdim_convert_output_format_without_raster_support(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="Driver 'ESRI Shapefile' does not expose the required "
+        "'DCAP_RASTER or DCAP_MULTIDIM_RASTER' capability",
+    ):
+        gdal.Run(
+            "mdim",
+            "convert",
+            input="data/mdim.vrt",
+            output=tmp_vsimem / "out.shp",
+            output_format="ESRI Shapefile",
+        )
+
+
+###############################################################################
+
+
 def test_gdalalg_mdim_convert_group(tmp_vsimem):
 
     tmpfile = tmp_vsimem / "out.vrt"
@@ -123,9 +176,7 @@ def test_gdalalg_mdim_convert_group(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
@@ -163,7 +214,6 @@ def test_gdalalg_mdim_convert_group(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -186,9 +236,7 @@ def test_gdalalg_mdim_convert_subset(tmp_vsimem):
     # print(got_data)
 
     gdal.Unlink(tmpfile)
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="8" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
@@ -296,7 +344,6 @@ def test_gdalalg_mdim_convert_subset(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -321,9 +368,7 @@ def test_gdalalg_mdim_convert_scaleaxes(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="5" indexingVariable="longitude" />
@@ -375,7 +420,6 @@ def test_gdalalg_mdim_convert_scaleaxes(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -404,9 +448,9 @@ def test_gdalalg_mdim_convert_creation_option(tmp_path):
 @pytest.mark.require_driver("netCDF")
 def test_gdalalg_mdim_convert_completion_array(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal mdim convert ../gdrivers/data/netcdf/byte.nc --array"
-    ).split(" ")
+    )
     assert out == ["/x", "/y", "/Band1"]
 
 
@@ -416,9 +460,9 @@ def test_gdalalg_mdim_convert_completion_array(gdal_path):
 @pytest.mark.require_driver("netCDF")
 def test_gdalalg_mdim_convert_completion_array_option(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal mdim convert ../gdrivers/data/netcdf/byte.nc --array-option"
-    ).split(" ")
+    )
     assert "USE_DEFAULT_FILL_AS_NODATA=" in out
 
 

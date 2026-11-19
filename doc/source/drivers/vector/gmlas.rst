@@ -446,24 +446,27 @@ The supported dataset creation options are:
 Examples
 --------
 
-Listing content of a data file:
+.. example::
+   :title: Listing content of a data file
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro GMLAS:my.gml
+      ogrinfo -ro GMLAS:my.gml
 
-Converting to PostGIS:
+.. example::
+   :title: Converting to PostGIS
 
-::
+   .. code-block:: bash
 
-   ogr2ogr -f PostgreSQL PG:'host=myserver dbname=warmerda' GMLAS:my.gml -nlt CONVERT_TO_LINEAR
+      ogr2ogr -f PostgreSQL PG:'host=myserver dbname=warmerda' GMLAS:my.gml -nlt CONVERT_TO_LINEAR
 
-Converting to Spatialite and back to GML
+.. example::
+   :title: Converting to Spatialite and back to GML
 
-::
+   .. code-block:: bash
 
-   ogr2ogr -f SQLite tmp.sqlite GMLAS:in.gml -dsco SPATIALITE=YES -nlt CONVERT_TO_LINEAR -oo EXPOSE_METADATA_LAYERS=YES
-   ogr2ogr -f GMLAS out.gml tmp.sqlite
+      ogr2ogr -f SQLite tmp.sqlite GMLAS:in.gml -dsco SPATIALITE=YES -nlt CONVERT_TO_LINEAR -oo EXPOSE_METADATA_LAYERS=YES
+      ogr2ogr -f GMLAS out.gml tmp.sqlite
 
 See Also
 --------

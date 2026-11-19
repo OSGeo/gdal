@@ -101,7 +101,7 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
     {
         /* throw an error */
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "RSLV/RSFV values are not sane... oh dear.\n");
+                 "RSLV/RSFV values are not sane... oh dear.");
         return CE_Failure;
     }
 

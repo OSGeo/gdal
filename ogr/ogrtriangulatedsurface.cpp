@@ -109,8 +109,8 @@ OGRwkbGeometryType OGRTriangulatedSurface::getGeometryType() const
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRBoolean
-OGRTriangulatedSurface::isCompatibleSubType(OGRwkbGeometryType eSubType) const
+bool OGRTriangulatedSurface::isCompatibleSubType(
+    OGRwkbGeometryType eSubType) const
 {
     return wkbFlatten(eSubType) == wkbTriangle;
 }

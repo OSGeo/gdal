@@ -69,13 +69,14 @@ def _has_geoheif_support():
 
 
 @pytest.mark.parametrize("endianness", ["big_endian", "little_endian"])
-def test_heif_exif_endian(endianness):
+def test_heif_exif_endian(endianness, tmp_path):
     if not _has_hevc_decoding_support():
         pytest.skip("no HEVC decoding support")
 
     filename = "data/heif/byte_exif_%s.heic" % endianness
+    gdal.CopyFile(filename, tmp_path / "in.heic")
     gdal.ErrorReset()
-    ds = gdal.Open(filename)
+    ds = gdal.Open(tmp_path / "in.heic")
     assert gdal.GetLastErrorMsg() == ""
     assert ds
     assert ds.RasterXSize == 64
@@ -98,7 +99,6 @@ def test_heif_exif_endian(endianness):
         assert "xpacket" in ds.GetMetadata("xml:XMP")[0]
 
     ds = None
-    gdal.Unlink(filename + ".aux.xml")
 
 
 def test_heif_thumbnail():
@@ -528,7 +528,7 @@ def test_heif_network_read(tmp_vsimem):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -831,8 +831,8 @@ def test_heif_geoheif_curie():
     )
     assert ds.GetMetadataItem("TAGS", "DESCRIPTION_en-AU") == "copyright"
     assert ds.GetSpatialRef() is not None
-    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32755"
+    assert ds.GetSpatialRef().GetAuthorityName() == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32755"
     assert ds.GetGeoTransform() is not None
     assert ds.GetGeoTransform() == pytest.approx(
         [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
@@ -869,8 +869,8 @@ def test_heif_geoheif_curie_order():
         [691051.2, 0.1, 0.0, 6090000.0, 0.0, -0.1]
     )
     assert ds.GetSpatialRef() is not None
-    assert ds.GetSpatialRef().GetAuthorityName(None) == "EPSG"
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32755"
+    assert ds.GetSpatialRef().GetAuthorityName() == "EPSG"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32755"
     assert ds.GetGCPCount() == 1
     gcp = ds.GetGCPs()[0]
     assert (

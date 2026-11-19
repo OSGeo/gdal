@@ -11,7 +11,7 @@ gdal.h: Raster C API
 
 .. doxygenfile:: gdal.h
    :project: api
-
+   :sections: briefdescription related detaileddescription define typedef enum func innerclass public-attrib var
 
 .. below is an allow-list for spelling checker.
 

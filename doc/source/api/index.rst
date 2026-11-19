@@ -9,6 +9,14 @@ API
    `Full Doxygen output <../doxygen/index.html>`_
    ----------------------------------------------
 
+   General topics
+   --------------
+
+   .. toctree::
+       :maxdepth: 1
+
+       error_handling
+
    C API
    -----
 

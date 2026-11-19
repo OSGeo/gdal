@@ -278,7 +278,7 @@ typedef struct
 {
     GUInt16 nCode;  // type
     char nType;
-    char nScale;
+    signed char nScale;
 } SXFRecordAttributeInfo;
 
 enum SXFRecordAttributeType

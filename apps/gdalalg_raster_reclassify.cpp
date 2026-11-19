@@ -40,6 +40,8 @@ GDALRasterReclassifyAlgorithm::GDALRasterReclassifyAlgorithm(
              "a file containing mappings"),
            &m_mapping)
         .SetRequired();
+    AddArg("keep-color-table", 0, _("Preserve the input color table"),
+           &m_keepColorTable);
     AddOutputDataTypeArg(&m_type);
 }
 
@@ -69,61 +71,50 @@ static bool GDALReclassifyValidateMappings(GDALDataset &input,
 
 static std::unique_ptr<GDALDataset>
 GDALReclassifyCreateVRTDerived(GDALDataset &input, const std::string &mappings,
-                               GDALDataType eDstType)
+                               GDALDataType eDstType, bool keepColorTable)
 {
-    CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
-
     const auto nX = input.GetRasterXSize();
     const auto nY = input.GetRasterYSize();
 
+    auto poDS = VRTDataset::CreateVRTDataset("", nX, nY, 0, eDstType, nullptr);
+
+    GDALGeoTransform gt;
+    if (input.GetGeoTransform(gt) == CE_None)
+        poDS->SetGeoTransform(gt);
+    poDS->SetSpatialRef(input.GetSpatialRef());
+
+    CPLStringList papszBandArgs;
+    papszBandArgs.SetNameValue("subclass", "VRTDerivedRasterBand");
+
     for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
     {
-        const GDALDataType srcType =
-            input.GetRasterBand(iBand)->GetRasterDataType();
+        GDALRasterBand *poSrcBand = input.GetRasterBand(iBand);
+        const GDALDataType srcType = poSrcBand->GetRasterDataType();
         const GDALDataType bandType =
             eDstType == GDT_Unknown ? srcType : eDstType;
         const GDALDataType xferType = GDALDataTypeUnion(srcType, bandType);
 
-        CPLXMLNode *band =
-            CPLCreateXMLNode(root.get(), CXT_Element, "VRTRasterBand");
-        CPLAddXMLAttributeAndValue(band, "subClass", "VRTDerivedRasterBand");
-        CPLAddXMLAttributeAndValue(band, "dataType",
-                                   GDALGetDataTypeName(bandType));
+        if (poDS->AddBand(bandType, papszBandArgs) != CE_None)
+        {
+            return nullptr;
+        }
 
-        CPLXMLNode *pixelFunctionType =
-            CPLCreateXMLNode(band, CXT_Element, "PixelFunctionType");
-        CPLCreateXMLNode(pixelFunctionType, CXT_Text, "reclassify");
-        CPLXMLNode *arguments =
-            CPLCreateXMLNode(band, CXT_Element, "PixelFunctionArguments");
-        CPLAddXMLAttributeAndValue(arguments, "mapping", mappings.c_str());
+        VRTDerivedRasterBand *poDstBand =
+            cpl::down_cast<VRTDerivedRasterBand *>(poDS->GetRasterBand(iBand));
+        poDstBand->SetSourceTransferType(xferType);
+        poDstBand->SetPixelFunctionName("reclassify");
+        poDstBand->AddPixelFunctionArgument("mapping", mappings.c_str());
 
-        CPLXMLNode *sourceTransferType =
-            CPLCreateXMLNode(band, CXT_Element, "SourceTransferType");
-        CPLCreateXMLNode(sourceTransferType, CXT_Text,
-                         GDALGetDataTypeName(xferType));
-    }
+        if (keepColorTable && poSrcBand->GetColorTable() != nullptr)
+        {
+            poDstBand->SetColorTable(poSrcBand->GetColorTable());
+        }
 
-    auto ds = std::make_unique<VRTDataset>(nX, nY);
-    if (ds->XMLInit(root.get(), "") != CE_None)
-    {
-        return nullptr;
-    };
-
-    for (int iBand = 1; iBand <= input.GetRasterCount(); ++iBand)
-    {
-        auto poSrcBand = input.GetRasterBand(iBand);
-        auto poDstBand =
-            cpl::down_cast<VRTDerivedRasterBand *>(ds->GetRasterBand(iBand));
         GDALCopyNoDataValue(poDstBand, poSrcBand);
         poDstBand->AddSimpleSource(poSrcBand);
     }
 
-    GDALGeoTransform gt;
-    if (input.GetGeoTransform(gt) == CE_None)
-        ds->SetGeoTransform(gt);
-    ds->SetSpatialRef(input.GetSpatialRef());
-
-    return ds;
+    return poDS;
 }
 
 /************************************************************************/
@@ -205,8 +196,8 @@ bool GDALRasterReclassifyAlgorithm::RunStep(GDALPipelineStepRunContext &)
             return false;
         }
 
-        m_outputDataset.Set(
-            GDALReclassifyCreateVRTDerived(*poSrcDS, m_mapping, eDstType));
+        m_outputDataset.Set(GDALReclassifyCreateVRTDerived(
+            *poSrcDS, m_mapping, eDstType, m_keepColorTable));
     }
     return m_outputDataset.GetDatasetRef() != nullptr;
 }

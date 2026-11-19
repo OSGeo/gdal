@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "reproject" step of "vector pipeline"
+ * Purpose:  "gdal vector reproject"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_REPROJECT_INCLUDED
 #define GDALALG_VECTOR_REPROJECT_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -28,7 +28,7 @@ class GDALVectorReprojectAlgorithm /* non final */
     static constexpr const char *NAME = "reproject";
     static constexpr const char *DESCRIPTION = "Reproject a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_pipeline.html";
+        "/programs/gdal_vector_reproject.html";
 
     explicit GDALVectorReprojectAlgorithm(bool standaloneStep = false);
 
@@ -36,8 +36,10 @@ class GDALVectorReprojectAlgorithm /* non final */
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
-    std::string m_srsCrs{};
+    std::string m_srcCrs{};
     std::string m_dstCrs{};
+    GDALArgDatasetValue m_likeDataset{};
+    std::string m_likeLayer{};
 };
 
 /************************************************************************/

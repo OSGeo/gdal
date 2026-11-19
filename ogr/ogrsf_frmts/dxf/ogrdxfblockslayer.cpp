@@ -177,7 +177,7 @@ OGRFeature *OGRDXFBlocksLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDXFBlocksLayer::TestCapability(const char *pszCap) const
+bool OGRDXFBlocksLayer::TestCapability(const char *pszCap) const
 
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);

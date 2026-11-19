@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_READ_INCLUDED
 #define GDALALG_VECTOR_READ_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

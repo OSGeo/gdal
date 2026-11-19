@@ -74,7 +74,7 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -115,7 +115,7 @@ class OGRODBCTableLayer final : public OGRODBCLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
 #ifdef notdef
     // follow methods are not base class overrides
@@ -156,7 +156,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -175,9 +175,7 @@ class OGRODBCDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 #endif
 
     // set of all lowercase table names. Note that this is only used when
@@ -205,7 +203,7 @@ class OGRODBCDataSource final : public GDALDataset
     OGRLayer *GetLayerByName(const char *) override;
     bool IsLayerPrivate(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

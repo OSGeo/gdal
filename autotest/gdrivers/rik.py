@@ -30,19 +30,21 @@ def test_rik_online_1():
         "sverige500_swe99.zip",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     try:
-        os.stat("tmp/cache/sverige500_swe99.rik")
-        file_to_test = "tmp/cache/sverige500_swe99.rik"
+        os.stat(f"{tmp_dir}/sverige500_swe99.rik")
+        file_to_test = f"{tmp_dir}/sverige500_swe99.rik"
     except OSError:
         try:
             print("Uncompressing ZIP file...")
             import zipfile
 
-            zfobj = zipfile.ZipFile("tmp/cache/sverige500_swe99.zip")
-            outfile = open("tmp/cache/sverige500_swe99.rik", "wb")
+            zfobj = zipfile.ZipFile(f"{tmp_dir}/sverige500_swe99.zip")
+            outfile = open(f"{tmp_dir}/sverige500_swe99.rik", "wb")
             outfile.write(zfobj.read("sverige500_swe99.rik"))
             outfile.close()
-            file_to_test = "tmp/cache/sverige500_swe99.rik"
+            file_to_test = f"{tmp_dir}/sverige500_swe99.rik"
         except OSError:
             pytest.skip()
 
@@ -60,7 +62,9 @@ def test_rik_online_2():
         "http://trac.osgeo.org/gdal/raw-attachment/ticket/3674/ab-del.rik", "ab-del.rik"
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     tst = gdaltest.GDALTest(
-        "RIK", "tmp/cache/ab-del.rik", 1, 44974, filename_absolute=1
+        "RIK", f"{tmp_dir}/ab-del.rik", 1, 44974, filename_absolute=1
     )
     tst.testOpen()

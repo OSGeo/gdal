@@ -171,7 +171,8 @@ class TileDBDataset /* non final */ : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static CPLErr Delete(const char *pszFilename);
     static CPLString VSI_to_tiledb_uri(const char *pszUri);
-    static bool TileDBObjectExists(const std::string &osArrayUri);
+    static bool TileDBObjectExists(tiledb::Context &ctx,
+                                   const std::string &osArrayUri);
 
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
@@ -484,7 +485,7 @@ class OGRTileDBLayer final : public OGRLayer,
     OGRFeature *GetFeature(GIntBig nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     GIntBig GetFeatureCount(int bForce) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -538,7 +539,7 @@ class OGRTileDBDataset final : public TileDBDataset
                                                    : nullptr;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

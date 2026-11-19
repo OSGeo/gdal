@@ -15,72 +15,9 @@
 
 #include "gdalalgorithm.h"
 #include "gdalalg_abstract_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
-
-/************************************************************************/
-/*                   GDALRasterPipelineStepAlgorithm                    */
-/************************************************************************/
-
-class GDALRasterAlgorithmStepRegistry;
-
-class GDALRasterPipelineStepAlgorithm /* non final */
-    : public GDALPipelineStepAlgorithm
-{
-  public:
-    ~GDALRasterPipelineStepAlgorithm() override;
-
-  protected:
-    GDALRasterPipelineStepAlgorithm(const std::string &name,
-                                    const std::string &description,
-                                    const std::string &helpURL,
-                                    bool standaloneStep);
-
-    GDALRasterPipelineStepAlgorithm(const std::string &name,
-                                    const std::string &description,
-                                    const std::string &helpURL,
-                                    const ConstructorOptions &options);
-
-    friend class GDALRasterPipelineAlgorithm;
-    friend class GDALRasterMosaicStackCommonAlgorithm;
-
-    int GetInputType() const override
-    {
-        return GDAL_OF_RASTER;
-    }
-
-    int GetOutputType() const override
-    {
-        return GDAL_OF_RASTER;
-    }
-
-    void SetOutputVRTCompatible(bool b);
-};
-
-/************************************************************************/
-/*           GDALRasterPipelineNonNativelyStreamingAlgorithm            */
-/************************************************************************/
-
-class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
-    : public GDALRasterPipelineStepAlgorithm
-{
-  protected:
-    GDALRasterPipelineNonNativelyStreamingAlgorithm(
-        const std::string &name, const std::string &description,
-        const std::string &helpURL, bool standaloneStep);
-
-    bool IsNativelyStreamingCompatible() const override;
-
-    static std::unique_ptr<GDALDataset>
-    CreateTemporaryDataset(int nWidth, int nHeight, int nBands,
-                           GDALDataType eDT, bool bTiledIfPossible,
-                           GDALDataset *poSrcDSForMetadata,
-                           bool bCopyMetadata = true);
-    static std::unique_ptr<GDALDataset>
-    CreateTemporaryCopy(GDALAlgorithm *poAlg, GDALDataset *poSrcDS,
-                        int nSingleBand, bool bTiledIfPossible,
-                        GDALProgressFunc pfnProgress, void *pProgressData);
-};
 
 /************************************************************************/
 /*                   GDALRasterAlgorithmStepRegistry                    */

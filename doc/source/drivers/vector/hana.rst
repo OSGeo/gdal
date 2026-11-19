@@ -271,31 +271,31 @@ in `SAP HANA Multitenant Database Containers <https://help.sap.com/doc/0987e3b51
 Examples
 --------
 
--  This example shows how to list HANA layers on a specified host using
-   :ref:`ogrinfo` command.
+.. example:: 
+   :title: List HANA layers on a specified host using :ref:`ogrinfo`
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
 
    or
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro HANA:"DSN=MYHANADB;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
 
    or
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro HANA:"DRIVER=HDBODBC;USER_STORE_KEY=mykey;SCHEMA=MYSCHEMA"
 
--  This example shows how to print summary information about a given layer,
-   i.e. 'planet_osm_line', using :ref:`ogrinfo`.
+.. example::
+   :title: Print summary information about a the ``planet_osm_line`` layer using :ref:`ogrinfo`
 
-   ::
+   .. code-block:: console
 
-      ogrinfo -ro HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
+      $ ogrinfo -ro HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" -so "planet_osm_line"
 
       Layer name: planet_osm_line
       Geometry: Line String
@@ -329,15 +329,17 @@ Examples
       aerialway: String (4000.0)
       aeroway: String (4000.0)
 
--  This example shows how to export data from the 'points' table to a shapefile called 'points_output.shp'.
+.. example:: 
+   :title: Export data from the ``points`` table to a shapefile called ``points_output.shp``
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f "ESRI Shapefile" "D:\\points_output.shp" HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=GIS;TABLES=points"
 
--  This example shows how to create and populate a table with data taken from a shapefile.
+.. example::
+   :title: Create and populate a table with data taken from a shapefile
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f HANA HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA" myshapefile.shp
 

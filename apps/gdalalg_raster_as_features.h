@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_AS_FEATURES_INCLUDED
 #define GDALALG_RASTER_AS_FEATURES_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

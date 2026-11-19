@@ -77,7 +77,7 @@ def test_ogr_geomcoordinate_precision_geom_field():
     feature_defn.AddGeomFieldDefn(geom_fld)
     assert feature_defn.IsSame(feature_defn)
 
-    for (xy, z, m) in [
+    for xy, z, m in [
         (1e-9 * 10, 1e-3, 1e-2),
         (1e-9, 1e-3 * 10, 1e-2),
         (1e-9, 1e-3, 1e-2 * 10),

@@ -220,7 +220,7 @@ Metadata
 --------
 
 All HDF4 attributes are transparently translated as GDAL metadata. In
-the HDF file attributes may be assigned assigned to the whole file as
+the HDF file attributes may be assigned to the whole file as
 well as to particular subdatasets.
 
 Open options

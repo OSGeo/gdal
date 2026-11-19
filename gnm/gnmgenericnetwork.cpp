@@ -777,10 +777,10 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
     }
 
     GDALDriver *poMEMDrv =
-        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("Memory");
+        OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("MEM");
     if (poMEMDrv == nullptr)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'Memory' driver");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot load 'MEM' driver");
         return nullptr;
     }
 
@@ -1389,7 +1389,7 @@ CPLErr GNMGenericNetwork::LoadFeaturesLayer(GDALDataset *const pDS)
     return CE_None;
 }
 
-int GNMGenericNetwork::TestCapability(const char *pszCap) const
+bool GNMGenericNetwork::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

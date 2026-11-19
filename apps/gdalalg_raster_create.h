@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_CREATE_INCLUDED
 #define GDALALG_RASTER_CREATE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -45,6 +45,9 @@ class GDALRasterCreateAlgorithm : public GDALRasterPipelineStepAlgorithm
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     std::vector<int> m_size{};
+    std::vector<std::string> m_size_str{};
+    std::vector<std::string> m_resolution_str{};
+    std::vector<double> m_resolution{};
     int m_bandCount = 1;
     std::string m_type = "Byte";
     std::string m_crs{};

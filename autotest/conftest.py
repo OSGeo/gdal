@@ -1,6 +1,9 @@
 # coding: utf-8
+import glob
 import os
 import sys
+import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -15,6 +18,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "pymod"))
 
 # put the autotest dir on the path too. This lets us import all test modules
 sys.path.insert(1, os.path.dirname(__file__))
+
+from ogr.ogr_mssqlspatial import (  # noqa
+    mssql_ds,
+)
 
 # import fixtures that need to be used outside the test module where they were defined
 from ogr.ogr_pg import (  # noqa
@@ -49,7 +56,7 @@ def setup_proj_search_paths():
     assert os.path.exists(proj_grids_path)
 
     proj_db_tmpdir = os.path.join(
-        os.path.dirname(__file__), "gcore", "tmp", "proj_db_tmpdir"
+        tempfile.gettempdir(), "gdaltest", "gcore", "tmp", "proj_db_tmpdir"
     )
     proj_db_tmpdir_filename = os.path.join(proj_db_tmpdir, "proj.db")
     src_proj_db_filename = None
@@ -122,17 +129,80 @@ def chdir_to_test_file(request):
     os.chdir(old)
 
 
-@pytest.fixture(autouse=True, scope="function")
-def check_no_unintended_side_car_files(request):
-    """Detect if some tests generate unintended side car files that can cause
-    troubles to other tests.
-    """
+def _list_files(root_dir, include_dir=True):
+
+    res = set()
+    for filename in glob.glob(root_dir + "/**", recursive=True):
+        if (
+            "/tmp" not in filename
+            and "\\tmp" not in filename
+            and "__pycache__" not in filename
+            and (include_dir or not os.path.isdir(filename))
+        ):
+            res.add(
+                frozenset(
+                    {"filename": filename, "mtime": os.stat(filename).st_mtime}.items()
+                )
+            )
+
+    return res
+
+
+def _get_check_no_unintended_files():
+    check_no_unintended_files = gdal.GetConfigOption(
+        "CHECK_NO_UNINTENDED_FILES", "SESSION"
+    )
+    assert check_no_unintended_files in ("NO", "SESSION", "FULL", "PARTIAL")
+    return check_no_unintended_files
+
+
+@pytest.fixture(autouse=True, scope="session")
+def check_no_unintended_files_session(request):
+    """Detect if any test generates, modifies or deletes files in autotest/"""
+
+    check_no_unintended_files = _get_check_no_unintended_files()
+    if check_no_unintended_files != "SESSION":
+        yield
+        return
+
+    root_dir = os.path.dirname(Path(__file__).resolve())
+    files_before = _list_files(root_dir, include_dir=False)
+
     yield
 
-    filename = os.path.dirname(__file__) + "/gcore/data/byte.tif.aux.xml"
-    if os.path.exists(filename):
-        os.unlink(filename)
-        assert False, f"{filename} exists but should not"
+    files_after = _list_files(root_dir, include_dir=False)
+    if files_before != files_after:
+        sym_diff = files_before.symmetric_difference(files_after)
+        assert False, f"Files {sym_diff} have been created/modified/deleted"
+
+
+@pytest.fixture(autouse=True, scope="function")
+def check_no_unintended_files_function(request):
+    """Detect if each test generates, modifies or deletes files in autotest/"""
+
+    check_no_unintended_files = _get_check_no_unintended_files()
+    if check_no_unintended_files not in ("FULL", "PARTIAL"):
+        yield
+        return
+
+    if check_no_unintended_files == "FULL":
+        root_dir = os.path.dirname(Path(__file__).resolve())
+    else:
+        # If running tests from autotest/xxxxx, only check that subdirectory
+        cur_dir = os.getcwd()
+        while os.path.basename(os.path.dirname(cur_dir)) != "autotest":
+            cur_dir = os.path.dirname(cur_dir)
+        cur_subdir = os.path.basename(cur_dir)
+        root_dir = os.path.join(os.path.dirname(Path(__file__).resolve()), cur_subdir)
+
+    files_before = _list_files(root_dir)
+
+    yield
+
+    files_after = _list_files(root_dir)
+    if files_before != files_after:
+        sym_diff = files_before.symmetric_difference(files_after)
+        assert False, f"Files {sym_diff} have been created/modified/deleted"
 
 
 def pytest_collection_modifyitems(config, items):
@@ -223,6 +293,14 @@ def pytest_collection_modifyitems(config, items):
                         f"Requires PROJ >= {'.'.join(str(x) for x in required_version)}"
                     )
                 )
+
+        for mark in item.iter_markers("require_32bit"):
+            if sys.maxsize > (1 << 32) - 1:
+                item.add_marker(pytest.mark.skip("test requires a 32-bit system"))
+
+        for mark in item.iter_markers("require_64bit"):
+            if sys.maxsize < (1 << 63) - 1:
+                item.add_marker(pytest.mark.skip("test requires a 64-bit system"))
 
         for mark in item.iter_markers("require_curl"):
             if not gdaltest.built_against_curl():

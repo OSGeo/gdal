@@ -281,11 +281,22 @@ def test_gdalalg_set_field_type_completion(tmp_path):
         f"{gdal_path} completion gdal vector set-field-type --input ../ogr/data/poly.shp --field-name"
     )
     assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" not in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --field-name "
     )
     assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer poly --field-name "
+    )
+    assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer invalid --field-name "
+    )
+    assert "EAS_ID" not in out
 
     # No completion when there is a tee operator as this can be a slow operation
     out = gdaltest.runexternal(
@@ -345,7 +356,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     assert alg.Run()
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 2
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert out_ds.GetLayer(1).GetFeatureCount() == 1
@@ -390,7 +401,7 @@ def test_gdalalg_set_field_type_multiple_layers(tmp_vsimem, tmp_path):
     src_ds = None
 
     # Verify
-    with gdal.OpenEx(out_filename, gdal.OF_VECTOR) as out_ds:
+    with gdal.Open(out_filename, gdal.OF_VECTOR) as out_ds:
         assert out_ds.GetLayerCount() == 1
         assert out_ds.GetLayer(0).GetFeatureCount() == 1
         assert (
@@ -422,8 +433,8 @@ def test_gdalalg_set_field_type_src_field_type():
         "vector",
         "set-field-type",
         input=src_ds,
-        src_field_type="String",
-        dst_field_type="Integer",
+        input_field_type="String",
+        output_field_type="Integer",
         output_format="MEM",
     )
     ds = alg.Output()
@@ -475,3 +486,23 @@ def test_gdalalg_set_field_type_pipeline_fuse_in_open_not_supported(tmp_vsimem):
         assert lyr_defn.GetFieldDefn(0).GetType() == ogr.OFTDate
         assert lyr_defn.GetFieldDefn(1).GetType() == ogr.OFTInteger64
         assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTInteger
+
+
+@pytest.mark.parametrize("field_type", ["Integer", "Integer64"])
+def test_gdalalg_set_field_type_pipeline_filter(field_type):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    for i in range(1, 4):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["id"] = i
+        src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.pipeline(
+        input=src_ds,
+        pipeline=f'read ! set-field-type --field-name id --field-type {field_type} ! filter --where "id = 2"',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert [f["id"] for f in lyr] == [2]

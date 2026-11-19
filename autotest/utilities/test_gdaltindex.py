@@ -72,12 +72,12 @@ def four_tiles(tmp_path_factory):
 @pytest.fixture()
 def four_tile_index(gdaltindex_path, four_tiles, tmp_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdaltindex_path} {tmp_path}/tileindex.shp {four_tiles[0]} {four_tiles[1]}"
     )
     assert err is None or err == "", "got error/warning"
 
-    (ret_stdout, ret_stderr) = gdaltest.runexternal_out_and_err(
+    ret_stdout, ret_stderr = gdaltest.runexternal_out_and_err(
         f"{gdaltindex_path} {tmp_path}/tileindex.shp {four_tiles[2]} {four_tiles[3]}"
     )
 

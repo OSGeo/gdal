@@ -15,6 +15,7 @@
 #include "ogr_odbc.h"
 #include "cpl_string.h"
 
+#include <algorithm>
 #include <cmath>
 
 /************************************************************************/
@@ -87,7 +88,7 @@ CPLErr OGRODBCLayer::BuildFeatureDefn(const char *pszLayerName,
     {
         OGRFieldDefn oField(poStmtIn->GetColName(iCol), OFTString);
 
-        oField.SetWidth(MAX(0, poStmtIn->GetColSize(iCol)));
+        oField.SetWidth(std::max<int>(0, poStmtIn->GetColSize(iCol)));
 
         if (pszGeomColumn != nullptr &&
             EQUAL(poStmtIn->GetColName(iCol), pszGeomColumn))
@@ -340,7 +341,7 @@ OGRFeature *OGRODBCLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCLayer::TestCapability(const char *) const
+bool OGRODBCLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

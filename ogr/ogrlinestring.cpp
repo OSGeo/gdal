@@ -186,7 +186,7 @@ bool OGRSimpleCurve::setCoordinateDimension(int nNewDimension)
     return true;
 }
 
-bool OGRSimpleCurve::set3D(OGRBoolean bIs3D)
+bool OGRSimpleCurve::set3D(bool bIs3D)
 
 {
     if (bIs3D)
@@ -196,7 +196,7 @@ bool OGRSimpleCurve::set3D(OGRBoolean bIs3D)
     return true;
 }
 
-bool OGRSimpleCurve::setMeasured(OGRBoolean bIsMeasured)
+bool OGRSimpleCurve::setMeasured(bool bIsMeasured)
 
 {
     if (bIsMeasured)
@@ -2031,9 +2031,9 @@ std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions &opts,
     {
         wkt += '(';
 
-        OGRBoolean hasZ = Is3D();
-        OGRBoolean hasM =
-            (opts.variant != wkbVariantIso ? FALSE : IsMeasured());
+        const bool hasZ = Is3D();
+        const bool hasM =
+            (opts.variant != wkbVariantIso ? false : IsMeasured());
 
         try
         {
@@ -2491,7 +2491,7 @@ void OGRSimpleCurve::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::Equals(const OGRGeometry *poOther) const
+bool OGRSimpleCurve::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -2636,7 +2636,7 @@ OGRErr OGRSimpleCurve::transform(OGRCoordinateTransformation *poCT)
 /*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::IsEmpty() const
+bool OGRSimpleCurve::IsEmpty() const
 {
     return (nPointCount == 0);
 }
@@ -2850,14 +2850,14 @@ class OGRSimpleCurvePointIterator final : public OGRPointIterator
     {
     }
 
-    OGRBoolean getNextPoint(OGRPoint *p) override;
+    bool getNextPoint(OGRPoint *p) override;
 };
 
 /************************************************************************/
 /*                            getNextPoint()                            */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurvePointIterator::getNextPoint(OGRPoint *p)
+bool OGRSimpleCurvePointIterator::getNextPoint(OGRPoint *p)
 {
     if (iCurPoint >= poSC->getNumPoints())
         return FALSE;
@@ -3282,14 +3282,14 @@ double OGRLineString::get_AreaOfCurveSegments() const
  * @return TRUE if clockwise otherwise FALSE.
  */
 
-int OGRLineString::isClockwise() const
+bool OGRLineString::isClockwise() const
 
 {
     // WARNING: keep in sync OGRLineString::isClockwise(),
     // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
 
     if (nPointCount < 2)
-        return TRUE;
+        return true;
 
     bool bUseFallback = false;
 
@@ -3359,9 +3359,9 @@ int OGRLineString::isClockwise() const
     if (!bUseFallback)
     {
         if (crossproduct > 0)  // CCW
-            return FALSE;
+            return false;
         else if (crossproduct < 0)  // CW
-            return TRUE;
+            return true;
     }
 
     // This is a degenerate case: the extent of the polygon is less than EPSILON

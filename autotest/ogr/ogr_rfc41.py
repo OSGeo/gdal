@@ -22,6 +22,7 @@ from osgeo import gdal, ogr, osr
 require_ogr_sql_sqlite
 # to make pyflakes happy
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -569,7 +570,7 @@ def test_ogr_rfc41_6():
         ),
     ]
 
-    for (sql, error_msg) in wrong_sql_list:
+    for sql, error_msg in wrong_sql_list:
         gdal.ErrorReset()
         with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(sql)
@@ -750,11 +751,11 @@ def test_ogr_rfc41_7():
         or feat["p.eas_id"] != 168
         or feat.area_int != 215229
         or feat.area != pytest.approx(215229.266, abs=1e-5)
-        or feat.geom1.GetGeometryType() != ogr.wkbPolygon
+        or feat.geom1.GetGeometryType() != ogr.wkbMultiPolygon
         or feat.geom2 is not None
         or feat.geom3.GetGeometryType() != ogr.wkbPoint
-        or feat.geom4.GetGeometryType() != ogr.wkbPolygon
-        or feat["_ogr_geometry_"].GetGeometryType() != ogr.wkbPolygon
+        or feat.geom4.GetGeometryType() != ogr.wkbMultiPolygon
+        or feat["_ogr_geometry_"].GetGeometryType() != ogr.wkbMultiPolygon
     ):
         feat.DumpReadable()
         pytest.fail()
@@ -785,7 +786,7 @@ def test_ogr_rfc41_8(require_ogr_sql_sqlite):  # noqa
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPoint25D
     srs = sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     ds.ReleaseResultSet(sql_lyr)
 
     # Test INSERT INTO request

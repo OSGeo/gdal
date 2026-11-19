@@ -46,7 +46,7 @@ though other organizations are supported for read.
       Sets the compression to use. Values
       other than NONE may only be used with TILED
       interleaving. If JPEG is select it may include a quality value
-      between 1 and 100 - eg. COMPRESSION=JPEG40.
+      between 1 and 100 - e.g., COMPRESSION=JPEG40.
 
 -  .. co:: TILESIZE
       :default: 127

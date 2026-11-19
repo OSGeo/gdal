@@ -14,6 +14,7 @@
 #include "ogr_geopackage.h"
 #include "ogrgeopackageutility.h"
 #include "ogrlayerarrow.h"
+#include "ogrlibjsonutils.h"
 #include "ogrsqliteutility.h"
 #include "cpl_md5.h"
 #include "cpl_multiproc.h"  // CPLSleep()
@@ -316,6 +317,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
         const OGRFieldDefn *poFieldDefn =
             poFeatureDefn->GetFieldDefnUnsafe(iField);
         int err = SQLITE_OK;
+        bool bBound = false;
+        char *pszValToFree = nullptr;
 
         if (!poFeature->IsFieldNullUnsafe(iField))
         {
@@ -471,7 +474,9 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                              : "");
                                 if (m_bTruncateFields)
                                 {
-                                    pszVal = CPLForceToASCII(pszVal, -1, '_');
+                                    pszValToFree =
+                                        CPLForceToASCII(pszVal, -1, '_');
+                                    pszVal = pszValToFree;
                                     destructorType = CPLFree;
                                 }
                             }
@@ -520,14 +525,56 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                         {
                             destructorType = SQLITE_STATIC;
                         }
+
+                        // If the field subtype is JSON and the current value cannot
+                        // be parsed as a valid JSON, encode it as a JSON string.
+                        if (poFieldDefn->GetSubType() == OFSTJSON)
+                        {
+                            json_object *poObjProp = nullptr;
+                            std::string osValue(pszVal);
+                            if (!OGRJSonParse(
+                                    osValue.c_str(), &poObjProp, false,
+                                    static_cast<int>(osValue.length() + 1)))
+                            {
+                                CPLErrorOnce(
+                                    CE_Warning, CPLE_AppDefined,
+                                    "Field %s is declared as JSON but the "
+                                    "value is not a valid JSON. Storing as "
+                                    "string.",
+                                    poFieldDefn->GetNameRef());
+                                // Escape and quote
+                                osValue = CPLJSONObject(pszVal).Format(
+                                    CPLJSONObject::PrettyFormat::Plain);
+                            }
+                            else
+                            {
+                                osValue = json_object_to_json_string(poObjProp);
+                            }
+                            err = sqlite3_bind_text(
+                                poStmt, nColCount++, osValue.c_str(),
+                                static_cast<int>(osValue.size()),
+                                SQLITE_TRANSIENT);
+                            bBound = true;
+                            json_object_put(poObjProp);
+                            CPLFree(pszValToFree);
+                            pszValToFree = nullptr;
+                            CPL_IGNORE_RET_VAL(pszValToFree);
+                            destructorType = SQLITE_TRANSIENT;
+                            pszVal = "";
+                            nValLengthBytes = 0;
+                        }
                     }
                     else
                     {
                         pszVal = poFeature->GetFieldAsString(iField);
                     }
 
-                    err = sqlite3_bind_text(poStmt, nColCount++, pszVal,
-                                            nValLengthBytes, destructorType);
+                    if (!bBound)
+                    {
+                        err =
+                            sqlite3_bind_text(poStmt, nColCount++, pszVal,
+                                              nValLengthBytes, destructorType);
+                    }
                     break;
                 }
             }
@@ -715,7 +762,8 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
         }
         for (int i = 0; i < poFeatureDefn->GetFieldCount(); i++)
         {
-            if (i == m_iFIDAsRegularColumnIndex)
+            const auto *poFieldDefn = poFeatureDefn->GetFieldDefn(i);
+            if (i == m_iFIDAsRegularColumnIndex || poFieldDefn->IsGenerated())
                 continue;
             if (!bBindUnsetFields && !poFeature->IsFieldSet(i))
                 continue;
@@ -729,12 +777,11 @@ CPLString OGRGeoPackageTableLayer::FeatureGenerateInsertSQL(
                 osSQLBack += ", ";
             }
 
-            osSQLBack += CPLSPrintf(
-                "\"%s\" = excluded.\"%s\"",
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str(),
-                SQLEscapeName(poFeatureDefn->GetFieldDefn(i)->GetNameRef())
-                    .c_str());
+            const std::string osEscapedColName =
+                SQLEscapeName(poFieldDefn->GetNameRef());
+            osSQLBack +=
+                CPLSPrintf("\"%s\" = excluded.\"%s\"", osEscapedColName.c_str(),
+                           osEscapedColName.c_str());
         }
 #if SQLITE_VERSION_NUMBER >= 3035000L
         osSQLBack += " RETURNING \"";
@@ -1998,13 +2045,12 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     OGRGeomFieldDefn oGeomField(poGeomFieldIn);
-    auto poSRSOri = poGeomFieldIn->GetSpatialRef();
+    const auto poSRSOri = poGeomFieldIn->GetSpatialRef();
     if (poSRSOri)
     {
-        auto poSRS = poSRSOri->Clone();
+        auto poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSOri);
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        oGeomField.SetSpatialRef(poSRS);
-        poSRS->Release();
+        oGeomField.SetSpatialRef(poSRS.get());
     }
     if (EQUAL(oGeomField.GetNameRef(), ""))
     {
@@ -2201,7 +2247,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-Z geometry type "
                         "%s, but it does contain geometries with Z. Setting "
-                        "the Z=2 hint into gpkg_geometry_columns",
+                        "the Z=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
@@ -2216,7 +2264,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-M geometry type "
                         "%s, but it does contain geometries with M. Setting "
-                        "the M=2 hint into gpkg_geometry_columns",
+                        "the M=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
@@ -2683,6 +2733,14 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
 
     /* All done! */
     return OGRERR_NONE;
+}
+
+void OGRGeoPackageTableLayer::FinishRollbackTransaction(
+    const std::string &osSavepointName)
+{
+    OGRGeoPackageLayer::FinishRollbackTransaction(osSavepointName);
+    // Invalidate feature count
+    m_nTotalFeatureCount = -1;
 }
 
 OGRErr OGRGeoPackageTableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -4097,6 +4155,14 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 
     CancelAsyncNextArrowArray();
 
+    if (m_poFilterGeom != nullptr)
+    {
+        // Both are exclusive
+        CreateSpatialIndexIfNecessary();
+        if (!RunDeferredSpatialIndexUpdate())
+            return -1;
+    }
+
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
@@ -4392,7 +4458,7 @@ void OGRGeoPackageTableLayer::RecomputeExtent()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
+bool OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -5728,8 +5794,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
 
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            poGotSRS;
+        OGRSpatialReferenceRefCountedPtr poGotSRS;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
 
         oGeomFieldDefn.SetSpatialRef(poSRS);
@@ -5753,7 +5818,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                 else
                 {
                     bool bOK = false;
-                    OGRSpatialReference *poSRSTmp = new OGRSpatialReference();
+                    auto poSRSTmp =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     if (m_iSrs < 32767)
                     {
                         CPLErrorHandlerPusher oErrorHandler(
@@ -5764,8 +5830,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                             bOK = true;
                             poSRSTmp->SetAxisMappingStrategy(
                                 OAMS_TRADITIONAL_GIS_ORDER);
-                            m_iSrs = m_poDS->GetSrsId(poSRSTmp);
-                            oGeomFieldDefn.SetSpatialRef(poSRSTmp);
+                            m_iSrs = m_poDS->GetSrsId(poSRSTmp.get());
+                            oGeomFieldDefn.SetSpatialRef(poSRSTmp.get());
                         }
                     }
                     if (!bOK)
@@ -5775,7 +5841,6 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                             "No entry in gpkg_spatial_ref_sys matching SRID=%s",
                             pszSRID);
                     }
-                    poSRSTmp->Release();
                 }
             }
         }
@@ -6799,7 +6864,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsNullable() != poNewFieldDefn->IsNullable())
     {
         nActualFlags |= ALTER_NULLABLE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (!poNewFieldDefn->IsNullable())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetNullable(poNewFieldDefn->IsNullable());
     }
     if ((nFlagsIn & ALTER_DEFAULT_FLAG) != 0 &&
@@ -6817,7 +6883,8 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         poFieldDefnToAlter->IsUnique() != poNewFieldDefn->IsUnique())
     {
         nActualFlags |= ALTER_UNIQUE_FLAG;
-        bUseRewriteSchemaMethod = false;
+        if (poNewFieldDefn->IsUnique())
+            bUseRewriteSchemaMethod = false;
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
     if ((nFlagsIn & ALTER_DOMAIN_FLAG) != 0 &&
@@ -6868,7 +6935,13 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
     /* -------------------------------------------------------------------- */
     m_poDS->ResetReadingAllLayers();
 
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    const bool bUseRenameColumn =
+        (nActualFlags == ALTER_NAME_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG));
+#else
     const bool bUseRenameColumn = (nActualFlags == ALTER_NAME_FLAG);
+#endif
     if (bUseRenameColumn)
         bUseRewriteSchemaMethod = false;
 
@@ -6909,6 +6982,26 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
         }
     }
 
+    bool bUseRecreateTableMethod =
+        !bUseRenameColumn && !bUseRewriteSchemaMethod;
+
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    if (eErr == OGRERR_NONE &&
+        (nActualFlags == ALTER_NULLABLE_FLAG ||
+         nActualFlags == (ALTER_NAME_FLAG | ALTER_NULLABLE_FLAG)))
+    {
+        eErr =
+            SQLCommand(m_poDS->GetDB(),
+                       CPLString().Printf(
+                           "ALTER TABLE \"%s\" ALTER COLUMN \"%s\" %s NOT NULL",
+                           SQLEscapeName(m_pszTableName).c_str(),
+                           SQLEscapeName(osOldColName).c_str(),
+                           poNewFieldDefn->IsNullable() ? "DROP" : "SET"));
+        bUseRecreateTableMethod = false;
+        bUseRewriteSchemaMethod = false;
+    }
+#endif
+
     if (bUseRenameColumn)
     {
         if (eErr == OGRERR_NONE)
@@ -6924,7 +7017,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
                     .c_str());
         }
     }
-    else if (!bUseRewriteSchemaMethod)
+    else if (bUseRecreateTableMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -6940,7 +7033,7 @@ OGRErr OGRGeoPackageTableLayer::AlterFieldDefn(int iFieldToAlter,
             eErr = RecreateTable(osColumnsForCreate, osFieldListForSelect);
         }
     }
-    else
+    else if (bUseRewriteSchemaMethod)
     {
         /* --------------------------------------------------------------------
          */
@@ -7406,12 +7499,13 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         const auto poOldSRS = poGeomFieldDefn->GetSpatialRef();
         const auto poNewSRSRef = poNewGeomFieldDefn->GetSpatialRef();
 
-        std::unique_ptr<OGRSpatialReference> poNewSRS;
+        OGRSpatialReferenceRefCountedPtr poNewSRS;
         if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG) != 0)
         {
             if (poNewSRSRef != nullptr)
             {
-                poNewSRS.reset(poNewSRSRef->Clone());
+                poNewSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poNewSRSRef);
                 if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG) ==
                     0)
                 {
@@ -7425,7 +7519,8 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         {
             if (poOldSRS != nullptr)
             {
-                poNewSRS.reset(poOldSRS->Clone());
+                poNewSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poOldSRS);
                 if (poNewSRSRef)
                     poNewSRS->SetCoordinateEpoch(
                         poNewSRSRef->GetCoordinateEpoch());
@@ -7518,10 +7613,7 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             }
 
             m_iSrs = nNewSRID;
-            OGRSpatialReference *poSRS = poNewSRS.release();
-            poGeomFieldDefn->SetSpatialRef(poSRS);
-            if (poSRS)
-                poSRS->Release();
+            poGeomFieldDefn->SetSpatialRef(poNewSRS.get());
         }
     }
 
@@ -8101,6 +8193,11 @@ begin:
 
         if (nWKBSize == 0)
         {
+            // Features with a null geometry never match a spatial filter.
+            if (psFillArrowArray->poLayerForFilterGeom)
+            {
+                return;
+            }
             if (!psHelper->SetNull(iArrowField, iFeat))
             {
                 goto error;

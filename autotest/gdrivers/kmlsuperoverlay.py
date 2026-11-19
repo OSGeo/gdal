@@ -13,7 +13,6 @@
 ###############################################################################
 
 import os
-import shutil
 import sys
 
 import gdaltest
@@ -226,12 +225,11 @@ def test_kmlsuperoverlay_4():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_kmlsuperoverlay_5():
+def test_kmlsuperoverlay_5(tmp_path):
 
     from xml.etree import ElementTree
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="512" rasterYSize="512">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
   <SRS>PROJCS["WGS 84 / Mercator 41",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -259,21 +257,20 @@ def test_kmlsuperoverlay_5():
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        "tmp/tmp.kml", src_ds, options=["FIX_ANTIMERIDIAN=YES"]
+        tmp_path / "tmp.kml", src_ds, options=["FIX_ANTIMERIDIAN=YES"]
     )
     del ds
     src_ds = None
 
     files = [
-        "tmp/tmp.kml",
-        "tmp/0/0/0.kml",
-        "tmp/1/0/0.kml",
-        "tmp/1/0/1.kml",
-        "tmp/1/1/0.kml",
-        "tmp/1/1/1.kml",
+        str(tmp_path / "tmp.kml"),
+        str(tmp_path / "0/0/0.kml"),
+        str(tmp_path / "1/0/0.kml"),
+        str(tmp_path / "1/0/1.kml"),
+        str(tmp_path / "1/1/0.kml"),
+        str(tmp_path / "1/1/1.kml"),
     ]
 
     for f in files:
@@ -285,10 +282,6 @@ def test_kmlsuperoverlay_5():
             assert float(east) >= float(
                 west
             ), "East is less than west in LatLonAltBox %s, (%s < %s)" % (f, east, west)
-
-    shutil.rmtree("tmp/0")
-    shutil.rmtree("tmp/1")
-    os.remove("tmp/tmp.kml")
 
 
 ###############################################################################
@@ -397,11 +390,10 @@ def test_kmlsuperoverlay_gx_latlonquad():
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_kmlsuperoverlay_8():
+def test_kmlsuperoverlay_8(tmp_path):
 
     # a large raster with actual data on each end and blank space in between
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="2048" rasterYSize="512">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="2048" rasterYSize="512">
   <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]</SRS>
   <GeoTransform>  0,  0.01,  0,  0,  0, 0.01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
@@ -476,16 +468,15 @@ def test_kmlsuperoverlay_8():
       <ScaleRatio>0</ScaleRatio>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
-        "tmp/tmp.kml", src_ds, options=["FORMAT=AUTO"]
+        tmp_path / "tmp.kml", src_ds, options=["FORMAT=AUTO"]
     )
     del ds
     src_ds = None
 
-    assert set(os.listdir("tmp/0/0")) == set(("0.kml", "0.png"))
-    assert set(os.listdir("tmp/3/1")) == set(
+    assert set(os.listdir(str(tmp_path / "0/0"))) == set(("0.kml", "0.png"))
+    assert set(os.listdir(str(tmp_path / "3/1"))) == set(
         (
             "0.jpg",
             "0.kml",
@@ -505,10 +496,4 @@ def test_kmlsuperoverlay_8():
             "7.kml",
         )
     )
-    assert set(os.listdir("tmp/3/2")) == set()
-
-    shutil.rmtree("tmp/0")
-    shutil.rmtree("tmp/1")
-    shutil.rmtree("tmp/2")
-    shutil.rmtree("tmp/3")
-    os.remove("tmp/tmp.kml")
+    assert set(os.listdir(str(tmp_path / "3/2"))) == set()

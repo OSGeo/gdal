@@ -106,9 +106,11 @@ def calc_geotransform_and_dimensions(
             out_extent = (
                 extent
                 if out_extent is None
-                else out_extent.union(extent)
-                if is_union
-                else out_extent.intersect(extent)
+                else (
+                    out_extent.union(extent)
+                    if is_union
+                    else out_extent.intersect(extent)
+                )
             )
     else:
         raise Exception(f"Unknown input extent format {input_extent}")

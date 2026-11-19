@@ -398,7 +398,7 @@ typedef struct {
 /*   uChar center, subcenter; */ /* Who produced it. */
    uChar genProcess;         /* Generating Process ID. ?Sect 4? */
    uChar cat;                /* General category of Meteo Product. */
-   uChar gridID;             /* The Grid Defin ID number (GRIB1 specific) */
+   uChar gridID;             /* The Grid Define ID number (GRIB1 specific) */
    uChar levelType;          /* Type of level. ?sect 4 fstSurf? */
    int levelVal;             /* Value of level. */
    double refTime;           /* Reference time in seconds UTC */

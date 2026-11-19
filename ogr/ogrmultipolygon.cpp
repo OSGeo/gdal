@@ -95,8 +95,7 @@ const char *OGRMultiPolygon::getGeometryName() const
 /*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiPolygon::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiPolygon::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
     return wkbFlatten(eGeomType) == wkbPolygon;
 }
@@ -113,7 +112,7 @@ OGRErr OGRMultiPolygon::importFromWkb(const unsigned char *pabyData,
     if (nGeomCount == 1 && nSize >= 9 && flags == 0 && pabyData[0] == wkbNDR &&
         memcmp(pabyData + 1, "\x06\x00\x00\x00\x01\x00\x00\x00", 8) == 0)
     {
-        // Optimization to import a Intel-ordered 1-part multipolyon on
+        // Optimization to import a Intel-ordered 1-part multipolygon on
         // top of an existing 1-part multipolygon, to save dynamic memory
         // allocations.
         const size_t nDataOffset = 9;
@@ -154,7 +153,7 @@ std::string OGRMultiPolygon::exportToWkt(const OGRWktOptions &opts,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
+bool OGRMultiPolygon::hasCurveGeometry(int /* bLookForNonLinear */) const
 {
     return FALSE;
 }

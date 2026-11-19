@@ -228,7 +228,7 @@ void ods_formula_node::Dump(FILE *fp, int depth)
 
 {
     const int max_num_spaces = 60;
-    char spaces[max_num_spaces];
+    char spaces[max_num_spaces] = {0};
 
     for (int i = 0; i < depth * 2 && i < max_num_spaces - 1; i++)
         spaces[i] = ' ';

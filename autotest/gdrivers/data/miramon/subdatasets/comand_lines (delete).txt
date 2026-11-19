@@ -1,0 +1,1 @@
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\subdatasets\byteI.rel" "D:\tmp\supermultibanda_byte.vrt" -sds

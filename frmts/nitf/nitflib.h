@@ -150,6 +150,9 @@ typedef struct
     char szICAT[9];
     int nABPP; /* significant bits per pixel */
 
+    /* We use NITF02.10 conventions to indicate no IGEOLO, ie ICORDS=' ', even
+     * when writing NITF02.00 where this is nominally 'N' (which in NITF02.10
+     * means UTM North...). NITFCreate() and NITFWriteIGEOLO() do the translation */
     char chICORDS;
     int bHaveIGEOLO;
 
@@ -405,6 +408,12 @@ typedef struct
 /** Return not freeable (maybe NULL if no matching) */
 const NITFSeries CPL_DLL *NITFGetSeriesInfo(const char *pszFilename);
 
+const NITFSeries *NITFGetRPFSeriesInfoFromIndex(int nIdx);
+const NITFSeries *NITFGetRPFSeriesInfoFromCode(const char *pszCode);
+bool NITFIsKnownRPFDataSeriesCode(const char *pszCode,
+                                  const char *pszProductType);
+int NITFGetScaleFromScaleResolution(const char *scaleResolution);
+
 /* -------------------------------------------------------------------- */
 /*                           Internal use                               */
 /* -------------------------------------------------------------------- */
@@ -418,5 +427,20 @@ CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
                              bool *pbGotError);
 
 CPL_C_END
+
+#ifdef __cplusplus
+
+namespace GDALOffsetPatcher
+{
+class OffsetPatcher;
+}
+
+int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
+                 int nBitsPerSample, const char *pszPVType,
+                 CSLConstList papszOptions, int *pnIndex, int *pnImageCount,
+                 vsi_l_offset *pnImageOffset, vsi_l_offset *pnICOffset,
+                 GDALOffsetPatcher::OffsetPatcher *offsetPatcher);
+
+#endif  // __cplusplus
 
 #endif /* ndef NITFLIB_H_INCLUDED */

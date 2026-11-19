@@ -31,7 +31,8 @@ static std::nullptr_t CPLErrorInvalidLength(const char *message)
 OGRPoint *GeometryReader::readPoint()
 {
     const auto offsetXy = m_offset * 2;
-    if (offsetXy >= m_length)
+    // +1 because we need to read x and y
+    if (offsetXy + 1 >= m_length)
         return CPLErrorInvalidLength("XY data");
     if (m_hasZ)
     {

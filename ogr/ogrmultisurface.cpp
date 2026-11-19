@@ -108,8 +108,7 @@ const char *OGRMultiSurface::getGeometryName() const
 /*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiSurface::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiSurface::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
     OGRwkbGeometryType eFlattenGeomType = wkbFlatten(eGeomType);
     return eFlattenGeomType == wkbPolygon ||
@@ -257,7 +256,7 @@ std::string OGRMultiSurface::exportToWkt(const OGRWktOptions &opts,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
 {
     if (bLookForNonLinear)
         return OGRGeometryCollection::hasCurveGeometry(TRUE);

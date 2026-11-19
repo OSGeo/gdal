@@ -191,7 +191,7 @@ MAIN_START(argc, argv)
         if (sOptionsForBinary.nSubdataset > 0)
         {
             CSLConstList papszSubdatasets =
-                GDALGetMetadata(hDataset, "SUBDATASETS");
+                GDALGetMetadata(hDataset, GDAL_MDD_SUBDATASETS);
             const int nSubdatasets = CSLCount(papszSubdatasets) / 2;
 
             if (nSubdatasets > 0 &&

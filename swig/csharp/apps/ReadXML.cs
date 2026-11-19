@@ -7,11 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
+
 
 using OSGeo.GDAL;
 /**
@@ -28,23 +30,29 @@ using OSGeo.GDAL;
 /// A C# based sample for demonstrating the usage of the XMLNode class.
 /// </summary>
 
-class ReadXML {
+class ReadXML
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage example: readxml {xml string}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage example: readxml {xml string}");
+        System.Environment.Exit(-1);
+    }
 
-	public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 1) usage();
+        if (args.Length != 1)
+        {
+            usage();
+        }
 
-        XMLNode node = new XMLNode(args[0]);
-
-        PrintNode(0, node);
-	}
+        using (XMLNode node = new XMLNode(args[0]))
+        {
+            PrintNode(0, node);
+        }
+    }
 
     public static void PrintNode(int recnum, XMLNode node)
     {

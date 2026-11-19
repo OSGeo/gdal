@@ -32,7 +32,7 @@ void Swap(double &a, double &b)
 std::string URLEncode(const std::string &str)
 {
     char *pszEncoded = CPLEscapeString(str.c_str(), -1, CPLES_URL);
-    std::string str2 = pszEncoded;
+    std::string str2(pszEncoded);
     CPLFree(pszEncoded);
     return str2;
 }
@@ -447,7 +447,7 @@ bool SetupCache(std::string &cache, bool clear)
         }
         else
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+            CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                      db.c_str(), errno);
             return false;
         }
@@ -455,14 +455,6 @@ bool SetupCache(std::string &cache, bool clear)
     srand((unsigned int)time(
         nullptr));  // not to have the same names in the cache
     return true;
-}
-
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static void SortStringList(std::vector<std::string> &strList)
-{
-    std::sort(strList.begin(), strList.end());
 }
 
 std::vector<std::string> ReadCache(const std::string &cache)
@@ -486,7 +478,8 @@ std::vector<std::string> ReadCache(const std::string &cache)
         }
         CSLDestroy(data);
     }
-    SortStringList(contents);
+    if (!contents.empty())
+        std::sort(contents.begin(), contents.end());
     return contents;
 }
 
@@ -582,7 +575,7 @@ CPLErr SearchCache(const std::string &cache, const std::string &url,
     VSILFILE *f = VSIFOpenL(db.c_str(), "r");
     if (!f)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                  db.c_str(), errno);
         return CE_Failure;
     }
@@ -631,7 +624,7 @@ CPLErr AddEntryToCache(const std::string &cache, const std::string &url,
     VSILFILE *f = VSIFOpenL(db.c_str(), "a");
     if (!f)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Can't open file '%s': %i",
                  db.c_str(), errno);
         return CE_Failure;
     }

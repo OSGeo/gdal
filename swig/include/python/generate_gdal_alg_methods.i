@@ -70,34 +70,59 @@ def _generate_gdal_alg_methods():
                 for arg_name in alg.GetArgNames():
                     arg = alg.GetArg(arg_name)
                     if arg.IsInput() and not arg.IsHiddenForAPI():
+
+                        names = [ arg_name ]
+                        aliases = arg.GetAliases()
+                        if aliases:
+                            for alias in aliases:
+                                if len(alias) >= 4:  # no 'if', 'of', 'abs', etc.
+                                    names.append(alias)
+
                         is_required = (arg.IsRequired() or arg_name == "pipeline")
-                        if pass_idx == 1 and not is_required:
+                        is_required_without_alias = is_required and len(names) == 1
+                        if pass_idx == 1 and not is_required_without_alias:
                             continue
-                        elif pass_idx == 2 and is_required:
+                        elif pass_idx == 2 and is_required_without_alias:
                             continue
-                        if args:
-                            args += ", "
-                            kwargs += ", "
 
-                        arg_name_sanitized = arg_name.replace('-', '_')
-                        if arg_name_sanitized[0:1].isdigit():
-                            arg_name_sanitized = '_' + arg_name_sanitized
+                        sanitized_names = []
+                        for idx, name in enumerate(names):
 
-                        assert arg_name_sanitized.isidentifier()
+                            arg_name_sanitized = name.replace('-', '_')
+                            if arg_name_sanitized[0:1].isdigit():
+                                arg_name_sanitized = '_' + arg_name_sanitized
 
-                        args += arg_name_sanitized
-                        type_hint = _get_type_hint(arg, for_input=True)
-                        if not is_required:
-                            type_hint = f"Optional[{type_hint}]=None"
-                        args += f": {type_hint}"
+                            assert arg_name_sanitized.isidentifier()
+                            sanitized_names.append(arg_name_sanitized)
 
-                        kwargs += f'"{arg_name_sanitized}": {arg_name_sanitized}'
+                            if idx == 0:
+                                if args:
+                                    args += ", "
+                                    kwargs += ", "
+
+                                args += arg_name_sanitized
+                                type_hint = _get_type_hint(arg, for_input=True)
+                                if not is_required:
+                                    type_hint = f"Optional[{type_hint}]=None"
+                                    args += f": {type_hint}"
+                                else:
+                                    if len(names) > 1:
+                                        args += f": Optional[{type_hint}]=None"
+                                    else:
+                                        args += f": {type_hint}"
+
+                                kwargs += f'"{arg_name_sanitized}": {arg_name_sanitized}'
 
                         parameters += "       "
-                        parameters += arg_name_sanitized
+                        parameters += sanitized_names[0]
                         parameters += ": "
                         parameters += type_hint
                         parameters += "\n"
+                        if len(sanitized_names) > 1:
+                            parameters += "       "
+                            parameters += "    Aliases: "
+                            parameters += ", ".join(sanitized_names[1:])
+                            parameters += "\n"
                         parameters += "       "
                         parameters += "    "
                         parameters += arg.GetDescription()
@@ -143,10 +168,11 @@ def _generate_gdal_alg_methods():
 
 
             func_code = f"""
-def {name_sanitized}({args}):
-    kwargs = {kwargs}
-    kwargs = {{k: v for k, v in kwargs.items() if v is not None}}
-    return gdal.Run({new_path}, **kwargs)
+def {name_sanitized}({args}, **kwargs):
+    new_kwargs = {kwargs}
+    new_kwargs = {{k: v for k, v in new_kwargs.items() if v is not None}}
+    new_kwargs.update(kwargs)
+    return gdal.Run({new_path}, **new_kwargs)
 """
             func_globals = copy.copy(parent_module.__dict__)
             extra = {"gdal": gdal_module, "os": os, "List": List, "Union": Union, "Optional": Optional, "Callable": Callable}

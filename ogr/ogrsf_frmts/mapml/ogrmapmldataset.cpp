@@ -97,7 +97,7 @@ class OGRMapMLReaderLayer final
 
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRMapMLReaderLayer)
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -144,7 +144,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void AddFeature(CPLXMLNode *psNode);
 
@@ -193,7 +193,7 @@ class OGRMapMLWriterLayer final : public OGRLayer
 
     OGRErr CreateField(const OGRFieldDefn *poFieldDefn, int) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -477,7 +477,7 @@ OGRMapMLReaderLayer::~OGRMapMLReaderLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMapMLReaderLayer::TestCapability(const char *pszCap) const
+bool OGRMapMLReaderLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCStringsAsUTF8))
@@ -971,7 +971,7 @@ const OGRLayer *OGRMapMLWriterDataset::GetLayer(int idx) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMapMLWriterDataset::TestCapability(const char *pszCap) const
+bool OGRMapMLWriterDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return true;
@@ -1000,8 +1000,8 @@ OGRMapMLWriterDataset::ICreateLayer(const char *pszLayerName,
 
     if (m_oSRS.IsEmpty())
     {
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName();
+        const char *pszAuthCode = poSRS->GetAuthorityCode();
         if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
         {
             const int nEPSGCode = atoi(pszAuthCode);
@@ -1084,7 +1084,7 @@ OGRMapMLWriterLayer::~OGRMapMLWriterLayer()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMapMLWriterLayer::TestCapability(const char *pszCap) const
+bool OGRMapMLWriterLayer::TestCapability(const char *pszCap) const
 {
 
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField))
@@ -1134,9 +1134,7 @@ void OGRMapMLWriterLayer::writePolygon(CPLXMLNode *psContainer,
     bool bFirstRing = true;
     for (const auto poRing : *poPoly)
     {
-        const bool bReversePointOrder =
-            (bFirstRing && CPL_TO_BOOL(poRing->isClockwise())) ||
-            (!bFirstRing && !CPL_TO_BOOL(poRing->isClockwise()));
+        const bool bReversePointOrder = bFirstRing == poRing->isClockwise();
         bFirstRing = false;
         CPLXMLNode *psCoordinates =
             CPLCreateXMLNode(psPolygon, CXT_Element, "map-coordinates");

@@ -62,8 +62,7 @@ def test_vrtmisc_2():
 
 def test_vrtmisc_3():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <ComplexSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -73,8 +72,7 @@ def test_vrtmisc_3():
       <DstMax>255</DstMax>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -252,11 +250,10 @@ def test_vrtmisc_10(tmp_vsimem):
 # Test relativeToVRT is preserved during re-serialization (#5985)
 
 
-def test_vrtmisc_11():
+def test_vrtmisc_11(tmp_path):
 
-    f = open("tmp/vrtmisc_11.vrt", "wt")
-    f.write(
-        """<VRTDataset rasterXSize="1" rasterYSize="1">
+    f = open(tmp_path / "vrtmisc_11.vrt", "wt")
+    f.write("""<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>
@@ -267,18 +264,17 @@ def test_vrtmisc_11():
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
-"""
-    )
+""")
     f.close()
 
-    ds = gdal.Open("tmp/vrtmisc_11.vrt", gdal.GA_Update)
+    ds = gdal.Open(tmp_path / "vrtmisc_11.vrt", gdal.GA_Update)
     # to trigger a flush
     ds.SetMetadata(ds.GetMetadata())
     ds = None
 
-    data = open("tmp/vrtmisc_11.vrt", "rt").read()
+    data = open(tmp_path / "vrtmisc_11.vrt", "rt").read()
 
-    gdal.Unlink("tmp/vrtmisc_11.vrt")
+    gdal.Unlink(tmp_path / "vrtmisc_11.vrt")
 
     assert '<SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>' in data
 
@@ -726,34 +722,41 @@ def test_vrtmisc_sourcefilename_all_relatives(tmp_path):
 # Test the relativeToVRT attribute of SourceFilename
 
 
-def test_vrtmisc_sourcefilename_source_relative_dest_absolute():
+def test_vrtmisc_sourcefilename_source_relative_dest_absolute(tmp_path, monkeypatch):
+
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    shutil.copy("data/byte.tif", tmp_path / "data" / "byte.tif")
+
+    monkeypatch.chdir(tmp_path)
 
     shutil.copy("data/byte.tif", "tmp")
 
-    try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
-        ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
-        path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
-        if sys.platform == "win32":
-            path = path.replace("/", "\\")
-        ds.SetDescription(path)
-        ds = None
-        src_ds = None
-        assert (
-            '<SourceFilename relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
+    ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
+    path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
+    if sys.platform == "win32":
+        path = path.replace("/", "\\")
+    ds.SetDescription(path)
+    ds = None
+    src_ds = None
+    assert (
+        '<SourceFilename relativeToVRT="1">byte.tif<'
+        in open("tmp/byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceFilename
 
 
-def test_vrtmisc_sourcefilename_source_absolute_dest_absolute():
+def test_vrtmisc_sourcefilename_source_absolute_dest_absolute(tmp_path, monkeypatch):
 
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    shutil.copy("data/byte.tif", tmp_path / "data" / "byte.tif")
+
+    monkeypatch.chdir(tmp_path)
     shutil.copy("data/byte.tif", "tmp")
 
     try:
@@ -775,14 +778,20 @@ def test_vrtmisc_sourcefilename_source_absolute_dest_absolute():
 # Test the relativeToVRT attribute of SourceFilename
 
 
-def test_vrtmisc_sourcefilename_source_absolute_dest_relative():
+def test_vrtmisc_sourcefilename_source_absolute_dest_relative(tmp_path, monkeypatch):
 
+    gdal.Mkdir(tmp_path / "tmp", 0o755)
+    gdal.Mkdir(tmp_path / "data", 0o755)
+    shutil.copy("data/byte.tif", tmp_path / "data" / "byte.tif")
+
+    monkeypatch.chdir(tmp_path)
     shutil.copy("data/byte.tif", "tmp")
 
     try:
         path = os.path.join(os.getcwd(), "tmp", "byte.tif")
         if sys.platform == "win32":
             path = path.replace("/", "\\")
+
         src_ds = gdal.Open(path)
         ds = gdal.GetDriverByName("VRT").CreateCopy("", src_ds)
         ds.SetDescription(os.path.join("tmp", "byte.vrt"))

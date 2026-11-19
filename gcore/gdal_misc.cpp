@@ -44,6 +44,7 @@
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_typetraits.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_geos.h"
@@ -1064,6 +1065,119 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
+/*                   GDALGetDataTypeMinMaxAsDouble()                    */
+/************************************************************************/
+
+/**
+ * \brief Get the minimum and maximum values that can be stored in the
+ * specified data type, if those values can also be exactly stored in a double.
+ *
+ * @param eType type to check.
+ * @param pdfMin optional pointer to double where the minimum value will be stored
+ * @param pdfMax optional pointer to double where the maximum value will be stored
+ *
+ * @return true if the min/max values for the specified data type can be stored
+ * exactly in a double, false otherwise.
+ * @since GDAL 3.14
+ */
+bool GDALGetDataTypeMinMaxAsDouble(GDALDataType eType, double *pdfMin,
+                                   double *pdfMax)
+{
+    if (static_cast<int>(eType) >= static_cast<int>(GDT_TypeCount))
+    {
+        return false;
+    }
+
+    double dfMin, dfMax;
+
+    switch (eType)
+    {
+        case GDT_Int8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int8>::type>::max());
+            break;
+        case GDT_UInt8:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt8>::type>::max());
+            break;
+        case GDT_Int16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int16>::type>::max());
+            break;
+        case GDT_UInt16:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt16>::type>::max());
+            break;
+        case GDT_Int32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Int32>::type>::max());
+            break;
+        case GDT_UInt32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::min());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_UInt32>::type>::max());
+            break;
+        case GDT_Float16:
+            dfMin = static_cast<double>(cpl::NumericLimits<GFloat16>::lowest());
+            dfMax = static_cast<double>(cpl::NumericLimits<GFloat16>::max());
+            break;
+        case GDT_Float32:
+            dfMin = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::lowest());
+            dfMax = static_cast<double>(
+                cpl::NumericLimits<
+                    gdal::GDALDataTypeTraits<GDT_Float32>::type>::max());
+            break;
+        case GDT_Float64:
+            dfMin = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::lowest();
+            dfMax = cpl::NumericLimits<
+                gdal::GDALDataTypeTraits<GDT_Float64>::type>::max();
+            break;
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Int64:
+        case GDT_UInt64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            return false;
+    }
+
+    if (pdfMin)
+        *pdfMin = dfMin;
+    if (pdfMax)
+        *pdfMax = dfMax;
+    return true;
+}
+
+/************************************************************************/
 /*                     GDALGetNonComplexDataType()                      */
 /************************************************************************/
 /**
@@ -1370,8 +1484,47 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 
         case GCI_SAR_Reserved_2:
             return "SAR_Reserved_2";
+
+            // If adding any (non-reserved) value, also update GDALGetColorInterpretationList()
     }
     return "Undefined";
+}
+
+/************************************************************************/
+/*                  GDALGetColorInterpretationByName()                  */
+/************************************************************************/
+
+/**
+ * \brief Get the list of valid color interpretations.
+ *
+ * Reserved values of the GDALColorInterp enumeration are not listed.
+ *
+ * @param[out] pnCount Pointer to an integer that will be set to the number of
+ *                     values of the returned array. It must not be null.
+ *
+ * @return array of *pnCount values
+ *
+ */
+const GDALColorInterp *GDALGetColorInterpretationList(int *pnCount)
+{
+    VALIDATE_POINTER1(pnCount, "GDALGetColorInterpretationList", nullptr);
+
+    static constexpr GDALColorInterp list[] = {
+        GCI_Undefined,     GCI_GrayIndex,    GCI_PaletteIndex,
+        GCI_RedBand,       GCI_GreenBand,    GCI_BlueBand,
+        GCI_AlphaBand,     GCI_HueBand,      GCI_SaturationBand,
+        GCI_LightnessBand, GCI_CyanBand,     GCI_MagentaBand,
+        GCI_YellowBand,    GCI_BlackBand,    GCI_YCbCr_YBand,
+        GCI_YCbCr_CbBand,  GCI_YCbCr_CrBand, GCI_PanBand,
+        GCI_CoastalBand,   GCI_RedEdgeBand,  GCI_NIRBand,
+        GCI_SWIRBand,      GCI_MWIRBand,     GCI_LWIRBand,
+        GCI_TIRBand,       GCI_OtherIRBand,  GCI_SAR_Ka_Band,
+        GCI_SAR_K_Band,    GCI_SAR_Ku_Band,  GCI_SAR_X_Band,
+        GCI_SAR_C_Band,    GCI_SAR_S_Band,   GCI_SAR_L_Band,
+        GCI_SAR_P_Band,
+    };
+    *pnCount = static_cast<int>(CPL_ARRAYSIZE(list));
+    return list;
 }
 
 /************************************************************************/
@@ -2492,14 +2645,15 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszFilename the world file name.
@@ -2585,14 +2739,15 @@ int CPL_STDCALL GDALLoadWorldFile(const char *pszFilename,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
@@ -2760,14 +2915,15 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
  * in a different order than in a geotransform array.
  *
  * <ul>
- * <li> geotransform[1] : width of pixel
- * <li> geotransform[4] : rotational coefficient, zero for north up images.
- * <li> geotransform[2] : rotational coefficient, zero for north up images.
- * <li> geotransform[5] : height of pixel (but negative)
+ * <li> geotransform[1] : width of pixel</li>
+ * <li> geotransform[4] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[2] : rotational coefficient, zero for north up images.</li>
+ * <li> geotransform[5] : height of pixel (but negative)</li>
  * <li> geotransform[0] + 0.5 * geotransform[1] + 0.5 * geotransform[2] : x
- * offset to center of top left pixel. <li> geotransform[3] + 0.5 *
+ * offset to center of top left pixel.</li>
+ * <li> geotransform[3] + 0.5 *
  * geotransform[4] + 0.5 * geotransform[5] : y offset to center of top left
- * pixel.
+ * pixel.</li>
  * </ul>
  *
  * @param pszBaseFilename the target raster file.
@@ -2792,7 +2948,7 @@ int CPL_STDCALL GDALWriteWorldFile(const char *pszBaseFilename,
     /* -------------------------------------------------------------------- */
     CPLString osTFWText;
 
-    osTFWText.Printf("%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n%.10f\n",
+    osTFWText.Printf("%.15f\n%.15f\n%.15f\n%.15f\n%.15f\n%.15f\n",
                      padfGeoTransform[1], padfGeoTransform[4],
                      padfGeoTransform[2], padfGeoTransform[5],
                      padfGeoTransform[0] + 0.5 * padfGeoTransform[1] +
@@ -2911,7 +3067,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
         osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
 #endif
-
+#ifdef DEBUG
+        osBuildInfo += "DEBUG=YES\n";
+#endif
 #undef STRINGIFY_HELPER
 #undef STRINGIFY
 
@@ -3453,11 +3611,11 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
     // We need to think of the geotransform in a more normal form to do
     // the matrix multiple:
     //
-    //  __                     __
-    //  | gt[1]   gt[2]   gt[0] |
-    //  | gt[4]   gt[5]   gt[3] |
-    //  |  0.0     0.0     1.0  |
-    //  --                     --
+    //  __                                __
+    //  | gt.xscale   gt.xrot     gt.xorig |
+    //  | gt.yrot     gt.yscale   gt.yorig |
+    //  |  0.0        0.0         1.0      |
+    //  --                                --
     //
     // Then we can use normal matrix multiplication to produce the
     // composed transformation.  I don't actually reform the matrix
@@ -3628,7 +3786,9 @@ std::string GDALPrintDriverList(int nOptions, bool bJSON)
         CSLConstList papszMD = GDALGetMetadata(hDriver, nullptr);
 
         if (nOptions == GDAL_OF_RASTER &&
-            !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false))
+            !CPLFetchBool(papszMD, GDAL_DCAP_RASTER, false) &&
+            // HACK For CPHD driver to appear
+            !CPLFetchBool(papszMD, GDAL_DCAP_MULTIDIM_RASTER, false))
             continue;
         if (nOptions == GDAL_OF_VECTOR &&
             !CPLFetchBool(papszMD, GDAL_DCAP_VECTOR, false))
@@ -3784,7 +3944,7 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
     /* ==================================================================== */
 
     // Start with --debug, so that "my_command --config UNKNOWN_CONFIG_OPTION --debug on"
-    // detects and warns about a unknown config option.
+    // detects and warns about an unknown config option.
     for (iArg = 1; iArg < nArgc; iArg++)
     {
         if (EQUAL(papszArgv[iArg], "--config") && iArg + 2 < nArgc &&
@@ -4052,14 +4212,23 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
             if (!bHasOptfile)
             {
                 char **papszArgvOptfileBefore = papszArgvOptfile;
-                if (GDALGeneralCmdLineProcessor(CSLCount(papszArgvOptfile),
-                                                &papszArgvOptfile,
-                                                nOptions) < 0)
+                const int nRet = GDALGeneralCmdLineProcessor(
+                    CSLCount(papszArgvOptfile), &papszArgvOptfile, nOptions);
+                if (nRet < 0)
                 {
                     CSLDestroy(papszArgvOptfile);
                     return -1;
                 }
-                CSLDestroy(papszArgvOptfileBefore);
+                else if (nRet == 0 &&
+                         papszArgvOptfileBefore == papszArgvOptfile)
+                {
+                    CSLDestroy(papszArgvOptfile);
+                    return nRet;
+                }
+                else
+                {
+                    CSLDestroy(papszArgvOptfileBefore);
+                }
             }
 
             char **papszIter = papszArgvOptfile + 1;
@@ -4195,6 +4364,12 @@ int CPL_STDCALL GDALGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                 /*ok*/ printf(
                     "  Supports: Creating geometry fields with NOT NULL "
                     "constraint.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_CURVE_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: Curve geometries.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_Z_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: 3D (Z) geometries.\n");
+            if (CPLFetchBool(papszMD, GDAL_DCAP_MEASURED_GEOMETRIES, false))
+                /*ok*/ printf("  Supports: Measured (M) geometries.\n");
             if (CPLFetchBool(papszMD, GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION,
                              false))
                 /*ok*/ printf("  Supports: Writing geometries with given "
@@ -5040,10 +5215,12 @@ GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char *pszResampling)
 
 const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
 {
+    const char *pszRet = "Unknown";
     switch (eResampleAlg)
     {
         case GRIORA_NearestNeighbour:
-            return "NearestNeighbour";
+            pszRet = "NearestNeighbour";
+            break;
         case GRIORA_Bilinear:
             return "Bilinear";
         case GRIORA_Cubic:
@@ -5060,10 +5237,11 @@ const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
             return "Mode";
         case GRIORA_Gauss:
             return "Gauss";
-        default:
-            CPLAssert(false);
-            return "Unknown";
+        case GRIORA_RESERVED_START:
+        case GRIORA_RESERVED_END:
+            break;
     }
+    return pszRet;
 }
 
 /************************************************************************/
@@ -5094,6 +5272,9 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
 int GDALCanFileAcceptSidecarFile(const char *pszFilename)
 {
     if (strstr(pszFilename, "/vsicurl/") && strchr(pszFilename, '?'))
+        return FALSE;
+    // Idem for the /vsigs/ query-string file name syntax
+    if (strstr(pszFilename, "/vsigs/?"))
         return FALSE;
     // Do no attempt reading side-car files on /vsisubfile/ (#6241)
     if (strncmp(pszFilename, "/vsisubfile/", strlen("/vsisubfile/")) == 0)
@@ -5905,4 +6086,36 @@ bool GDALGeoTransform::Apply(const GDALRasterWindow &window,
         std::swap(env.MinY, env.MaxY);
 
     return true;
+}
+
+/************************************************************************/
+/*                        GDALGeoTransform::Init                        */
+/************************************************************************/
+
+bool GDALGeoTransform::Init(const char *pszText, const char *pszSep)
+{
+    CPLStringList aosGeoTransform(
+        CSLTokenizeString2(pszText, pszSep, CSLT_HONOURSTRINGS));
+    if (aosGeoTransform.size() != 6)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < 6; i++)
+    {
+        (*this)[i] = CPLAtof(aosGeoTransform[i]);
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      GDALGeoTransform::ToString                      */
+/************************************************************************/
+
+std::string GDALGeoTransform::ToString(const char *pszSep) const
+{
+    return CPLSPrintf("%.17g%s%.17g%s%.17g%s%.17g%s%.17g%s%.17g", (*this)[0],
+                      pszSep, (*this)[1], pszSep, (*this)[2], pszSep,
+                      (*this)[3], pszSep, (*this)[4], pszSep, (*this)[5]);
 }

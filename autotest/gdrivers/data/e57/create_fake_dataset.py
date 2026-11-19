@@ -47,7 +47,7 @@ def single_image():
 
     mask_filename = "/vsimem/temp.png"
     src_ds = gdal.GetDriverByName("MEM").Create("", 20, 20, 1)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 10, b"\xFF" * (20 * 10))
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 10, b"\xff" * (20 * 10))
     gdal.GetDriverByName("PNG").CreateCopy(mask_filename, src_ds)
     with gdal.VSIFile(mask_filename, "rb") as f:
         mask_blob = f.read()

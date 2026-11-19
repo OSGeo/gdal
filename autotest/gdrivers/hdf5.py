@@ -19,7 +19,7 @@ import gdaltest
 import pytest
 from uffd import uffd_compare
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # Test if HDF5 driver is present
@@ -112,8 +112,18 @@ def test_hdf5_5():
 # Test generating an overview on a subdataset.
 
 
-def test_hdf5_6():
+def test_hdf5_6(tmp_path, monkeypatch):
 
+    data_subdir = tmp_path / "data" / "hdf5"
+    gdal.MkdirRecursive(data_subdir, 0o755)
+
+    tmp_subdir2 = tmp_path / "tmp"
+    gdal.Mkdir(tmp_subdir2, 0o755)
+
+    shutil.copyfile("data/hdf5/groups.h5", str(data_subdir / "groups.h5"))
+
+    # Temporaryily change working directory to tmp_path
+    monkeypatch.chdir(tmp_path)
     shutil.copyfile("data/hdf5/groups.h5", "tmp/groups.h5")
 
     ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
@@ -129,14 +139,13 @@ def test_hdf5_6():
     # confirm that it works with a different path. (#3290)
 
     ds = gdal.Open('HDF5:"data/../tmp/groups.h5"://MyGroup/dset1')
+
     assert (
         ds.GetRasterBand(1).GetOverviewCount() == 1
     ), "failed to find overview with alternate path"
     ovfile = ds.GetMetadataItem("OVERVIEW_FILE", "OVERVIEWS")
     assert ovfile[:11] == "data/../tmp", "did not get expected OVERVIEW_FILE."
     ds = None
-
-    gdaltest.clean_tmp()
 
 
 ###############################################################################
@@ -340,7 +349,9 @@ def test_hdf5_12():
         "norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf",
     )
 
-    ds = gdal.Open("tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open(f"{tmp_dir}/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf")
     got_projection = ds.GetProjection()
     assert "Azimuthal_Equidistant" in got_projection
 
@@ -372,8 +383,10 @@ def test_hdf5_13():
         "A2016273115000.L2_LAC_OC.nc",
     )
 
+    tmp_dir = gdaltest.get_cache_dir()
+
     ds = gdal.Open(
-        'HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490'
+        f'HDF5:"{tmp_dir}/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490'
     )
 
     got_gcps = ds.GetGCPs()
@@ -516,7 +529,9 @@ hdf5_list = [
 def test_hdf5(downloadURL, fileName, subdatasetname, checksum, download_size):
     gdaltest.download_or_skip(downloadURL + "/" + fileName, fileName, download_size)
 
-    ds = gdal.Open('HDF5:"tmp/cache/' + fileName + '"://' + subdatasetname)
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = gdal.Open('HDF5:"' + tmp_dir + "/" + fileName + '"://' + subdatasetname)
 
     assert (
         ds.GetRasterBand(1).Checksum() == checksum
@@ -1404,6 +1419,22 @@ def test_gdal_subdataset_get_filename(filename, path_component):
 
 @pytest.mark.parametrize(
     "filename",
+    ("/vsimem/DATA:TEST.h5", "/vsimem/DATA:TEST:DOUBLE.h5", '/vsimem/DATA:"TEST".h5'),
+)
+def test_gdal_subdataset_get_filename_colon(filename):
+    """Test regression #14978"""
+
+    gdal.FileFromMemBuffer(
+        filename, open("data/hdf5/hdfeos_sample_swath.h5", "rb").read()
+    )
+    info = gdal.GetSubdatasetInfo(f'HDF5:"{filename}":/navigation_data/latitude')
+    assert info.GetPathComponent() == filename
+    assert info.GetSubdatasetComponent() == "/navigation_data/latitude"
+    gdal.Unlink(filename)
+
+
+@pytest.mark.parametrize(
+    "filename",
     (
         'HDF5:"OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
         r'HDF5:"C:\OMI-Aura_L2-OMTO3_2005m0113t0224-o02648_v002-2005m0625t035355.he5"://HDFEOS/SWATHS/OMI_Column_Amount_O3/Data_Fields/UVAerosolIndex',
@@ -1637,10 +1668,10 @@ def test_hdf5_read_netcdf_nodata_scale_offset():
 
 def test_hdf5_force_opening_netcdf_file():
 
-    ds = gdal.OpenEx("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
+    ds = gdal.Open("data/netcdf/trmm-nc4.nc", allowed_drivers=["HDF5"])
     assert ds.GetDriver().GetDescription() == "HDF5Image"
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/netcdf/byte_hdf5_starting_at_offset_1024.nc", allowed_drivers=["HDF5"]
     )
     assert ds.GetDriver().GetDescription() == "HDF5Image"
@@ -1660,7 +1691,7 @@ def test_hdf5_force_opening_no_match():
 @gdaltest.enable_exceptions()
 def test_hdf5_open_larger_than_INT_MAX_pixels():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/bag/larger_than_INT_MAX_pixels.bag", allowed_drivers=["HDF5"]
     ) as ds:
         assert len(ds.GetSubDatasets()) == 0
@@ -1746,7 +1777,6 @@ def test_hdf5_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
     assert ds
     assert ds.RasterXSize == 4
     assert ds.RasterYSize == 5
-    print(ds.GetGeoTransform())
     assert ds.GetGeoTransform() == pytest.approx(
         (
             -1111950.519667,
@@ -1757,3 +1787,83 @@ def test_hdf5_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
             -222390.10393320007,
         )
     )
+
+
+###############################################################################
+# Test opening a fake NISAR Level 2 dataset where SRS is encoded in epsg_code
+# attribute
+
+
+def test_hdf5_NISAR_level_2_epsg_code():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/fake_NISAR_L2_epsg_code.h5", "w")
+        f.attrs["mission_name"] = "NISAR"
+
+        some_group = f.create_group("some_group")
+
+        ds = some_group.create_dataset("test", (5, 4), dtype="B")
+        ds[...] = np.array([i for i in range(5 * 4)]).reshape(ds.shape)
+        ds.attrs["grid_mapping"] = "projection"
+
+        ds = some_group.create_dataset("projection", (), dtype="B")
+        ds.attrs["epsg_code"] = "32611"
+
+        ds = some_group.create_dataset("xCoordinates", (4), dtype="d")
+        ds[...] = np.array([10, 20, 30, 40]).reshape(ds.shape)
+
+        ds = some_group.create_dataset("yCoordinates", (5), dtype="d")
+        ds[...] = np.array([500, 400, 300, 200, 100]).reshape(ds.shape)
+
+        f.close()
+
+    ds = gdal.Open("data/hdf5/fake_NISAR_L2_epsg_code.h5")
+    assert ds
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 5
+    assert ds.GetGeoTransform() == pytest.approx((5.0, 10.0, 0.0, 550.0, 0.0, -100.0))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
+
+
+###############################################################################
+# Test opening a fake NISAR Level 2 dataset where SRS is encoded in spatial_ref
+# attribute
+
+
+def test_hdf5_NISAR_level_2_spatial_ref():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/fake_NISAR_L2_spatial_ref.h5", "w")
+        f.attrs["mission_name"] = "NISAR"
+
+        some_group = f.create_group("some_group")
+
+        ds = some_group.create_dataset("test", (5, 4), dtype="B")
+        ds[...] = np.array([i for i in range(5 * 4)]).reshape(ds.shape)
+        ds.attrs["grid_mapping"] = "projection"
+
+        ds = some_group.create_dataset("projection", (), dtype="B")
+        ds.attrs["spatial_ref"] = osr.SpatialReference(epsg=32611).ExportToWkt()
+
+        ds = some_group.create_dataset("xCoordinates", (4), dtype="d")
+        ds[...] = np.array([10, 20, 30, 40]).reshape(ds.shape)
+
+        ds = some_group.create_dataset("yCoordinates", (5), dtype="d")
+        ds[...] = np.array([500, 400, 300, 200, 100]).reshape(ds.shape)
+
+        f.close()
+
+    ds = gdal.Open("data/hdf5/fake_NISAR_L2_spatial_ref.h5")
+    assert ds
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 5
+    assert ds.GetGeoTransform() == pytest.approx((5.0, 10.0, 0.0, 550.0, 0.0, -100.0))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32611"

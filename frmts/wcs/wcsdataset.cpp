@@ -106,19 +106,19 @@ void WCSDataset::SetGeometry(const std::vector<int> &size,
     nRasterXSize = size[0];
     nRasterYSize = size[1];
 
-    m_gt[0] = origin[0];
-    m_gt[1] = offsets[0][0];
-    m_gt[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
-    m_gt[3] = origin[1];
-    m_gt[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
-    m_gt[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
+    m_gt.xorig = origin[0];
+    m_gt.xscale = offsets[0][0];
+    m_gt.xrot = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
+    m_gt.yorig = origin[1];
+    m_gt.yrot = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
+    m_gt.yscale = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
 
     if (!CPLGetXMLBoolean(psService, "OriginAtBoundary"))
     {
-        m_gt[0] -= m_gt[1] * 0.5;
-        m_gt[0] -= m_gt[2] * 0.5;
-        m_gt[3] -= m_gt[4] * 0.5;
-        m_gt[3] -= m_gt[5] * 0.5;
+        m_gt.xorig -= m_gt.xscale * 0.5;
+        m_gt.xorig -= m_gt.xrot * 0.5;
+        m_gt.yorig -= m_gt.yrot * 0.5;
+        m_gt.yorig -= m_gt.yscale * 0.5;
     }
 }
 
@@ -207,7 +207,7 @@ CPLErr WCSDataset::DirectRasterIO(CPL_UNUSED GDALRWFlag eRWFlag, int nXOff,
     // todo: in 2.0.1 the band list in this dataset may be user-defined
 
     int band_count = nBandCount;
-    if (EQUAL(CPLGetXMLValue(psService, "INTERLEAVE", ""), "PIXEL"))
+    if (EQUAL(CPLGetXMLValue(psService, GDALMD_INTERLEAVE, ""), "PIXEL"))
     {
         band_count = 0;
     }
@@ -550,8 +550,8 @@ int WCSDataset::EstablishRasterDetails()
     {
         nMaxCols = atoi(pszCols);
         nMaxRows = atoi(pszRows);
-        SetMetadataItem("MAXNCOLS", pszCols, "IMAGE_STRUCTURE");
-        SetMetadataItem("MAXNROWS", pszRows, "IMAGE_STRUCTURE");
+        SetMetadataItem("MAXNCOLS", pszCols, GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem("MAXNROWS", pszRows, GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -714,8 +714,8 @@ GDALDataset *WCSDataset::GDALOpenResult(CPLHTTPResult *psResult)
     /* -------------------------------------------------------------------- */
     /*      Try opening this result as a gdaldataset.                       */
     /* -------------------------------------------------------------------- */
-    GDALDataset *poDS =
-        (GDALDataset *)GDALOpen(osResultFilename.c_str(), GA_ReadOnly);
+    GDALDataset *poDS = GDALDataset::Open(
+        osResultFilename.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
 
     /* -------------------------------------------------------------------- */
     /*      If opening it in memory didn't work, perhaps we need to         */
@@ -1043,7 +1043,7 @@ static CPLXMLNode *CreateService(const std::string &base_url,
 #define WCS_TWEAK_OPTIONS                                                      \
     "OriginAtBoundary", "OuterExtents", "BufSizeAdjust", "OffsetsPositive",    \
         "NrOffsets", "GridCRSOptional", "NoGridAxisSwap", "GridAxisLabelSwap", \
-        "SubsetAxisSwap", "UseScaleFactor", "INTERLEAVE"
+        "SubsetAxisSwap", "UseScaleFactor", GDALMD_INTERLEAVE
 
 static bool UpdateService(CPLXMLNode *service, GDALOpenInfo *poOpenInfo)
 {
@@ -1102,7 +1102,7 @@ static WCSDataset *CreateFromCache(const std::string &cache)
         metadata = CSLSetNameValue(metadata, name.c_str(), value.c_str());
         index += 1;
     }
-    ds->SetMetadata(metadata, "SUBDATASETS");
+    ds->SetMetadata(metadata, GDAL_MDD_SUBDATASETS);
     CSLDestroy(metadata);
     return ds;
 }
@@ -1285,7 +1285,7 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLXMLTreeCloser doc(CPLParseXMLFile(global_meta.c_str()));
             CPLXMLNode *metadata = doc.getDocumentElement();
             CPLXMLNode *domain =
-                SearchChildWithValue(metadata, "domain", "SUBDATASETS");
+                SearchChildWithValue(metadata, "domain", GDAL_MDD_SUBDATASETS);
             if (domain != nullptr)
             {
                 CPLRemoveXMLChild(metadata, domain);
@@ -1586,7 +1586,8 @@ GDALDataset *WCSDataset::Open(GDALOpenInfo *poOpenInfo)
                                                osValue.c_str());
         }
 
-        poDS->GDALMajorObject::SetMetadata(papszSubdatasets, "SUBDATASETS");
+        poDS->GDALMajorObject::SetMetadata(papszSubdatasets,
+                                           GDAL_MDD_SUBDATASETS);
 
         CSLDestroy(papszSubdatasets);
     }

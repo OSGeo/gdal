@@ -667,9 +667,10 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poDS->SetBand(i, new GDALEXRRGBARasterBand(poDS.get(), i));
                 }
-                poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+                poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                      GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else if (BGR || ABGR)
             {
@@ -764,12 +765,12 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                          strcmp(iter.name(), "gdal:geoTransform") == 0)
                 {
                     poDS->m_bHasGT = true;
-                    poDS->m_gt[0] = m33DAttr->value()[0][2];
-                    poDS->m_gt[1] = m33DAttr->value()[0][0];
-                    poDS->m_gt[2] = m33DAttr->value()[0][1];
-                    poDS->m_gt[3] = m33DAttr->value()[1][2];
-                    poDS->m_gt[4] = m33DAttr->value()[1][0];
-                    poDS->m_gt[5] = m33DAttr->value()[1][1];
+                    poDS->m_gt.xorig = m33DAttr->value()[0][2];
+                    poDS->m_gt.xscale = m33DAttr->value()[0][0];
+                    poDS->m_gt.xrot = m33DAttr->value()[0][1];
+                    poDS->m_gt.yorig = m33DAttr->value()[1][2];
+                    poDS->m_gt.yrot = m33DAttr->value()[1][0];
+                    poDS->m_gt.yscale = m33DAttr->value()[1][1];
                 }
                 else if (stringAttr && STARTS_WITH(iter.name(), "gdal:"))
                 {
@@ -790,9 +791,9 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
             }
             else if (compression < CPL_ARRAYSIZE(apszCompressions))
             {
-                poDS->SetMetadataItem("COMPRESSION",
+                poDS->SetMetadataItem(GDALMD_COMPRESSION,
                                       apszCompressions[compression],
-                                      "IMAGE_STRUCTURE");
+                                      GDAL_MDD_IMAGE_STRUCTURE);
             }
             else
             {
@@ -806,7 +807,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                                       CPLSPrintf("EXR:PREVIEW:%d:%s", iPart + 1,
                                                  osFilename.c_str()));
                 aosSubDS.SetNameValue("SUBDATASET_1_DESC", "Preview image");
-                poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+                poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
             }
         }
         else
@@ -821,7 +822,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       header.name().c_str());
             }
-            poDS->SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            poDS->SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
 
         poDS->SetPamFlags(poDS->GetPamFlags() & ~GPF_DIRTY);
@@ -876,17 +877,17 @@ static void WriteSRSInHeader(Header &header, const OGRSpatialReference *poSRS)
 static void WriteGeoTransformInHeader(Header &header,
                                       const GDALGeoTransform &gtIn)
 {
-    M33d gt;
-    gt[0][0] = gtIn[1];
-    gt[0][1] = gtIn[2];
-    gt[0][2] = gtIn[0];
-    gt[1][0] = gtIn[4];
-    gt[1][1] = gtIn[5];
-    gt[1][2] = gtIn[3];
-    gt[2][0] = 0;
-    gt[2][1] = 0;
-    gt[2][2] = 1;
-    header.insert("gdal:geoTransform", M33dAttribute(gt));
+    M33d gt_33;
+    gt_33[0][0] = gtIn.xscale;
+    gt_33[0][1] = gtIn.xrot;
+    gt_33[0][2] = gtIn.xorig;
+    gt_33[1][0] = gtIn.yrot;
+    gt_33[1][1] = gtIn.yscale;
+    gt_33[1][2] = gtIn.yorig;
+    gt_33[2][0] = 0;
+    gt_33[2][1] = 0;
+    gt_33[2][2] = 1;
+    header.insert("gdal:geoTransform", M33dAttribute(gt_33));
 }
 
 static void WriteMetadataInHeader(Header &header, CSLConstList papszMD)
@@ -2020,8 +2021,8 @@ GDALDataset *GDALEXRDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn > 1)
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
-                                           "IMAGE_STRUCTURE");
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                           GDAL_MDD_IMAGE_STRUCTURE);
     }
     for (int i = 0; i < nBandsIn; i++)
     {

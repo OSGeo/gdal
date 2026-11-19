@@ -43,7 +43,7 @@ class OGRVRTGeomFieldProps
   public:
     CPLString osName{};  // Name of the VRT geometry field */
     OGRwkbGeometryType eGeomType = wkbUnknown;
-    const OGRSpatialReference *poSRS = nullptr;
+    OGRSpatialReferenceRefCountedPtr poSRS{};
 
     bool bSrcClip = false;
     std::unique_ptr<OGRGeometry> poSrcRegion{};
@@ -92,7 +92,7 @@ class OGRVRTLayer final : public OGRLayer
     CPLXMLNode *psLTree = nullptr;
     CPLString osVRTDirectory{};
 
-    OGRFeatureDefn *poFeatureDefn = nullptr;
+    OGRFeatureDefnRefCountedPtr poFeatureDefn{};
 
     std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser> poSrcDS{};
     OGRLayer *poSrcLayer = nullptr;
@@ -120,8 +120,10 @@ class OGRVRTLayer final : public OGRLayer
 
     bool m_bEmptyResultSet = false;
 
-    OGRFeature *TranslateFeature(OGRFeature *&, int bUseSrcRegion);
-    OGRFeature *TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature);
+    std::unique_ptr<OGRFeature> TranslateFeature(std::unique_ptr<OGRFeature> &,
+                                                 int bUseSrcRegion);
+    std::unique_ptr<OGRFeature>
+    TranslateVRTFeatureToSrcFeature(const OGRFeature *poVRTFeature);
 
     bool ResetSourceReading();
 
@@ -167,7 +169,7 @@ class OGRVRTLayer final : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = TRUE) override;
@@ -253,7 +255,7 @@ class OGRVRTDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     char **GetFileList() override;
 

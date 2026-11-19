@@ -1,5 +1,7 @@
 .. _gdal_raster_nodata_to_alpha:
 
+.. program:: gdal_raster_nodata_to_alpha
+
 ================================================================================
 ``gdal raster nodata-to-alpha``
 ================================================================================
@@ -55,6 +57,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/ot.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

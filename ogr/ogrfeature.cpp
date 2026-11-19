@@ -1669,7 +1669,8 @@ bool OGRFeature::IsFieldNull(int iField) const
     const int iSpecialField = iField - poDefn->GetFieldCountUnsafe();
     if (iSpecialField >= 0)
     {
-        // FIXME?
+        // Special fields (FID, geometry, style, area) are virtual/derived
+        // values that have no nullable state.
         return false;
     }
     else
@@ -2835,7 +2836,6 @@ const char *OGRFeature::GetFieldAsISO8601DateTime(
     OGRGetISO8601DateTime(&pauFields[iField], bAlwaysMillisecond,
                           m_pszTmpFieldValue);
     return m_pszTmpFieldValue;
-    ;
 }
 
 /************************************************************************/
@@ -2845,7 +2845,7 @@ const char *OGRFeature::GetFieldAsISO8601DateTime(
 /**
  * \brief Fetch OFTDateTime field value as a ISO8601 representation.
  *
- * Return a string like "YYYY-MM6DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
+ * Return a string like "YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
  * Milliseconds are omitted if equal to zero.
  * Other field types, or errors will result in a return of an empty string.
  *
@@ -4466,6 +4466,59 @@ void OGRFeature::SetField(int iField, const char *pszValue)
 }
 
 /************************************************************************/
+/*                              SetField()                              */
+/************************************************************************/
+
+/**
+ * \brief Set field to string value.
+ *
+ * OFTInteger fields will be set based on an atoi() conversion of the string.
+ * OFTInteger64 fields will be set based on an CPLAtoGIntBig() conversion of the
+ * string.  OFTReal fields will be set based on an CPLAtof() conversion of the
+ * string.  Other field types may be unaffected.
+ *
+ * This method is the same as the C function OGR_F_SetFieldString().
+ *
+ * @note This method has only an effect on the in-memory feature object. If
+ * this object comes from a layer and the modifications must be serialized back
+ * to the datasource, OGR_L_SetFeature() must be used afterwards. Or if this is
+ * a new feature, OGR_L_CreateFeature() must be used afterwards.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param svValue the value to assign.
+ * @since 3.13
+ */
+
+void OGRFeature::SetField(int iField, std::string_view svValue)
+
+{
+    const OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+    if (poFDefn == nullptr)
+        return;
+    if (poFDefn->GetType() == OFTString)
+    {
+        if (IsFieldSetAndNotNullUnsafe(iField))
+            CPLFree(pauFields[iField].String);
+
+        pauFields[iField].String =
+            static_cast<char *>(VSI_MALLOC_VERBOSE(svValue.size() + 1));
+        if (pauFields[iField].String)
+        {
+            memcpy(pauFields[iField].String, svValue.data(), svValue.size());
+            pauFields[iField].String[svValue.size()] = 0;
+        }
+        else
+        {
+            OGR_RawField_SetUnset(&pauFields[iField]);
+        }
+    }
+    else
+    {
+        SetField(iField, std::string(svValue).c_str());
+    }
+}
+
+/************************************************************************/
 /*                        OGR_F_SetFieldString()                        */
 /************************************************************************/
 
@@ -5915,6 +5968,154 @@ OGRErr OGR_F_SetFID(OGRFeatureH hFeat, GIntBig nFID)
 }
 
 /************************************************************************/
+/*                          IsSameFieldValue()                          */
+/************************************************************************/
+
+/** Compare the value of a field between two features.
+ *
+ * @since 3.14
+ */
+/* static */ bool OGRFeature::IsSameFieldValue(const OGRFeature *poFeature1,
+                                               int nIdxField1,
+                                               const OGRFeature *poFeature2,
+                                               int nIdxField2)
+{
+    const OGRFieldDefn *poFieldDefn1 = poFeature1->GetFieldDefnRef(nIdxField1);
+    const OGRField *poRawField1 = poFeature1->GetRawFieldRef(nIdxField1);
+    const OGRFieldDefn *poFieldDefn2 = poFeature2->GetFieldDefnRef(nIdxField2);
+    const OGRField *poRawField2 = poFeature2->GetRawFieldRef(nIdxField2);
+    if (OGR_RawField_IsUnset(poRawField1) !=
+            OGR_RawField_IsUnset(poRawField2) ||
+        OGR_RawField_IsNull(poRawField1) != OGR_RawField_IsNull(poRawField2))
+    {
+        return false;
+    }
+    if (OGR_RawField_IsUnset(poRawField1) || OGR_RawField_IsNull(poRawField1))
+    {
+        return true;
+    }
+
+    if (poFieldDefn1->GetType() == poFieldDefn2->GetType())
+    {
+        switch (poFieldDefn1->GetType())
+        {
+            case OFTInteger:
+            {
+                return poRawField1->Integer == poRawField2->Integer;
+            }
+            case OFTInteger64:
+            {
+                return poRawField1->Integer64 == poRawField2->Integer64;
+            }
+            case OFTReal:
+            {
+                return (std::isnan(poRawField1->Real) &&
+                        std::isnan(poRawField2->Real)) ||
+                       poRawField1->Real == poRawField2->Real;
+            }
+            case OFTString:
+            {
+                return strcmp(poRawField1->String, poRawField2->String) == 0;
+            }
+
+            case OFTIntegerList:
+            {
+                if (poRawField1->IntegerList.nCount !=
+                    poRawField2->IntegerList.nCount)
+                    return false;
+                for (int i = 0; i < poRawField1->IntegerList.nCount; ++i)
+                {
+                    if (poRawField1->IntegerList.paList[i] !=
+                        poRawField2->IntegerList.paList[i])
+                        return false;
+                }
+                return true;
+            }
+
+            case OFTInteger64List:
+            {
+                if (poRawField1->Integer64List.nCount !=
+                    poRawField2->Integer64List.nCount)
+                    return false;
+                for (int i = 0; i < poRawField1->Integer64List.nCount; ++i)
+                {
+                    if (poRawField1->Integer64List.paList[i] !=
+                        poRawField2->Integer64List.paList[i])
+                        return false;
+                }
+                return true;
+            }
+
+            case OFTRealList:
+            {
+                if (poRawField1->RealList.nCount !=
+                    poRawField2->RealList.nCount)
+                    return false;
+                for (int i = 0; i < poRawField1->RealList.nCount; ++i)
+                {
+                    if (!((std::isnan(poRawField1->RealList.paList[i]) &&
+                           std::isnan(poRawField2->RealList.paList[i])) ||
+                          poRawField1->RealList.paList[i] ==
+                              poRawField2->RealList.paList[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            case OFTStringList:
+            {
+                if (poRawField1->StringList.nCount !=
+                    poRawField2->StringList.nCount)
+                    return false;
+                for (int i = 0; i < poRawField1->StringList.nCount; ++i)
+                {
+                    if (strcmp(poRawField1->StringList.paList[i],
+                               poRawField2->StringList.paList[i]) != 0)
+                        return false;
+                }
+                return true;
+            }
+
+            case OFTTime:
+            case OFTDate:
+            case OFTDateTime:
+            {
+                return poRawField1->Date.Year == poRawField2->Date.Year &&
+                       poRawField1->Date.Month == poRawField2->Date.Month &&
+                       poRawField1->Date.Day == poRawField2->Date.Day &&
+                       poRawField1->Date.Hour == poRawField2->Date.Hour &&
+                       poRawField1->Date.Minute == poRawField2->Date.Minute &&
+                       poRawField1->Date.Second == poRawField2->Date.Second &&
+                       poRawField1->Date.TZFlag == poRawField2->Date.TZFlag;
+            }
+
+            case OFTBinary:
+            {
+                return poRawField1->Binary.nCount ==
+                           poRawField2->Binary.nCount &&
+                       memcmp(poRawField1->Binary.paData,
+                              poRawField2->Binary.paData,
+                              poRawField1->Binary.nCount) == 0;
+            }
+
+            case OFTWideString:
+            case OFTWideStringList:
+            {
+                break;
+            }
+        }
+        return false;
+    }
+    else
+    {
+        return strcmp(poFeature1->GetFieldAsString(nIdxField1),
+                      poFeature2->GetFieldAsString(nIdxField2)) == 0;
+    }
+}
+
+/************************************************************************/
 /*                               Equal()                                */
 /************************************************************************/
 
@@ -5932,7 +6133,7 @@ OGRErr OGR_F_SetFID(OGRFeatureH hFeat, GIntBig nFID)
  * @return TRUE if they are equal, otherwise FALSE.
  */
 
-OGRBoolean OGRFeature::Equal(const OGRFeature *poFeature) const
+bool OGRFeature::Equal(const OGRFeature *poFeature) const
 
 {
     if (poFeature == this)
@@ -5947,183 +6148,9 @@ OGRBoolean OGRFeature::Equal(const OGRFeature *poFeature) const
     const int nFields = GetDefnRef()->GetFieldCountUnsafe();
     for (int i = 0; i < nFields; i++)
     {
-        if (IsFieldSet(i) != poFeature->IsFieldSet(i))
-            return FALSE;
-        if (IsFieldNull(i) != poFeature->IsFieldNull(i))
-            return FALSE;
-        if (!IsFieldSetAndNotNullUnsafe(i))
-            continue;
-
-        switch (GetDefnRef()->GetFieldDefnUnsafe(i)->GetType())
+        if (!IsSameFieldValue(this, i, poFeature, i))
         {
-            case OFTInteger:
-                if (GetFieldAsInteger(i) != poFeature->GetFieldAsInteger(i))
-                    return FALSE;
-                break;
-
-            case OFTInteger64:
-                if (GetFieldAsInteger64(i) != poFeature->GetFieldAsInteger64(i))
-                    return FALSE;
-                break;
-
-            case OFTReal:
-            {
-                const double dfVal1 = GetFieldAsDouble(i);
-                const double dfVal2 = poFeature->GetFieldAsDouble(i);
-                if (std::isnan(dfVal1))
-                {
-                    if (!std::isnan(dfVal2))
-                        return FALSE;
-                }
-                else if (std::isnan(dfVal2))
-                {
-                    return FALSE;
-                }
-                else if (dfVal1 != dfVal2)
-                {
-                    return FALSE;
-                }
-                break;
-            }
-
-            case OFTString:
-                if (strcmp(GetFieldAsString(i),
-                           poFeature->GetFieldAsString(i)) != 0)
-                    return FALSE;
-                break;
-
-            case OFTIntegerList:
-            {
-                int nCount1 = 0;
-                int nCount2 = 0;
-                const int *pnList1 = GetFieldAsIntegerList(i, &nCount1);
-                const int *pnList2 =
-                    poFeature->GetFieldAsIntegerList(i, &nCount2);
-                if (nCount1 != nCount2)
-                    return FALSE;
-                for (int j = 0; j < nCount1; j++)
-                {
-                    if (pnList1[j] != pnList2[j])
-                        return FALSE;
-                }
-                break;
-            }
-
-            case OFTInteger64List:
-            {
-                int nCount1 = 0;
-                int nCount2 = 0;
-                const GIntBig *pnList1 = GetFieldAsInteger64List(i, &nCount1);
-                const GIntBig *pnList2 =
-                    poFeature->GetFieldAsInteger64List(i, &nCount2);
-                if (nCount1 != nCount2)
-                    return FALSE;
-                for (int j = 0; j < nCount1; j++)
-                {
-                    if (pnList1[j] != pnList2[j])
-                        return FALSE;
-                }
-                break;
-            }
-
-            case OFTRealList:
-            {
-                int nCount1 = 0;
-                int nCount2 = 0;
-                const double *padfList1 = GetFieldAsDoubleList(i, &nCount1);
-                const double *padfList2 =
-                    poFeature->GetFieldAsDoubleList(i, &nCount2);
-                if (nCount1 != nCount2)
-                    return FALSE;
-                for (int j = 0; j < nCount1; j++)
-                {
-                    const double dfVal1 = padfList1[j];
-                    const double dfVal2 = padfList2[j];
-                    if (std::isnan(dfVal1))
-                    {
-                        if (!std::isnan(dfVal2))
-                            return FALSE;
-                    }
-                    else if (std::isnan(dfVal2))
-                    {
-                        return FALSE;
-                    }
-                    else if (dfVal1 != dfVal2)
-                    {
-                        return FALSE;
-                    }
-                }
-                break;
-            }
-
-            case OFTStringList:
-            {
-                int nCount1 = 0;
-                int nCount2 = 0;
-                char **papszList1 = GetFieldAsStringList(i);
-                char **papszList2 = poFeature->GetFieldAsStringList(i);
-                nCount1 = CSLCount(papszList1);
-                nCount2 = CSLCount(papszList2);
-                if (nCount1 != nCount2)
-                    return FALSE;
-                for (int j = 0; j < nCount1; j++)
-                {
-                    if (strcmp(papszList1[j], papszList2[j]) != 0)
-                        return FALSE;
-                }
-                break;
-            }
-
-            case OFTTime:
-            case OFTDate:
-            case OFTDateTime:
-            {
-                int nYear1 = 0;
-                int nMonth1 = 0;
-                int nDay1 = 0;
-                int nHour1 = 0;
-                int nMinute1 = 0;
-                int nTZFlag1 = 0;
-                int nYear2 = 0;
-                int nMonth2 = 0;
-                int nDay2 = 0;
-                int nHour2 = 0;
-                int nMinute2 = 0;
-                int nTZFlag2 = 0;
-                float fSecond1 = 0.0f;
-                float fSecond2 = 0.0f;
-                GetFieldAsDateTime(i, &nYear1, &nMonth1, &nDay1, &nHour1,
-                                   &nMinute1, &fSecond1, &nTZFlag1);
-                poFeature->GetFieldAsDateTime(i, &nYear2, &nMonth2, &nDay2,
-                                              &nHour2, &nMinute2, &fSecond2,
-                                              &nTZFlag2);
-
-                if (!(nYear1 == nYear2 && nMonth1 == nMonth2 &&
-                      nDay1 == nDay2 && nHour1 == nHour2 &&
-                      nMinute1 == nMinute2 && fSecond1 == fSecond2 &&
-                      nTZFlag1 == nTZFlag2))
-                    return FALSE;
-                break;
-            }
-
-            case OFTBinary:
-            {
-                int nCount1 = 0;
-                int nCount2 = 0;
-                GByte *pabyData1 = GetFieldAsBinary(i, &nCount1);
-                GByte *pabyData2 = poFeature->GetFieldAsBinary(i, &nCount2);
-                if (nCount1 != nCount2)
-                    return FALSE;
-                if (memcmp(pabyData1, pabyData2, nCount1) != 0)
-                    return FALSE;
-                break;
-            }
-
-            default:
-                if (strcmp(GetFieldAsString(i),
-                           poFeature->GetFieldAsString(i)) != 0)
-                    return FALSE;
-                break;
+            return false;
         }
     }
 
@@ -7285,7 +7312,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7304,7 +7331,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7386,7 +7413,8 @@ void OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C function
  * OGR_F_SetNativeMediaType().
@@ -7413,7 +7441,8 @@ void OGRFeature::SetNativeMediaType(const char *pszNativeMediaType)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C++ method
  * OGRFeature::SetNativeMediaType().

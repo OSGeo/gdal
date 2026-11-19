@@ -759,13 +759,13 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
                      "Could not compute geotransform with approximate match.");
             return false;
         }
-        if (std::fabs(georeferencing.m_gt[2]) <
-                1e-5 * std::fabs(georeferencing.m_gt[1]) &&
-            std::fabs(georeferencing.m_gt[4]) <
-                1e-5 * std::fabs(georeferencing.m_gt[5]))
+        if (std::fabs(georeferencing.m_gt.xrot) <
+                1e-5 * std::fabs(georeferencing.m_gt.xscale) &&
+            std::fabs(georeferencing.m_gt.yrot) <
+                1e-5 * std::fabs(georeferencing.m_gt.yscale))
         {
-            georeferencing.m_gt[2] = 0;
-            georeferencing.m_gt[4] = 0;
+            georeferencing.m_gt.xrot = 0;
+            georeferencing.m_gt.yrot = 0;
         }
 
         georeferencing.m_osID = pszId;
@@ -2405,7 +2405,7 @@ GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,
     VSILFILE *fp = VSIFOpenL(pszPDFFilename, "wb");
     if (fp == nullptr)
     {
-        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.\n",
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create PDF file %s.",
                  pszPDFFilename);
         return nullptr;
     }

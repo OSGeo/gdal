@@ -608,7 +608,12 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
 
     const int nKeyLength =
         m_papoIndexRootNodes[nIndexNumber - 1]->GetKeyLength();
-    CPLAssert(nKeyLength == 8 && sizeof(double) == 8);
+    if (nKeyLength != 8)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Got nKeyLength = %d, expected 8",
+                 nKeyLength);
+        return nullptr;
+    }
 
     /*-----------------------------------------------------------------
      * Convert double and decimal values...
@@ -1315,7 +1320,7 @@ GInt32 TABINDNode::FindFirst(const GByte *pKeyValue,
 
                 return nRetValue;
             }  // else
-        }      // while numEntries
+        }  // while numEntries
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0

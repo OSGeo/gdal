@@ -1,5 +1,7 @@
 .. _gdal_mdim_convert:
 
+.. program:: gdal_mdim_convert
+
 ================================================================================
 ``gdal mdim convert``
 ================================================================================
@@ -151,6 +153,11 @@ Advanced options
 .. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/if.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

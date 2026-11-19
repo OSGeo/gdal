@@ -66,13 +66,12 @@ netCDFLayer::~netCDFLayer()
 
 void netCDFLayer::netCDFWriteAttributesFromConf(
     int cdfid, int varid,
-    const std::vector<netCDFWriterConfigAttribute> &aoAttributes)
+    const std::vector<netCDFWriterConfigAttribute> &aoAttributes) const
 {
-    for (size_t i = 0; i < aoAttributes.size(); i++)
+    for (const auto &oAtt : aoAttributes)
     {
         try
         {
-            const netCDFWriterConfigAttribute &oAtt = aoAttributes[i];
             int status = NC_NOERR;
             if (oAtt.m_osValue.empty())
             {
@@ -131,9 +130,8 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
 
     long long newbufsize = 0;
     const char *memorySizeLimitation =
-        CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", "");
-    std::string memorySizeLimitation_s = std::string(memorySizeLimitation);
-    if (memorySizeLimitation_s != "")
+        CSLFetchNameValueDef(papszOptions, "BUFFER_SIZE", nullptr);
+    if (memorySizeLimitation && memorySizeLimitation[0] != '\0')
     {
         newbufsize = strtoll(memorySizeLimitation, nullptr, 10);
     }
@@ -158,8 +156,8 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
     m_nDefaultWidth = atoi(
         CSLFetchNameValueDef(papszOptions, "STRING_DEFAULT_WIDTH",
                              CPLSPrintf("%d", m_bAutoGrowStrings ? 10 : 80)));
-    m_bWriteGDALTags = CPL_TO_BOOL(
-        CSLFetchBoolean(m_poDS->papszCreationOptions, "WRITE_GDAL_TAGS", TRUE));
+    m_bWriteGDALTags =
+        m_poDS->aosCreationOptions.FetchBool("WRITE_GDAL_TAGS", true);
     m_bUseStringInNC4 =
         CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "USE_STRING_IN_NC4", TRUE));
     m_bNCDumpCompat =
@@ -486,10 +484,10 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
                                           poLayerConfig->m_aoAttributes);
         }
 
-        for (size_t i = 0; i < aoAutoVariables.size(); i++)
+        for (const auto &[osVar, nVarId] : aoAutoVariables)
         {
             const netCDFWriterConfigField *poConfig = nullptr;
-            CPLString osLookup = "__" + aoAutoVariables[i].first;
+            CPLString osLookup = "__" + osVar;
             std::map<CPLString, netCDFWriterConfigField>::const_iterator oIter;
             if (m_poLayerConfig != nullptr &&
                 (oIter = m_poLayerConfig->m_oFields.find(osLookup)) !=
@@ -505,8 +503,7 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
 
             if (poConfig != nullptr)
             {
-                netCDFWriteAttributesFromConf(m_nLayerCDFId,
-                                              aoAutoVariables[i].second,
+                netCDFWriteAttributesFromConf(m_nLayerCDFId, nVarId,
                                               poConfig->m_aoAttributes);
             }
         }
@@ -629,7 +626,7 @@ void netCDFLayer::SetRecordDimID(int nRecordDimID)
 /*                            GetFillValue()                            */
 /************************************************************************/
 
-CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
+CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue) const
 {
     if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, ppszValue) ==
         CE_None)
@@ -637,7 +634,7 @@ CPLErr netCDFLayer::GetFillValue(int nVarId, char **ppszValue)
     return NCDFGetAttr(m_nLayerCDFId, nVarId, "missing_value", ppszValue);
 }
 
-CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
+CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue) const
 {
     if (NCDFGetAttr(m_nLayerCDFId, nVarId, NCDF_FillValue, pdfValue) == CE_None)
         return CE_None;
@@ -845,7 +842,7 @@ void netCDFLayer::ResetReading()
 double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
                                      size_t nIndex,
                                      const NCDFNoDataUnion &noDataVal,
-                                     bool *pbIsNoData)
+                                     bool *pbIsNoData) const
 {
     double dfVal = 0;
     if (nVarType == NC_DOUBLE)
@@ -1975,12 +1972,14 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     else if (m_poFeatureDefn->GetGeomType() != wkbNone && m_nWKTVarID >= 0 &&
              poGeom != nullptr && m_bLegacyCreateMode)
     {
-        char *pszWKT = nullptr;
-        poGeom->exportToWkt(&pszWKT, wkbVariantIso);
-        int status;
+        OGRWktOptions opts;
+        opts.variant = wkbVariantIso;
+
+        std::string osWKT = poGeom->exportToWkt(opts);
+        int status = NC_NOERR;
         if (m_nWKTNCDFType == NC_STRING)
         {
-            const char *pszWKTConst = pszWKT;
+            const char *pszWKTConst = osWKT.c_str();
             status = nc_put_var1_string(m_nLayerCDFId, m_nWKTVarID, anIndex,
                                         &pszWKTConst);
         }
@@ -1988,7 +1987,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
         {
             size_t anCount[2];
             anCount[0] = 1;
-            anCount[1] = strlen(pszWKT);
+            anCount[1] = osWKT.size();
             if (anCount[1] > static_cast<unsigned int>(m_nWKTMaxWidth))
             {
                 if (m_bAutoGrowStrings)
@@ -2005,7 +2004,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     m_nWKTMaxWidth = static_cast<int>(nNewSize);
 
                     status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID,
-                                              anIndex, anCount, pszWKT);
+                                              anIndex, anCount, osWKT.c_str());
                 }
                 else
                 {
@@ -2013,16 +2012,16 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                              "Cannot write geometry as WKT. Would require %d "
                              "characters but field width is %d",
                              static_cast<int>(anCount[1]), m_nWKTMaxWidth);
-                    status = NC_NOERR;
+                    status =
+                        NC_EEDGE;  // error that would be returned had we called nc_put_var_text
                 }
             }
             else
             {
                 status = nc_put_vara_text(m_nLayerCDFId, m_nWKTVarID, anIndex,
-                                          anCount, pszWKT);
+                                          anCount, osWKT.c_str());
             }
         }
-        CPLFree(pszWKT);
         NCDF_ERR(status);
         if (status != NC_NOERR)
         {
@@ -2498,6 +2497,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Dimension '%s' does not exist",
                      poConfig->m_osMainDim.c_str());
+            return OGRERR_FAILURE;
         }
     }
 
@@ -2654,7 +2654,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
         fieldDesc.bIsDays = (eType == OFTDate);
         m_aoFieldDesc.push_back(fieldDesc);
 
-        // If we have an alternative name that is compatible of the
+        // If we have an alternative name that is compatible with the
         // standard_name attribute, then put it in it.
         // http://cfconventions.org/Data/cf-standard-names/docs/guidelines.html:
         // "Standard names consist of lower-letters, digits and underscores,
@@ -2790,7 +2790,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int netCDFLayer::TestCapability(const char *pszCap) const
+bool netCDFLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_poDS->GetAccess() == GA_Update;

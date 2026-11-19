@@ -71,6 +71,7 @@ class HFADataset final : public GDALPamDataset
     static CPLErr Rename(const char *pszNewName, const char *pszOldName);
     static CPLErr CopyFiles(const char *pszNewName, const char *pszOldName);
     static GDALDataset *Open(GDALOpenInfo *);
+    static HFADataset *OpenHFA(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
                                CSLConstList papszParamList);

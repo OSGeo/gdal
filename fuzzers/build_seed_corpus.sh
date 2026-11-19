@@ -566,6 +566,25 @@ rm -f $OUT/lvbag_fuzzer_seed_corpus.zip
 zip -r $OUT/lvbag_fuzzer_seed_corpus.zip ./*.xml >/dev/null
 cd $OLDPWD
 
+echo "Building s101_fuzzer_seed_corpus.zip"
+CUR_DIR=$PWD
+cd  $(dirname $0)/../autotest/ogr/data/s101
+for filename in *.000 invalid/*.000; do
+  BASENAME=$(echo $filename | cut -d. -f1)
+  TARNAME="$CUR_DIR/s101_$(basename ${BASENAME}).tar"
+  printf "FUZZER_FRIENDLY_ARCHIVE\\n" > $TARNAME
+  printf "***NEWFILE***:test.000\\n" >> $TARNAME
+  cat "${BASENAME}.000" >> $TARNAME
+  if test -f "${BASENAME}.001"; then
+    printf "***NEWFILE***:test.001\\n" >> $TARNAME
+    cat "${BASENAME}.001" >> $TARNAME
+  fi
+done
+cd $CUR_DIR
+rm -f $OUT/s101_fuzzer_seed_corpus.zip
+zip -r $OUT/s101_fuzzer_seed_corpus.zip s101_*.tar >/dev/null
+rm s101_*.tar
+
 echo "Building ogr_miramon_fuzzer_seed_corpus.zip"
 rm -f $OUT/ogr_miramon_fuzzer_seed_corpus.zip
 CUR_DIR=$PWD

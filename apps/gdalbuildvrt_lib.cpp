@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -441,16 +442,13 @@ static CPLString GetProjectionName(const char *pszProjection)
 
     OGRSpatialReference oSRS;
     oSRS.SetFromUserInput(pszProjection);
-    const char *pszRet = nullptr;
-    if (oSRS.IsProjected())
-        pszRet = oSRS.GetAttrValue("PROJCS");
-    else if (oSRS.IsGeographic())
-        pszRet = oSRS.GetAttrValue("GEOGCS");
-    return pszRet ? pszRet : "(null)";
+
+    const char *pszName = oSRS.GetName();
+    return pszName ? pszName : "(null)";
 }
 
 /************************************************************************/
-/*                           AnalyseRaster()                            */
+/*                         checkNoDataValues()                          */
 /************************************************************************/
 
 static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
@@ -468,12 +466,16 @@ static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
     }
 }
 
+/************************************************************************/
+/*                           AnalyseRaster()                            */
+/************************************************************************/
+
 std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                                       DatasetProperty *psDatasetProperties)
 {
     GDALDataset *poDS = GDALDataset::FromHandle(hDS);
     const char *dsFileName = poDS->GetDescription();
-    CSLConstList papszMetadata = poDS->GetMetadata("SUBDATASETS");
+    CSLConstList papszMetadata = poDS->GetMetadata(GDAL_MDD_SUBDATASETS);
     if (CSLCount(papszMetadata) > 0 && poDS->GetRasterCount() == 0)
     {
         ppszInputFilenames = static_cast<char **>(CPLRealloc(
@@ -842,7 +844,7 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                 CPLString osGot = GetProjectionName(proj);
                 return m_osProgramName +
                        CPLSPrintf(" does not support heterogeneous "
-                                  "projection: expected %s, got %s.",
+                                  "projection: expected \"%s\", got \"%s\".",
                                   osExpected.c_str(), osGot.c_str());
             }
         }
@@ -939,7 +941,16 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                     int nRefColorEntryCount =
                         asBandProperties[j].colorTable->GetColorEntryCount();
                     if (colorTable == nullptr ||
-                        colorTable->GetColorEntryCount() != nRefColorEntryCount)
+                        (colorTable->GetColorEntryCount() !=
+                             nRefColorEntryCount &&
+                         // For NITF CADRG tiles that may have 256 or 257 colors,
+                         // with the 257th color when present being transparent
+                         !(std::min(colorTable->GetColorEntryCount(),
+                                    nRefColorEntryCount) +
+                               1 ==
+                           std::max(colorTable->GetColorEntryCount(),
+                                    nRefColorEntryCount))))
+
                     {
                         return m_osProgramName +
                                " does not support rasters with "
@@ -951,7 +962,10 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                     /* We just warn and still process the file. It is not a
                      * technical no-go, but the user */
                     /* should check that the end result is OK for him. */
-                    for (int i = 0; i < nRefColorEntryCount; i++)
+                    for (int i = 0;
+                         i < std::min(nRefColorEntryCount,
+                                      colorTable->GetColorEntryCount());
+                         i++)
                     {
                         const GDALColorEntry *psEntry =
                             colorTable->GetColorEntry(i);
@@ -986,6 +1000,32 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                             bFirstWarningPCT = FALSE;
                             break;
                         }
+                    }
+
+                    // For NITF CADRG tiles that may have 256 or 257 colors,
+                    // with the 257th color when present being transparent
+                    if (nRefColorEntryCount + 1 ==
+                            colorTable->GetColorEntryCount() &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c1 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c2 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c3 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c4 == 0)
+                    {
+                        int bHasNoData = false;
+                        const double dfNoData =
+                            poBand->GetNoDataValue(&bHasNoData);
+                        if (bHasNoData && !asBandProperties[j].bHasNoData &&
+                            dfNoData == nRefColorEntryCount)
+                        {
+                            asBandProperties[j].bHasNoData = true;
+                            asBandProperties[j].noDataValue = dfNoData;
+                        }
+
+                        asBandProperties[j].colorTable.reset(
+                            colorTable->Clone());
                     }
                 }
 
@@ -1138,6 +1178,20 @@ static void WriteAbsolutePath(VRTSimpleSource *poSource, const char *dsFileName)
 }
 
 /************************************************************************/
+/*                       IsTransientSrcDataset()                        */
+/************************************************************************/
+
+static bool IsTransientSrcDataset(const char *dsFileName, GDALDatasetH hDS)
+{
+    auto hDriver = GDALGetDatasetDriver(hDS);
+    return !hDriver || dsFileName[0] == '\0' ||  // could be a unnamed VRT file
+                                                 // Inner pipeline
+           (dsFileName[0] == '[' &&
+            dsFileName[strlen(dsFileName) - 1] == ']') ||
+           EQUAL(GDALGetDescription(hDriver), "MEM");
+}
+
+/************************************************************************/
 /*                         CreateVRTSeparate()                          */
 /************************************************************************/
 
@@ -1178,10 +1232,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
         GDALDatasetH hSourceDS;
         bool bDropRef = false;
         if (nSrcDSCount == nInputFiles &&
-            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
-            (dsFileName[0] == '\0' ||  // could be a unnamed VRT file
-             EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])),
-                   "MEM")))
+            IsTransientSrcDataset(dsFileName, pahSrcDS[i]))
         {
             hSourceDS = pahSrcDS[i];
         }
@@ -1220,8 +1271,8 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                                         ? panSelectedBandList[iBandToIter] - 1
                                         : iBandToIter;
             assert(nSrcBandIdx >= 0);
-            poVRTDS->AddBand(psDatasetProperties->aeBandType[nSrcBandIdx],
-                             nullptr);
+            const auto eBandType = psDatasetProperties->aeBandType[nSrcBandIdx];
+            poVRTDS->AddBand(eBandType, nullptr);
 
             VRTSourcedRasterBand *poVRTBand =
                 static_cast<VRTSourcedRasterBand *>(
@@ -1243,18 +1294,30 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 
             if (bAllowVRTNoData)
             {
+                std::optional<double> noData;
                 if (nVRTNoDataCount > 0)
                 {
                     if (iBand - 1 < nVRTNoDataCount)
-                        poVRTBand->SetNoDataValue(padfVRTNoData[iBand - 1]);
+                        noData = padfVRTNoData[iBand - 1];
                     else
-                        poVRTBand->SetNoDataValue(
-                            padfVRTNoData[nVRTNoDataCount - 1]);
+                        noData = padfVRTNoData[nVRTNoDataCount - 1];
                 }
                 else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
                 {
-                    poVRTBand->SetNoDataValue(
-                        psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
+                    noData = psDatasetProperties->adfNoDataValues[nSrcBandIdx];
+                }
+                if (noData.has_value())
+                {
+                    if (GDALDataTypeIsInteger(eBandType) &&
+                        !GDALIsValueExactAs(*noData, eBandType))
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                 "Band data type of %s cannot represent the "
+                                 "specified "
+                                 "NoData value of %g",
+                                 GDALGetDataTypeName(eBandType), *noData);
+                    }
+                    poVRTBand->SetNoDataValue(*noData);
                 }
             }
 
@@ -1431,9 +1494,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 
         if (bCanCollectOverviewFactors)
         {
-            if (std::abs(psDatasetProperties->gt[1] - we_res) >
+            if (std::abs(psDatasetProperties->gt.xscale - we_res) >
                     1e-8 * std::abs(we_res) ||
-                std::abs(psDatasetProperties->gt[5] - ns_res) >
+                std::abs(psDatasetProperties->gt.yscale - ns_res) >
                     1e-8 * std::abs(ns_res))
             {
                 bCanCollectOverviewFactors = false;
@@ -1450,10 +1513,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
         bool bDropRef = false;
 
         if (nSrcDSCount == nInputFiles &&
-            GDALGetDatasetDriver(pahSrcDS[i]) != nullptr &&
-            (dsFileName[0] == '\0' ||  // could be a unnamed VRT file
-             EQUAL(GDALGetDescription(GDALGetDatasetDriver(pahSrcDS[i])),
-                   "MEM")))
+            IsTransientSrcDataset(dsFileName, pahSrcDS[i]))
         {
             hSourceDS = pahSrcDS[i];
         }
@@ -2282,7 +2342,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
         .help(_("Control the way the output resolution is computed."));
 
     argParser->add_argument("-tr")
-        .metavar("<xres> <yes>")
+        .metavar("<xres> <yres>")
         .nargs(2)
         .scan<'g', double>()
         .help(_("Set target resolution."));

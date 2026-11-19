@@ -1740,7 +1740,7 @@ def test_gml_invalid_geoms():
         ),
     ]
 
-    for (gml, expected_wkt) in gml_expected_wkt_list:
+    for gml, expected_wkt in gml_expected_wkt_list:
         with gdal.quiet_errors():
             # print gml
             geom = ogr.CreateGeometryFromGML(gml)
@@ -2162,7 +2162,7 @@ def test_gml_Coordinates_ts_cs_decimal():
         ),
     ]
 
-    for (gml, expected_wkt) in gml_expected_wkt_list:
+    for gml, expected_wkt in gml_expected_wkt_list:
         geom = ogr.CreateGeometryFromGML(gml)
         wkt = geom.ExportToWkt()
         if expected_wkt is None:
@@ -2217,7 +2217,7 @@ def test_gml_with_xml_header_and_comments():
         ),
     ]
 
-    for (gml, expected_wkt) in gml_expected_wkt_list:
+    for gml, expected_wkt in gml_expected_wkt_list:
         geom = ogr.CreateGeometryFromGML(gml)
         wkt = geom.ExportToWkt()
         if expected_wkt is None:
@@ -2455,6 +2455,29 @@ def test_gml_CircleByCenterPoint_srs_geog_unnhandled_uom():
 
 
 ###############################################################################
+# Test GML CircleByCenterPoint with uom="[nmi_i]", "[mi_i]" and "[ft_i]"
+
+
+def test_gml_CircleByCenterPoint_uom_ics():
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="m">1000</gml:radius></gml:CircleByCenterPoint>'
+    geom1 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[nmi_i]">0.5399568034557235</gml:radius></gml:CircleByCenterPoint>'
+    geom2 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[mi_i]">0.6213711922373341</gml:radius></gml:CircleByCenterPoint>'
+    geom3 = ogr.CreateGeometryFromGML(gml)
+
+    gml = '<gml:CircleByCenterPoint srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos>49 2</gml:pos><gml:radius uom="[ft_i]">3280.8398950131236</gml:radius></gml:CircleByCenterPoint>'
+    geom4 = ogr.CreateGeometryFromGML(gml)
+
+    ogrtest.check_feature_geometry(geom1, geom2)
+    ogrtest.check_feature_geometry(geom1, geom3)
+    ogrtest.check_feature_geometry(geom1, geom4)
+
+
+###############################################################################
 # Test compound curve of ArcByCenterPoint whose ends don't exactly match
 # with ends of neighbouring curves, as found in some AIXM files
 # with all curves in the same <segment> element as found in #2356)
@@ -2462,8 +2485,7 @@ def test_gml_CircleByCenterPoint_srs_geog_unnhandled_uom():
 
 def test_gml_CompoundCurve_of_ArcByCenterPoint_curve_in_same_segments():
 
-    geom = ogr.CreateGeometryFromGML(
-        """
+    geom = ogr.CreateGeometryFromGML("""
         <aixm:Surface srsName="urn:ogc:def:crs:EPSG::4326" gml:id="ID_249">
             <gml:patches>
                 <gml:PolygonPatch>
@@ -2497,8 +2519,7 @@ def test_gml_CompoundCurve_of_ArcByCenterPoint_curve_in_same_segments():
                 </gml:PolygonPatch>
             </gml:patches>
             <aixm:horizontalAccuracy uom="KM">2.0</aixm:horizontalAccuracy>
-        </aixm:Surface>"""
-    )
+        </aixm:Surface>""")
 
     ogrtest.check_feature_geometry(
         geom,
@@ -3116,4 +3137,29 @@ def test_gml_aixm_ElevatedPoint():
     ogrtest.check_feature_geometry(
         geom,
         "POINT (49 2)",
+    )
+
+
+###############################################################################
+#
+
+
+@pytest.mark.require_proj(8, 0)
+def test_gml_export_compound_crs():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(9518)  #  WGS 84 + EGM2008 height
+    wkt = "POINT (30 10 5)"
+    geometry = ogr.CreateGeometryFromWkt(wkt, srs)
+    gml = geometry.ExportToGML(
+        options=[
+            "FORMAT=GML32",
+            "SRSDIMENSION_LOC=GEOMETRY",
+            "SRSNAME_FORMAT=SHORT",
+            "GMLID=TestPoint-1",
+        ]
+    )
+    assert (
+        gml
+        == '<gml:Point srsName="EPSG:9518" srsDimension="3" gml:id="TestPoint-1"><gml:pos>30 10 5</gml:pos></gml:Point>'
     )

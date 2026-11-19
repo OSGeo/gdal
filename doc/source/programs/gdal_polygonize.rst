@@ -112,3 +112,8 @@ details on the algorithm.
 
     The script runs in quiet mode.  The progress monitor is suppressed and routine
     messages are not displayed.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

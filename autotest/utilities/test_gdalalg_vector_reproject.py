@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -28,7 +29,7 @@ def get_reproject_alg():
 def test_gdalalg_vector_reproject_dataset_getnextfeature():
 
     alg = get_reproject_alg()
-    src_ds = gdal.OpenEx("../ogr/data/osm/test.pbf")
+    src_ds = gdal.Open("../ogr/data/osm/test.pbf")
     alg["input"] = src_ds
     alg["dst-crs"] = "EPSG:4326"
 
@@ -78,8 +79,8 @@ def test_gdalalg_vector_reproject_active_layer():
 
     assert alg.ParseCommandLineArguments(
         [
-            "--src-crs=EPSG:4326",
-            "--dst-crs=EPSG:32631",
+            "--input-crs=EPSG:4326",
+            "--output-crs=EPSG:32631",
             "--of",
             "MEM",
             "--output",
@@ -108,8 +109,91 @@ def test_gdalalg_vector_reproject_complete_dst_crs():
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal vector reproject ../ogr/data/poly.shp --dst-crs=EPSG:"
     )
-    assert "4326\\ --" in out
-    assert "2193\\ --" not in out  # NZGD2000
+    assert "4326 --" in out
+    assert "2193 --" not in out  # NZGD2000
+
+
+@pytest.mark.parametrize(
+    "like_layer,num_like_layers",
+    (
+        (None, 0),
+        (None, 1),
+        ("test", 2),
+        ("test2", 2),
+    ),
+)
+def test_gdalalg_vector_reproject_like_multiple_layers(like_layer, num_like_layers):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer(
+        "points", srs=osr.SpatialReference(epsg=4326), geom_type=ogr.wkbPoint
+    )
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (-72.5802 44.2626)"))
+    src_lyr.CreateFeature(f)
+
+    like_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1)
+    like_ds.SetSpatialRef(osr.SpatialReference(epsg=6589))
+    if num_like_layers > 0:
+        like_ds.CreateLayer("test", srs=osr.SpatialReference(epsg=32145))
+    if num_like_layers > 1:
+        like_ds.CreateLayer("test2", srs=osr.SpatialReference(epsg=5646))
+
+    alg = get_reproject_alg()
+    alg["input"] = src_ds
+    alg["like"] = like_ds
+    if like_layer:
+        alg["like-layer"] = like_layer
+    alg["output-format"] = "stream"
+
+    if like_layer is None and num_like_layers > 1:
+        with pytest.raises(Exception, match="multiple layers with different spatial"):
+            alg.Run()
+        return
+
+    assert alg.Run()
+
+    dst_ds = alg.Output()
+
+    if num_like_layers == 0:
+        like_srs = like_ds.GetSpatialRef()
+    else:
+        like_srs = like_ds.GetLayer(like_layer or 0).GetSpatialRef()
+
+    assert dst_ds.GetLayer(0).GetSpatialRef().IsSame(like_srs)
+
+
+def test_gdalalg_vector_reproject_like_invalid_dataset():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["like"] = "/vsimem/does_not_exist"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="No such file or directory"):
+        alg.Run()
+
+
+def test_gdalalg_vector_reproject_like_layer():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["like"] = "../ogr/data/poly.shp"
+    alg["like-layer"] = "does_not_exist"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Specified layer .* not found"):
+        alg.Run()
+
+
+def test_gdalalg_vector_reproject_unspecified_dst_crs():
+
+    alg = get_reproject_alg()
+    alg["input"] = "../ogr/data/poly.shp"
+    alg["output-format"] = "stream"
+
+    with pytest.raises(Exception, match="Must specify --output-crs or --like"):
+        alg.Run()
 
 
 ###############################################################################
@@ -118,19 +202,29 @@ def test_gdalalg_vector_reproject_complete_dst_crs():
 
 @pytest.mark.require_geos
 @pytest.mark.parametrize(
-    "input_wkt,output_wkt",
+    "input_wkt,expected_wkt",
     [
         (
             "POLYGON((0 100000,100000 0,0 -100000,-100000 0,0 100000),(0 50000,50000 0,0 -50000,-50000 0,0 50000))",
-            "POLYGON ((90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069,90.0 89.089200825091))",
+            (
+                "POLYGON ((90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069,90.0 89.089200825091))",
+                # Below is with GEOS 3.15
+                "POLYGON ((180.0 89.0892008251069,90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069))",
+            ),
         ),
         (
             "POLYGON((50000 -100000,100000 -100000,100000 100000,-100000 100000,-100000 50000,50000 50000,50000 -100000))",
-            "MULTIPOLYGON (((135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091,135.0 88.7119614804959)),((-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803,-116.565051177078 88.9817007095479)))",
+            (
+                "MULTIPOLYGON (((135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091,135.0 88.7119614804959)),((-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803,-116.565051177078 88.9817007095479)))",
+                # Below is with GEOS 3.15
+                "MULTIPOLYGON (((180.0 89.089200825091,135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091)),((-180 89.5445935108803,-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803)))",
+            ),
         ),
     ],
 )
-def test_gdalalg_vector_reproject_polar_projected_to_geographic(input_wkt, output_wkt):
+def test_gdalalg_vector_reproject_polar_projected_to_geographic(
+    input_wkt, expected_wkt
+):
 
     srs_3996 = osr.SpatialReference()
     srs_3996.ImportFromEPSG(3996)
@@ -154,4 +248,47 @@ def test_gdalalg_vector_reproject_polar_projected_to_geographic(input_wkt, outpu
         out_lyr = out_ds.GetLayer(0)
         out_f = out_lyr.GetNextFeature()
         out_g = out_f.GetGeometryRef()
-        ogrtest.check_feature_geometry(out_g, output_wkt)
+        for wkt in expected_wkt:
+            try:
+                ogrtest.check_feature_geometry(out_g, wkt)
+                return
+            except Exception:
+                pass
+        assert False, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
+
+
+@pytest.mark.require_driver("OSM")
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_reproject_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector reproject ../ogr/data/osm/test.pbf --active-layer point --dst-crs EPSG:3857 --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_reproject_on_aspatial_layer():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
+    src_lyr.CreateFeature(ogr.Feature(src_lyr.GetLayerDefn()))
+
+    with gdal.alg.vector.reproject(
+        input=src_ds, output="", output_format="MEM", output_crs="EPSG:4326"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1

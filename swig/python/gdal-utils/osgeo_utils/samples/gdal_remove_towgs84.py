@@ -66,14 +66,12 @@ def main(argv=sys.argv):
             # Check if listgeo is recent enough
             tmp_filename = "tmp_gdal_remove_towgs84.tif"
             tmp_ds = gdal.GetDriverByName("GTiff").Create(tmp_filename, 1, 1)
-            tmp_ds.SetProjection(
-                """GEOGCS["test",
+            tmp_ds.SetProjection("""GEOGCS["test",
             DATUM["test",
                 SPHEROID["test",1,0],
                 TOWGS84[1,2,3,4,5,6,7]],
             PRIMEM["Greenwich",0],
-            UNIT["degree",0.0174532925199433]]"""
-            )
+            UNIT["degree",0.0174532925199433]]""")
             tmp_ds = None
             output = subprocess.check_output(["listgeo", tmp_filename]).decode("LATIN1")
             os.remove(tmp_filename)

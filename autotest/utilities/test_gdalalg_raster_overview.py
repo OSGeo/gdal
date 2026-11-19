@@ -461,15 +461,15 @@ def test_gdalalg_overview_add_complete():
     if gdal_path is None:
         pytest.skip("gdal binary missing")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster overview add ../gcore/data/byte.tif --co"
-    ).split(" ")
+    )
     assert "LOCATION=" in out
     assert "COMPRESS=" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster overview add ../gcore/data/byte.tif --co COMPRESS="
-    ).split(" ")
+    )
     assert "NONE" in out
     assert "LZW" in out
 

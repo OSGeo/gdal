@@ -57,7 +57,7 @@ class OGRGmtLayer final : public OGRLayer,
     bool bValidFile;
 
     OGRGmtLayer(GDALDataset *poDS, const char *pszFilename, VSILFILE *fp,
-                const OGRSpatialReference *poSRS, int bUpdate);
+                const OGRSpatialReference *poSRS, bool bUpdate);
     ~OGRGmtLayer() override;
 
     void ResetReading() override;
@@ -76,7 +76,7 @@ class OGRGmtLayer final : public OGRLayer,
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GDALDataset *GetDataset() override
     {
@@ -102,7 +102,7 @@ class OGRGmtDataSource final : public GDALDataset
     ~OGRGmtDataSource() override;
 
     int Open(const char *pszFilename, VSILFILE *fp,
-             const OGRSpatialReference *poSRS, int bUpdate);
+             const OGRSpatialReference *poSRS, bool bUpdate);
 
     int GetLayerCount() const override
     {
@@ -114,7 +114,7 @@ class OGRGmtDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 #endif /* ndef OGRGMT_H_INCLUDED */

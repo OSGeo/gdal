@@ -56,7 +56,7 @@ def test_stacit_basic():
 
 def test_stacit_max_items():
 
-    ds = gdal.OpenEx("data/stacit/test.json", open_options=["MAX_ITEMS=1"])
+    ds = gdal.Open("data/stacit/test.json", open_options=["MAX_ITEMS=1"])
     assert ds is not None
     assert ds.RasterXSize == 20
     assert ds.GetRasterBand(1).Checksum() == 4672
@@ -156,7 +156,7 @@ def test_stacit_overlapping_sources():
     # print(vrt)
     assert only_one_simple_source in vrt
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources.json",
         open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
     )
@@ -164,7 +164,7 @@ def test_stacit_overlapping_sources():
     vrt = ds.GetMetadata("xml:VRT")[0]
     assert only_one_simple_source in vrt
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources.json",
         open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
     )
@@ -172,7 +172,7 @@ def test_stacit_overlapping_sources():
     vrt = ds.GetMetadata("xml:VRT")[0]
     assert only_one_simple_source in vrt
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources.json",
         open_options=["OVERLAP_STRATEGY=USE_ALL"],
     )
@@ -205,7 +205,7 @@ def test_stacit_overlapping_sources_with_nodata():
     </ComplexSource>"""
     assert two_sources in vrt
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources_with_nodata.json",
         open_options=["OVERLAP_STRATEGY=REMOVE_IF_NO_NODATA"],
     )
@@ -214,14 +214,14 @@ def test_stacit_overlapping_sources_with_nodata():
     assert len(ds.GetFileList()) == 3
     assert two_sources in vrt
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources_with_nodata.json",
         open_options=["OVERLAP_STRATEGY=USE_MOST_RECENT"],
     )
     assert ds is not None
     assert len(ds.GetFileList()) == 2
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/stacit/overlapping_sources_with_nodata.json",
         open_options=["OVERLAP_STRATEGY=USE_ALL"],
     )
@@ -320,9 +320,9 @@ def test_stacit_force_opening(tmp_vsimem):
             fdest.write(fsrc.read())
 
     with pytest.raises(Exception):
-        gdal.OpenEx(filename)
+        gdal.Open(filename)
 
-    ds = gdal.OpenEx(filename, allowed_drivers=["STACIT"])
+    ds = gdal.Open(filename, allowed_drivers=["STACIT"])
     assert ds.GetDriver().GetDescription() == "STACIT"
 
 

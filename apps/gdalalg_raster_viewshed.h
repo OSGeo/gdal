@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_VIEWSHED_INCLUDED
 #define GDALALG_RASTER_VIEWSHED_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinenonnativelystreamingalgorithm.h"
 #include "viewshed/viewshed_types.h"
 
 //! @cond Doxygen_Suppress

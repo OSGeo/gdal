@@ -30,7 +30,6 @@ build:
     - unzip
 
 formats:
-  - htmlzip
   - pdf
 
 python:

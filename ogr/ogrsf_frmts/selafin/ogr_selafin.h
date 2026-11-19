@@ -106,7 +106,7 @@ class OGRSelafinLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
     GIntBig GetFeatureCount(int bForce = TRUE) override;
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -161,7 +161,7 @@ class OGRSelafinDataSource final : public GDALDataset
                            CSLConstList papszOptions) override;
 
     OGRErr DeleteLayer(int) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void SetDefaultSelafinName(const char *pszNameIn)
     {

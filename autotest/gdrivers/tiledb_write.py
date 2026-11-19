@@ -158,8 +158,8 @@ def test_tiledb_write_attributes(tmp_path, tmp_vsimem, mode):
         new_ds = None
 
     # check we can open the attributes with the band as well as the pixel values
-    att1_ds = gdal.OpenEx(dsname, open_options=["TILEDB_ATTRIBUTE=temp1"])
-    att2_ds = gdal.OpenEx(dsname, open_options=["TILEDB_ATTRIBUTE=temp2"])
+    att1_ds = gdal.Open(dsname, open_options=["TILEDB_ATTRIBUTE=temp1"])
+    att2_ds = gdal.Open(dsname, open_options=["TILEDB_ATTRIBUTE=temp2"])
     val_ds = gdal.Open(dsname)
 
     meta = val_ds.GetMetadata("IMAGE_STRUCTURE")
@@ -265,7 +265,7 @@ def test_tiledb_write_history(tmp_path, mode):
     ts = [2, 3, 4, 5]
 
     for t in ts:
-        update_ds = gdal.OpenEx(
+        update_ds = gdal.Open(
             dsname,
             gdal.GA_Update,
             open_options=["TILEDB_TIMESTAMP=%i" % (t)],
@@ -278,7 +278,7 @@ def test_tiledb_write_history(tmp_path, mode):
         update_ds = None
 
     for t in ts:
-        ds = gdal.OpenEx(dsname, open_options=["TILEDB_TIMESTAMP=%i" % (t)])
+        ds = gdal.Open(dsname, open_options=["TILEDB_TIMESTAMP=%i" % (t)])
         bnd = ds.GetRasterBand(1)
         assert int(bnd.GetMetadataItem("TILEDB_TIMESTAMP")) == t
         assert bnd.Checksum() == 20 * 20 * t
@@ -286,7 +286,7 @@ def test_tiledb_write_history(tmp_path, mode):
         ds = None
 
     # open at a later non-existent timestamp
-    ds = gdal.OpenEx(dsname, open_options=["TILEDB_TIMESTAMP=6"])
+    ds = gdal.Open(dsname, open_options=["TILEDB_TIMESTAMP=6"])
     bnd = ds.GetRasterBand(1)
     assert int(bnd.GetMetadataItem("TILEDB_TIMESTAMP")) == 5
     bnd = None
@@ -442,7 +442,7 @@ def test_tiledb_write_create_group(tmp_path):
     ds.Close()
 
     # Check that it resulted in an auxiliary dataset
-    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dsname, gdal.OF_MULTIDIM_RASTER)
     assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
         [
             "l_0",
@@ -482,7 +482,7 @@ def test_tiledb_write_overviews(tmp_path):
     ds.Close()
 
     # Check that it resulted in an auxiliary dataset
-    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dsname, gdal.OF_MULTIDIM_RASTER)
     assert set(ds.GetRootGroup().GetMDArrayNames()) == set(
         [
             "l_0",
@@ -551,7 +551,7 @@ def test_tiledb_write_overviews(tmp_path):
     # Check there are no more overviews after reopening
     assert not os.path.exists(dsname + "/l_1")
 
-    ds = gdal.OpenEx(dsname, gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open(dsname, gdal.OF_MULTIDIM_RASTER)
     assert ds.GetRootGroup().GetMDArrayNames() == ["l_0"]
     ds.Close()
 

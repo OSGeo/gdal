@@ -631,8 +631,7 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
     json_object *poNativeGeom = nullptr;
     bool bHasProperties = true;
     bool bWriteIdIfFoundInAttributes = true;
-    if (pszNativeMediaType &&
-        EQUAL(pszNativeMediaType, "application/vnd.geo+json"))
+    if (pszNativeMediaType && OGRIsGeoJSONMediaType(pszNativeMediaType))
     {
         const char *pszNativeData = poFeature->GetNativeData();
         json_object *poNativeJSon = nullptr;
@@ -643,7 +642,6 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
             it.key = nullptr;
             it.val = nullptr;
             it.entry = nullptr;
-            CPLString osNativeData;
             bHasProperties = false;
             json_object_object_foreachC(poNativeJSon, it)
             {
@@ -905,8 +903,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
     bool bUseNativeMedia{false};
 
     if (poFeature->GetNativeMediaType() &&
-        strcmp(poFeature->GetNativeMediaType(), "application/vnd.geo+json") ==
-            0 &&
+        OGRIsGeoJSONMediaType(poFeature->GetNativeMediaType()) &&
         poFeature->GetNativeData())
     {
         for (int nField = 0; nField < nFieldCount; ++nField)

@@ -63,7 +63,7 @@ class OGRSOSILayer final : public OGRLayer
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
 #endif
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************
@@ -90,7 +90,7 @@ class OGRSOSIDataSource final : public GDALDataset
     const char *pszEncoding;
     unsigned int nNumFeatures;
     OGRGeometry **papoBuiltGeometries; /* OGRSOSIDataSource prebuilds some
-                                        * features upon opening, te be used by
+                                        * features upon opening, to be used by
                                         * the more complex geometries later. */
     // FYBA specific
     LC_BASEADM *poBaseadm;

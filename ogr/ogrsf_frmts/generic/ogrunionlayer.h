@@ -210,7 +210,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;

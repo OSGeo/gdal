@@ -150,10 +150,9 @@ void netCDFVID::nc_vmap()
 {
     nc_set_define_mode();
 
-    for (size_t itr_d = 0; itr_d < dimList.size(); itr_d++)
+    for (netCDFVDimension &dim : dimList)
     {
         int realDimID = -1;
-        netCDFVDimension &dim = dimList[itr_d];
 
         if (!dim.isValid())
         {
@@ -162,13 +161,12 @@ void netCDFVID::nc_vmap()
 
         NCDF_ERR(
             nc_def_dim(ncid, dim.getName().c_str(), dim.getLen(), &realDimID));
-        dimList[itr_d].setRealID(realDimID);
+        dim.setRealID(realDimID);
     }
 
-    for (size_t itr_v = 0; itr_v < varList.size(); itr_v++)
+    for (netCDFVVariable &var : varList)
     {
         int realVarID = -1;
-        netCDFVVariable &var = varList[itr_v];
 
         if (!var.isValid())
         {
@@ -189,9 +187,9 @@ void netCDFVID::nc_vmap()
         var.setRealID(realVarID);
 
         // Now write each of its attributes
-        for (size_t attrct = 0; attrct < var.getAttributes().size(); attrct++)
+        for (auto &attr : var.getAttributes())
         {
-            var.getAttributes()[attrct]->vsync(ncid, realVarID);
+            attr->vsync(ncid, realVarID);
         }
 
         var.getAttributes().clear();
@@ -223,7 +221,7 @@ netCDFVDimension &netCDFVID::virtualDIDToDim(int virtualID)
     return dimList[virtualID];
 }
 
-int netCDFVID::nameToVirtualVID(const std::string &name)
+int netCDFVID::nameToVirtualVID(const std::string &name) const
 {
     if (nameVarTable.count(name) < 1)
     {
@@ -233,7 +231,7 @@ int netCDFVID::nameToVirtualVID(const std::string &name)
     return nameVarTable.at(name);
 }
 
-int netCDFVID::nameToVirtualDID(const std::string &name)
+int netCDFVID::nameToVirtualDID(const std::string &name) const
 {
     if (nameDimTable.count(name) < 1)
     {

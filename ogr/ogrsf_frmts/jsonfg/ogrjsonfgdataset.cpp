@@ -20,15 +20,15 @@
 #include <cmath>
 
 constexpr const char *CONFORMANCE_CORE =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/core";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/core";
 constexpr const char *CONFORMANCE_FEATURE_TYPE =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/types-schemas";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas";
 constexpr const char *CONFORMANCE_POLYHEDRA =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/polyhedra";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/polyhedra";
 constexpr const char *CONFORMANCE_CIRCULAR_ARCS =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/circular-arcs";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/circular-arcs";
 constexpr const char *CONFORMANCE_MEASURES =
-    "http://www.opengis.net/spec/json-fg-1/0.3/conf/measures";
+    "http://www.opengis.net/spec/json-fg-1/1.0/conf/measures";
 
 /************************************************************************/
 /*                OGRJSONFGDataset::~OGRJSONFGDataset()                 */
@@ -754,7 +754,7 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
         };
 
         const double dfCoordEpoch = poSRS->GetCoordinateEpoch();
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName();
         if (!pszAuthName)
         {
             auto poBestMatch = poSRS->FindBestMatch();
@@ -766,10 +766,10 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
                 poSRSTmp->SetDataAxisToSRSAxisMapping(
                     poSRS->GetDataAxisToSRSAxisMapping());
                 poSRS = poSRSTmp.get();
-                pszAuthName = poSRS->GetAuthorityName(nullptr);
+                pszAuthName = poSRS->GetAuthorityName();
             }
         }
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthCode = poSRS->GetAuthorityCode();
         json_object *poObj = nullptr;
         if (pszAuthName && pszAuthCode)
         {
@@ -848,9 +848,9 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
     else if (eGType != wkbNone)
     {
         if (OGR_GT_HasZ(eGType))
-            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84h";
+            osCoordRefSys = "\"http://www.opengis.net/def/crs/OGC/0/CRS84h\"";
         else
-            osCoordRefSys = "http://www.opengis.net/def/crs/OGC/0/CRS84";
+            osCoordRefSys = "\"http://www.opengis.net/def/crs/OGC/0/CRS84\"";
         CPLError(CE_Warning, CPLE_AppDefined,
                  "No SRS set on layer. Assuming it is long/lat on WGS84 "
                  "ellipsoid");
@@ -1024,7 +1024,7 @@ OGRJSONFGDataset::ICreateLayer(const char *pszNameIn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGDataset::TestCapability(const char *pszCap) const
+bool OGRJSONFGDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return fpOut_ != nullptr &&

@@ -1198,23 +1198,23 @@ int utf8makevalid(utf8_int8_t *str, const utf8_int32_t replacement) {
 utf8_constexpr14_impl utf8_int8_t *
 utf8codepoint(const utf8_int8_t *utf8_restrict str,
               utf8_int32_t *utf8_restrict out_codepoint) {
-  if (0xf0 == (0xf8 & str[0])) {
+  if (0xf0 == (0xf8 & static_cast<unsigned char>(str[0]))) {
     /* 4 byte utf8 codepoint */
-    *out_codepoint = ((0x07 & str[0]) << 18) | ((0x3f & str[1]) << 12) |
-                     ((0x3f & str[2]) << 6) | (0x3f & str[3]);
+    *out_codepoint = ((0x07 & static_cast<unsigned char>(str[0])) << 18) | ((0x3f & static_cast<unsigned char>(str[1])) << 12) |
+                     ((0x3f & static_cast<unsigned char>(str[2])) << 6) | (0x3f & static_cast<unsigned char>(str[3]));
     str += 4;
-  } else if (0xe0 == (0xf0 & str[0])) {
+  } else if (0xe0 == (0xf0 & static_cast<unsigned char>(str[0]))) {
     /* 3 byte utf8 codepoint */
     *out_codepoint =
-        ((0x0f & str[0]) << 12) | ((0x3f & str[1]) << 6) | (0x3f & str[2]);
+        ((0x0f & static_cast<unsigned char>(str[0])) << 12) | ((0x3f & static_cast<unsigned char>(str[1])) << 6) | (0x3f & static_cast<unsigned char>(str[2]));
     str += 3;
-  } else if (0xc0 == (0xe0 & str[0])) {
+  } else if (0xc0 == (0xe0 & static_cast<unsigned char>(str[0]))) {
     /* 2 byte utf8 codepoint */
-    *out_codepoint = ((0x1f & str[0]) << 6) | (0x3f & str[1]);
+    *out_codepoint = ((0x1f & static_cast<unsigned char>(str[0])) << 6) | (0x3f & static_cast<unsigned char>(str[1]));
     str += 2;
   } else {
     /* 1 byte utf8 codepoint otherwise */
-    *out_codepoint = str[0];
+    *out_codepoint = static_cast<unsigned char>(str[0]);
     str += 1;
   }
 

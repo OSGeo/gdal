@@ -45,7 +45,8 @@ def gpwv3_wms():
     if not wms_srv1_ok:
         pytest.skip(f"Could not read from {srv}")
 
-    wms_ds = gdal.Open(wms_xml)
+    with gdaltest.skip_on_network_error():
+        wms_ds = gdal.Open(wms_xml)
 
     if wms_ds is None:
         pytest.fail("open failed.")
@@ -57,6 +58,7 @@ def gpwv3_wms():
 # Check various things about the configuration.
 
 
+@pytest.mark.network
 def test_wms_3(gpwv3_wms):
 
     assert (
@@ -87,6 +89,7 @@ def test_wms_3(gpwv3_wms):
 # Check checksum for a small region.
 
 
+@pytest.mark.network
 def test_wms_4(gpwv3_wms):
 
     with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"), gdaltest.error_handler():
@@ -180,6 +183,7 @@ def metacarta_tms():
     return gdal.Open(tms)
 
 
+@pytest.mark.network
 def test_wms_7(metacarta_tms):
 
     ds = metacarta_tms
@@ -206,6 +210,7 @@ def test_wms_7(metacarta_tms):
 # Test TMS with cache
 
 
+@pytest.mark.network
 def test_wms_8(tmp_path):
 
     # server_url = 'http://tilecache.osgeo.org/wms-c/Basic.py'
@@ -427,6 +432,7 @@ def test_wms_8(tmp_path):
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
+
 # Permanently down
 def wms_9():
 
@@ -511,6 +517,7 @@ def wms_11():
 # Test getting subdatasets from a TMS server
 
 
+@pytest.mark.network
 @pytest.mark.usefixtures("metacarta_tms")
 def test_wms_12():
 
@@ -552,22 +559,18 @@ def test_wms_12():
 # Test reading WMS through VRT (test effect of r21866)
 
 
+@pytest.mark.network
 @pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-@gdaltest.disable_exceptions()
+@gdaltest.skip_on_network_error()
 def test_wms_13():
 
     with gdal.config_option("GDAL_HTTP_TIMEOUT", "5"):
 
         ds = gdal.Open("data/wms/DNEC_250K.vrt")
-        if ds.ReadRaster(0, 0, 1024, 682) is None:
-            srv = "http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities"
-            if gdaltest.gdalurlopen(srv) is None:
-                pytest.skip(f"Could not read from {srv}")
-            pytest.fail()
-        ds = None
+        assert ds.ReadRaster(0, 0, 1024, 682) is not None
 
 
 ###############################################################################
@@ -576,15 +579,12 @@ def test_wms_13():
 
 def test_wms_14():
 
-    ds = gdal.Open(
-        """<GDAL_WMS>
+    ds = gdal.Open("""<GDAL_WMS>
   <Service name="VirtualEarth">
     <ServerUrl>http://a${server_num}.ortho.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=90</ServerUrl>
   </Service>
-</GDAL_WMS>"""
-    )
-    if ds is None:
-        return "fail"
+</GDAL_WMS>""")
+    assert ds is not None
 
     assert (
         ds.RasterXSize == 536870912
@@ -619,7 +619,7 @@ def test_wms_14():
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 20, "bad overview count"
 
-    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    block_xsize, block_ysize = ds.GetRasterBand(1).GetBlockSize()
     if block_xsize != 256 or block_ysize != 256:
         print("(%d, %d)" % (block_xsize, block_ysize))
         pytest.fail("bad block size")
@@ -629,15 +629,12 @@ def test_wms_14():
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
 
 
+@pytest.mark.network
+@gdaltest.skip_on_network_error()
 def test_wms_15():
 
     srv = "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer?f=json&pretty=true"
-    try:
-        src_ds = gdal.Open(srv)
-    except Exception:
-        if gdaltest.gdalurlopen(srv) is None:
-            pytest.skip(f"{srv} not available")
-        pytest.fail()
+    src_ds = gdal.Open(srv)
 
     ds = gdal.GetDriverByName("WMS").CreateCopy("/vsimem/wms.xml", src_ds)
     src_ds = None
@@ -668,18 +665,15 @@ def test_wms_15():
 ###############################################################################
 # Test getting subdatasets from WMS-C Capabilities
 
+
 # server often returns a 504 after ages; this test can take minutes
-@gdaltest.disable_exceptions()
+@pytest.mark.network
 @pytest.mark.slow()
+@gdaltest.skip_on_network_error()
 def test_wms_16():
 
     name = "WMS:http://demo.opengeo.org/geoserver/gwc/service/wms?tiled=TRUE"
     ds = gdal.Open(name)
-    if ds is None:
-        srv = "http://demo.opengeo.org/geoserver/gwc/service/wms?"
-        if gdaltest.gdalurlopen(srv) is None:
-            pytest.skip(f"Cannot read from {srv}")
-        pytest.fail("open of %s failed." % name)
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
     assert subdatasets, "did not get expected subdataset count"
@@ -760,6 +754,7 @@ def test_wms_16():
 ###############################################################################
 # Test a TiledWMS dataset with a color table (#4613)
 
+
 # Permanently down
 def wms_17():
 
@@ -781,10 +776,10 @@ def wms_17():
 # Test an ArcGIS Server
 
 
+@pytest.mark.network
+@gdaltest.skip_on_network_error()
 def test_wms_18():
 
-    # We don't need to check if the remote service is online as we
-    # don't need a connection for this test.
     srv = "http://sampleserver6.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer"
 
     fn = f'<GDAL_WMS><Service name="AGS"><ServerUrl>{srv}</ServerUrl><BBoxOrder>xyXY</BBoxOrder><SRS>EPSG:3857</SRS></Service><DataWindow><UpperLeftX>-20037508.34</UpperLeftX><UpperLeftY>20037508.34</UpperLeftY><LowerRightX>20037508.34</LowerRightX><LowerRightY>-20037508.34</LowerRightY><SizeX>512</SizeX><SizeY>512</SizeY></DataWindow></GDAL_WMS>'
@@ -827,6 +822,8 @@ def test_wms_18():
 # Test a IIP server
 
 
+@pytest.mark.network
+@gdaltest.skip_on_network_error()
 def test_wms_19():
 
     if (
@@ -862,7 +859,9 @@ def test_wms_19():
 # Test reading data via MRF/LERC
 
 
+@pytest.mark.network
 @pytest.mark.require_creation_option("MRF", "LERC")
+@gdaltest.skip_on_network_error()
 def test_wms_data_via_mrf():
 
     srv = "http://astro.arcgis.com"
@@ -904,7 +903,8 @@ def test_twms_wmsmetadriver():
 
 
 # This test requires the GIBS server to be available
-@gdaltest.disable_exceptions()
+@pytest.mark.network
+@gdaltest.skip_on_network_error()
 def test_twms_GIBS():
 
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
@@ -913,23 +913,29 @@ def test_twms_GIBS():
         subdatasets = ds.GetMetadata("SUBDATASETS")
 
     # Connects to the server
-    ds = gdal.Open(subdatasets["SUBDATASET_1_NAME"])
-    if ds is None and gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
-        pytest.xfail(
-            "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
-        )
+    try:
+        ds = gdal.Open(subdatasets["SUBDATASET_1_NAME"])
+    except Exception:
+        if gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
+            pytest.xfail(
+                "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
+            )
+        raise
     ds = None
 
     # Connects to the server
     options = ["Change=time:2021-02-10"]
-    ds = gdal.OpenEx(subdatasets["SUBDATASET_1_NAME"], open_options=options)
-    if ds is None and gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
-        pytest.xfail(
-            "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
-        )
-    ds = None
+    try:
+        ds = gdal.Open(subdatasets["SUBDATASET_1_NAME"], open_options=options)
+    except Exception:
+        if gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
+            pytest.xfail(
+                "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
+            )
+        raise
 
 
+@gdaltest.skip_on_network_error()
 def test_twms_inline_configuration():
 
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
@@ -952,7 +958,7 @@ def test_twms_inline_configuration():
         "TiledGroupName={}".format(tiled_group_name),
         "Change=time:{}".format(date),
     ]
-    ds = gdal.OpenEx("/vsimem/ttms.xml", open_options=options)
+    ds = gdal.Open("/vsimem/ttms.xml", open_options=options)
     assert ds is not None, "Open twms with open options failed"
     metadata = ds.GetMetadata("")
     assert metadata["Change"] == "${time}=2021-02-10", "Change parameter not captured"
@@ -1186,12 +1192,14 @@ def test_wms_force_opening_url(tmp_vsimem, webserver_port):
         open("data/wms/demo_mapserver_org.xml", "rb").read(),
     )
     with webserver.install_http_handler(handler):
-        gdal.OpenEx(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
+        gdal.Open(f"http://localhost:{webserver_port}", allowed_drivers=["WMS"])
 
 
+@pytest.mark.network
 @pytest.mark.require_curl
 @pytest.mark.require_driver("JPEG")
 @gdaltest.enable_exceptions()
+@gdaltest.skip_on_network_error()
 def test_wms_iiif_online(tmp_vsimem):
 
     url = "https://asge.jarvis.memooria.org/images/iiif/db/6431901e-7474-4c51-aa57-41dfddf13604"
@@ -1297,11 +1305,11 @@ def test_wms_iiif_fake_nominal(tmp_vsimem, webserver_port):
             assert ds.RasterYSize == 5238
             assert ds.GetRasterBand(1).GetOverviewCount() == 6
 
-            assert ds.ReadRaster(1024, 2048, 256, 256) == b"\x7F" * (256 * 256 * 3)
+            assert ds.ReadRaster(1024, 2048, 256, 256) == b"\x7f" * (256 * 256 * 3)
 
             assert ds.ReadRaster(
                 1024, 2048, 256, 256, buf_xsize=128, buf_ysize=128
-            ) == b"\x3F" * (128 * 128 * 3)
+            ) == b"\x3f" * (128 * 128 * 3)
 
 
 @pytest.mark.require_curl
@@ -1355,3 +1363,23 @@ def test_wms_iiif_fake_errors(tmp_vsimem, webserver_port):
         ):
             with webserver.install_http_handler(handler):
                 gdal.Open(f"IIIF:http://localhost:{webserver_port}/my_image")
+
+
+@gdaltest.enable_exceptions()
+def test_wms_parse_layer_with_EX_GeographicBoundingBox():
+
+    ds = gdal.Open("data/wms/EX_GeographicBoundingBox_caps.xml")
+    subds = ds.GetSubDatasets()
+    name = subds[0][0]
+    prefix = "WMS:https://datacube.services.geo.ca/ows/landcover?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=top-layer&CRS=EPSG:3978&BBOX="
+    assert name.startswith(prefix)
+    bbox = [float(v) for v in name[len(prefix) :].split(",")]
+    assert bbox == pytest.approx(
+        [
+            -6105697.1922410242,
+            -1692050.8326816293,
+            6174560.6395176314,
+            4482700.1565916659,
+        ],
+        abs=10,
+    )

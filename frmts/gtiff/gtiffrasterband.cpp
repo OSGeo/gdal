@@ -174,7 +174,7 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
             {
                 if (v[nBand - nBaseSamples - 1] == EXTRASAMPLE_ASSOCALPHA)
                     m_oGTiffMDMD.SetMetadataItem("ALPHA", "PREMULTIPLIED",
-                                                 "IMAGE_STRUCTURE");
+                                                 GDAL_MDD_IMAGE_STRUCTURE);
                 m_eBandInterp = GCI_AlphaBand;
             }
             else
@@ -291,7 +291,26 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const int nYBlocks = nBlockY2 - nBlockY1 + 1;
         if (nXBlocks > 1 || nYBlocks > 1)
         {
-            bCanUseMultiThreadedRead = true;
+            if (psExtraArg->bFloatingPointWindowValidity)
+            {
+                const char *pszNumThreads =
+                    CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+                if (pszNumThreads != nullptr)
+                {
+                    if (!m_bWarnedAboutMultiThreadedReadDisabled)
+                    {
+                        m_bWarnedAboutMultiThreadedReadDisabled = true;
+                        ReportError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Multi-threaded reading is disabled because a "
+                            "floating point window is requested.");
+                    }
+                }
+            }
+            else
+            {
+                bCanUseMultiThreadedRead = true;
+            }
         }
     }
 

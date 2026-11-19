@@ -1,5 +1,7 @@
 .. _gdal_vector_sort:
 
+.. program:: gdal_vector_sort
+
 ================================================================================
 ``gdal vector sort``
 ================================================================================
@@ -46,6 +48,11 @@ Program-Specific Options
 
    Write the input features to a temporary file from which they can be read in sorted order. Avoids the need to load the entire
    input layer into memory.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

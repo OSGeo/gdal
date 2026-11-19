@@ -61,7 +61,7 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce = true) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -233,7 +233,7 @@ OGRFeature *OGRESRIFeatureServiceLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
+bool OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
@@ -596,22 +596,6 @@ static GDALDataset *OGRGeoJSONDriverCreate(const char *pszName,
 }
 
 /************************************************************************/
-/*                               Delete()                               */
-/************************************************************************/
-
-static CPLErr OGRGeoJSONDriverDelete(const char *pszFilename)
-{
-    if (VSIUnlink(pszFilename) == 0)
-    {
-        return CE_None;
-    }
-
-    CPLDebug("GeoJSON", "Failed to delete \'%s\'", pszFilename);
-
-    return CE_Failure;
-}
-
-/************************************************************************/
 /*                    OGRGeoJSONDriverStoreContent()                    */
 /************************************************************************/
 
@@ -740,7 +724,8 @@ void RegisterOGRGeoJSON()
         "  <Option name='NATIVE_DATA' type='string' "
         "description='FeatureCollection level elements.'/>"
         "  <Option name='NATIVE_MEDIA_TYPE' type='string' description='Format "
-        "of NATIVE_DATA. Must be \"application/vnd.geo+json\", otherwise "
+        "of NATIVE_DATA. Must be \"application/geo+json\" or "
+        "\"application/vnd.geo+json\", otherwise "
         "NATIVE_DATA will be ignored.'/>"
         "  <Option name='RFC7946' type='boolean' description='Whether to use "
         "RFC 7946 standard. Otherwise GeoJSON 2008 initial version will be "
@@ -795,7 +780,6 @@ void RegisterOGRGeoJSON()
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;
     poDriver->pfnCreate = OGRGeoJSONDriverCreate;
-    poDriver->pfnDelete = OGRGeoJSONDriverDelete;
     poDriver->pfnUnloadDriver = OGRGeoJSONDriverUnload;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);

@@ -6,6 +6,7 @@ add_library(
   gif_err.c
   gif_hash.c
   gif_hash.h
+  openbsd-reallocarray.c
   gif_lib.h
   gif_lib_private.h)
 set_property(TARGET giflib PROPERTY POSITION_INDEPENDENT_CODE ${GDAL_OBJECT_LIBRARIES_POSITION_INDEPENDENT_CODE})

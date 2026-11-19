@@ -207,7 +207,7 @@ def test_vrtfilt_invalid_kernel_size():
     md = {}
     md["source_0"] = filterSourceXML
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid value for kernel size"):
         vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
 
     filterSourceXML = """ <KernelFilteredSource>
@@ -224,7 +224,7 @@ def test_vrtfilt_invalid_kernel_size():
     md = {}
     md["source_0"] = filterSourceXML
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid value for kernel size"):
         vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
 
 

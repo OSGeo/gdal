@@ -118,7 +118,7 @@ const char *OGRS57DataSource::GetOption(const char *pszOption)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRS57DataSource::TestCapability(const char *pszCap) const
+bool OGRS57DataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCZGeometries))
@@ -290,8 +290,8 @@ int OGRS57DataSource::Open(const char *pszFilename)
 
         for (int iModule = 0; iModule < nModules; iModule++)
         {
-            bSuccess &= CPL_TO_BOOL(
-                papoModules[iModule]->CollectClassList(anClassCount));
+            bSuccess = bSuccess &&
+                       papoModules[iModule]->CollectClassList(anClassCount);
         }
 
         bool bGeneric = false;

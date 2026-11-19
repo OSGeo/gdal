@@ -15,7 +15,7 @@ import math
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_alg():
@@ -29,7 +29,7 @@ def test_gdalalg_raster_create_missing_size():
     alg["output-format"] = "MEM"
     with pytest.raises(
         Exception,
-        match="create: Argument 'size' should be specified, or 'like' dataset should be specified",
+        match="create: Argument 'size' or 'resolution' or 'like' dataset should be specified",
     ):
         alg.Run()
 
@@ -205,12 +205,12 @@ def test_gdalalg_raster_create_full():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
     assert (
-        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFD"
+        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xfd"
     )
     assert (
-        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFE"
+        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xfe"
     )
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == (2.0, 0.5, 0.0, 50.0, 0.0, -0.25)
     assert ds.GetMetadataItem("key") == "value"
 
@@ -234,7 +234,7 @@ def test_gdalalg_raster_create_copy():
     assert (
         ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\x00"
     )
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == (2.0, 0.5, 0.0, 50.0, 0.0, -0.25)
     assert ds.GetMetadataItem("key") is None
     assert ds.GetRasterBand(1).GetMetadataItem("foo") is None
@@ -250,7 +250,7 @@ def test_gdalalg_raster_create_copy_metadata_missing_input():
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="Argument 'copy-metadata' can only be set when an input dataset is set",
+        match="Argument 'copy-metadata' depends on argument 'input' that has not been specified.",
     ):
         alg.Run()
 
@@ -277,7 +277,7 @@ def test_gdalalg_raster_create_copy_overviews_missing_input():
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="Argument 'copy-overviews' can only be set when an input dataset is set",
+        match="Argument 'copy-overviews' depends on argument 'input' that has not been specified.",
     ):
         alg.Run()
 
@@ -409,17 +409,15 @@ def test_gdalalg_raster_create_copy_override_crs():
     alg["crs"] = "EPSG:32631"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
 
 
 def test_gdalalg_raster_create_copy_override_bbox():
 
-    alg = get_alg()
-    alg["output"] = ""
-    alg["output-format"] = "MEM"
-    alg["input"] = get_ref_ds()
-    alg["bbox"] = [1, 47, 2, 48]
-    assert alg.Run()
+    # Also test using 'like' alias of 'input' argument
+    alg = gdal.alg.raster.create(
+        output="", output_format="MEM", like=get_ref_ds(), bbox=[1, 47, 2, 48]
+    )
     ds = alg["output"].GetDataset()
     assert ds.GetGeoTransform() == (1.0, 0.5, 0.0, 48.0, 0.0, -0.25)
 
@@ -547,3 +545,273 @@ def test_gdalalg_raster_create_pipeline_middle_step():
         assert ds.RasterXSize == 20
         assert ds.RasterYSize == 20
         assert ds.GetRasterBand(1).ComputeRasterMinMax() == (7, 7)
+
+
+def test_gdalalg_raster_create_like_not_positional(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster create ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
+    )
+    assert (
+        "Positional values starting at '/vsimem/test_gdalalg_raster_create_like_not_positional/out.tif' are not expected"
+        in err
+    )
+
+
+@pytest.mark.parametrize(
+    "blockxsize,blockysize,output_format,expected_blockxsize,expected_blockysize,creation_option",
+    [
+        (16, 32, "GTiff", 16, 32, []),
+        (128, 128, "COG", 128, 128, []),
+        (512, 512, "GPKG", 512, 512, []),
+        (16, 32, "GTiff", 1000, 8, ["TILED=NO"]),
+        (128, 128, "COG", 256, 256, ["BLOCKSIZE=256"]),
+        (512, 512, "GPKG", 256, 256, ["BLOCKSIZE=256"]),
+        (16, 32, "GPKG", 256, 256, []),
+    ],
+)
+def test_gdalalg_raster_create_replicate_tiling(
+    tmp_vsimem,
+    blockxsize,
+    blockysize,
+    output_format,
+    expected_blockxsize,
+    expected_blockysize,
+    creation_option,
+):
+
+    if gdal.GetDriverByName(output_format) is None:
+        pytest.skip(f"{output_format} not available")
+
+    with gdal.GetDriverByName("GTIFF").Create(
+        tmp_vsimem / "src.tif",
+        1000,
+        1000,
+        1,
+        options=["TILED=YES", f"BLOCKXSIZE={blockxsize}", f"BLOCKYSIZE={blockysize}"],
+    ) as ds:
+        ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+        ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+
+    out_filename = str(tmp_vsimem / "out") + (
+        ".gpkg" if output_format == "GPKG" else ".tif"
+    )
+    gdal.alg.raster.create(
+        input=tmp_vsimem / "src.tif",
+        output=out_filename,
+        output_format=output_format,
+        creation_option=creation_option,
+    )
+
+    ds = gdal.Open(out_filename)
+    assert ds.GetRasterBand(1).GetBlockSize() == [
+        expected_blockxsize,
+        expected_blockysize,
+    ]
+
+
+@pytest.mark.parametrize(
+    "size_spec,expected_size",
+    [
+        ((10, 0), (10, 15)),
+        ((0, 15), (10, 15)),
+    ],
+)
+def test_gdalalg_raster_create_size_guess(tmp_vsimem, size_spec, expected_size):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["size"] = [str(size_spec[0]), str(size_spec[1])]
+    alg["bbox"] = [-1, -1, 1, 2]
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    assert alg.Run()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size
+
+
+@pytest.mark.parametrize(
+    "bbox_spec,size_spec,expected_error",
+    [
+        ([0, 0, 1, 2], [(1 << 31) - 1, 0], "Too large computed height"),
+        ([0, 0, 2, 1], [0, (1 << 31) - 1], "Too large computed width"),
+        (
+            [0, 0, 2, 1],
+            ["100%", "50%"],
+            "create: Cannot use percentage size without input dataset",
+        ),
+    ],
+)
+def test_gdalalg_raster_create_size_guess_error(
+    tmp_vsimem, bbox_spec, size_spec, expected_error
+):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["size"] = [str(size_spec[0]), str(size_spec[1])]
+    alg["bbox"] = bbox_spec
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    with pytest.raises(Exception, match=expected_error):
+        alg.Run()
+
+
+@pytest.mark.parametrize(
+    "size_spec,expected_size",
+    [
+        (["100%", "100%"], (2, 4)),
+        (["100%", "50%"], (2, 2)),
+        (["50%", "100%"], (1, 4)),
+        (["50%", "50%"], (1, 2)),
+        (["200%", "200%"], (4, 8)),
+        (["200%", "0"], (4, 8)),
+        (["0", "200%"], (4, 8)),
+    ],
+)
+def test_gdalalg_raster_create_like_percentage_size(
+    tmp_vsimem, size_spec, expected_size
+):
+
+    # ref dataset is 2x4
+    ref_ds = get_ref_ds()
+    assert (ref_ds.RasterXSize, ref_ds.RasterYSize) == (2, 4)
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["like"] = ref_ds
+    alg["overwrite"] = True
+    alg["size"] = [str(size_spec[0]), str(size_spec[1])]
+    alg["burn"] = [1, 2]
+    # import IPython; IPython.embed()
+    assert alg.Run()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size
+
+
+# compute MAX_INT = (1 << 31) - 1
+
+
+@pytest.mark.parametrize(
+    "size_spec",
+    [
+        ([str((1 << 31) * 100.0 / 2.0) + "%", "0"]),
+        (["0", str((1 << 31) * 100.0 / 4.0) + "%"]),
+    ],
+)
+def test_gdalalg_raster_create_like_percentage_error(tmp_vsimem, size_spec):
+
+    # ref dataset is 2x4
+    ref_ds = get_ref_ds()
+    assert (ref_ds.RasterXSize, ref_ds.RasterYSize) == (2, 4)
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["like"] = ref_ds
+    alg["overwrite"] = True
+    alg["size"] = [str(size_spec[0]), str(size_spec[1])]
+    alg["burn"] = [1, 2]
+    with pytest.raises(Exception, match="create: Computed size is too large"):
+        alg.Run()
+
+
+@pytest.mark.parametrize(
+    "res_spec,expected_size",
+    [
+        ([1, 1], (2, 3)),
+        ([0.5, 0.5], (4, 6)),
+        ([2, 2], (1, 2)),
+    ],
+)
+def test_gdalalg_raster_create_resolution(tmp_vsimem, res_spec, expected_size):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    # bbox is 2x3
+    alg["bbox"] = [-1, -1, 1, 2]
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    alg["resolution"] = res_spec
+    assert alg.Run()
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size
+
+
+@pytest.mark.parametrize(
+    "res_spec,expected_error",
+    [
+        ([0.00000000001, 0.00000000001], "create: Computed size is too large"),
+        ([0.00000000001, 1], "create: Computed size is too large"),
+        ([1, 0.00000000001], "create: Computed size is too large"),
+        (
+            ["50%", "50%"],
+            "create: Cannot use percentage resolution without input dataset",
+        ),
+        (
+            ["50%", "50%"],
+            "create: Cannot use percentage resolution without input dataset",
+        ),
+        ([-1, 1], "create: Invalid resolution value: -1"),
+        ([1, -1], "create: Invalid resolution value: -1"),
+    ],
+)
+def test_gdalalg_raster_create_resolution_error(tmp_vsimem, res_spec, expected_error):
+
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    # bbox is 2x3
+    alg["bbox"] = [-1, -1, 1, 2]
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    with pytest.raises(Exception, match=expected_error):
+        alg["resolution"] = res_spec
+        alg.Run()
+
+
+def test_gdalalg_raster_create_resolution_error_no_bbox(tmp_vsimem):
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    # bbox is 2x3
+    alg["burn"] = [1]
+    alg["crs"] = "EPSG:4326"
+    # resolution too small
+    alg["resolution"] = [0.00000000001, 0.00000000001]
+    with pytest.raises(
+        Exception,
+        match="create: Cannot use resolution without 'bbox' or 'like' dataset",
+    ):
+        alg.Run()
+
+
+@pytest.mark.parametrize(
+    "res_spec,expected_size",
+    [
+        (["100%", "100%"], (2, 4)),
+        (["100%", "50%"], (2, 8)),
+        (["50%", "100%"], (4, 4)),
+        (["50%", "50%"], (4, 8)),
+        (["200%", "200%"], (1, 2)),
+        (["200%", "0"], (1, 2)),
+        (["0", "200%"], (1, 2)),
+    ],
+)
+def test_gdalalg_raster_create_like_resolution_percentage(
+    tmp_vsimem, res_spec, expected_size
+):
+
+    # ref dataset is 2x4
+    ref_ds = get_ref_ds()
+    assert (ref_ds.RasterXSize, ref_ds.RasterYSize) == (2, 4)
+    alg = get_alg()
+    alg["output"] = tmp_vsimem / "out.tif"
+    alg["like"] = ref_ds
+    alg["overwrite"] = True
+    alg["resolution"] = [str(res_spec[0]), str(res_spec[1])]
+    alg["burn"] = [1, 2]
+    assert alg.Run()
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert (ds.RasterXSize, ds.RasterYSize) == expected_size

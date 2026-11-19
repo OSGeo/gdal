@@ -14,6 +14,7 @@
 #include "gdal_frmts.h"
 #include "common.h"
 #include "include_basisu_sdk.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <mutex>
@@ -137,8 +138,9 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         params.m_out_filename = pszFilename;
     }
 
-    params.m_uastc = EQUAL(
-        CSLFetchNameValueDef(papszOptions, "COMPRESSION", "ETC1S"), "UASTC");
+    params.m_uastc =
+        EQUAL(CSLFetchNameValueDef(papszOptions, GDALMD_COMPRESSION, "ETC1S"),
+              "UASTC");
     if (params.m_uastc)
     {
         if (bIsKTX2)
@@ -264,11 +266,8 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         params.m_mip_srgb = params.m_perceptual;
     }
 
-    const int nNumThreads = std::max(
-        1, atoi(CSLFetchNameValueDef(
-               papszOptions, "NUM_THREADS",
-               CPLGetConfigOption("GDAL_NUM_THREADS",
-                                  CPLSPrintf("%d", CPLGetNumCPUs())))));
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                              /* bDefaultAllCPUs = */ true);
     CPLDebug("KTX2", "Using %d threads", nNumThreads);
     if (params.m_uastc)
     {

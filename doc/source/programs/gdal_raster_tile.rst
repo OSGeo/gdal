@@ -1,5 +1,7 @@
 .. _gdal_raster_tile:
 
+.. program:: gdal_raster_tile
+
 ================================================================================
 ``gdal raster tile``
 ================================================================================
@@ -65,9 +67,9 @@ Program-Specific Options
     - ``tms``: from bottom, as in OSGeo Tile Map Service (TMS) Specification.
 
 
-.. option:: --dst-nodata <DSTNODATA>
+.. option:: --output-nodata <NODATA>
 
-    Destination nodata value.
+    Output nodata value.
 
 .. option:: -i, --input <INPUT>
 
@@ -155,7 +157,7 @@ Program-Specific Options
      located.
 
    - ``fork`` is a variant of ``spawn``, using the system call ``fork``, without
-     executing the the :program:`gdal` binary. Such method is not available on
+     executing the :program:`gdal` binary. Such method is not available on
      Windows. On Unix systems where it is available, this method is not recommended
      to be used on multithreaded processes, especially the ones where other threads
      are doing GDAL operation, since it can potentially cause deadlocks.
@@ -318,6 +320,10 @@ Standard Options
 
         Defaults to PNG.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -337,7 +343,7 @@ Examples
       gdal raster tile --tiling-scheme raster input.tif output_folder
 
 .. example::
-   :title: Creating a tiled dataset, compatible of the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
+   :title: Creating a tiled dataset, compatible with the Spatio-Temporal Asset Catalog Tiled Assets specification, using Cloud-Optimized GeoTIFF metatiles of dimension 4096x4096.
 
    .. code-block:: bash
 

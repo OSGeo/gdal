@@ -171,7 +171,7 @@ Corresponding additions at the C API level:
 
 .. code-block:: c
 
-    /** Value for a unknown coordinate precision. */
+    /** Value for an unknown coordinate precision. */
     #define OGR_GEOM_COORD_PRECISION_UNKNOWN 0
 
     /** Opaque type for OGRGeomCoordinatePrecision */
@@ -457,7 +457,7 @@ It will *not* be able to store it in its metadata.
 JSONFG
 ++++++
 
-Similar to GeoJSON. One subtelty is that this driver may write both the "place"
+Similar to GeoJSON. One subtlety is that this driver may write both the "place"
 geometry (generally in a non-WGS84 CRS) and the GeoJSON RFC7946 WGS84 "geometry".
 
 The OGRGeomFieldDefn::GetCoordinatePrecision() will qualify the "place" geometry.

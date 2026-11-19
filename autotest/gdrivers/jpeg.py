@@ -96,12 +96,14 @@ def test_jpeg_2():
 # Create simple copy and check (greyscale) using progressive option.
 
 
-def test_jpeg_3():
+def test_jpeg_3(tmp_path):
 
     ds = gdal.Open("data/byte.tif")
 
     options = ["PROGRESSIVE=YES", "QUALITY=50", "WORLDFILE=YES"]
-    ds = gdal.GetDriverByName("JPEG").CreateCopy("tmp/byte.jpg", ds, options=options)
+    ds = gdal.GetDriverByName("JPEG").CreateCopy(
+        str(tmp_path / "byte.jpg"), ds, options=options
+    )
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
@@ -123,18 +125,18 @@ def test_jpeg_3():
 
     ds = None
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
     ds = None
 
-    os.unlink("tmp/byte.jpg.aux.xml")
+    os.unlink(str(tmp_path / "byte.jpg.aux.xml"))
 
     try:
-        os.stat("tmp/byte.wld")
+        os.stat(str(tmp_path / "byte.wld"))
     except OSError:
         pytest.fail("should have .wld file at that point")
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     expected_gt = [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     gt = ds.GetGeoTransform()
     for i in range(6):
@@ -143,13 +145,13 @@ def test_jpeg_3():
         ), "did not get expected geotransform from .wld"
     ds = None
 
-    ds = gdal.Open("tmp/byte.jpg")
+    ds = gdal.Open(str(tmp_path / "byte.jpg"))
     ds.GetFileList()
     ds = None
 
-    gdal.GetDriverByName("JPEG").Delete("tmp/byte.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "byte.jpg"))
 
-    assert not os.path.exists("tmp/byte.wld")
+    assert not os.path.exists(str(tmp_path / "byte.wld"))
 
 
 ###############################################################################
@@ -174,11 +176,11 @@ def test_jpeg_4():
 # Verify CreateCopy() of masked jpeg.
 
 
-def test_jpeg_5():
+def test_jpeg_5(tmp_path):
 
     ds = gdal.Open("data/jpeg/masked.jpg")
 
-    ds2 = gdal.GetDriverByName("JPEG").CreateCopy("tmp/masked.jpg", ds)
+    ds2 = gdal.GetDriverByName("JPEG").CreateCopy(str(tmp_path / "masked.jpg"), ds)
 
     refband = ds2.GetRasterBand(1)
 
@@ -189,7 +191,7 @@ def test_jpeg_5():
 
     refband = None
     ds2 = None
-    gdal.GetDriverByName("JPEG").Delete("tmp/masked.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "masked.jpg"))
 
 
 ###############################################################################
@@ -360,28 +362,19 @@ def test_jpeg_10(jpeg_version):
     if md[gdal.DMD_CREATIONDATATYPES].find("UInt16") == -1:
         pytest.skip("12bit jpeg not available")
 
-    try:
-        os.remove("data/jpeg/12bit_rose_extract.jpg.aux.xml")
-    except OSError:
-        pass
-
-    ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 3613 and stats[2] <= 3614
     ds = None
-
-    try:
-        os.remove("data/jpeg/12bit_rose_extract.jpg.aux.xml")
-    except OSError:
-        pass
 
 
 ###############################################################################
 # Check creating a 12-bit JPEG
 
 
-def test_jpeg_11(jpeg_version):
+def test_jpeg_11(tmp_path, jpeg_version):
 
     if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
@@ -393,16 +386,16 @@ def test_jpeg_11(jpeg_version):
         pytest.skip("12bit jpeg not available")
 
     ds = gdal.Open("data/jpeg/12bit_rose_extract.jpg")
-    out_ds = gdal.GetDriverByName("JPEG").CreateCopy("tmp/jpeg11.jpg", ds)
+    out_ds = gdal.GetDriverByName("JPEG").CreateCopy(str(tmp_path / "jpeg11.jpg"), ds)
     del out_ds
 
-    ds = gdal.Open("tmp/jpeg11.jpg")
+    ds = gdal.Open(str(tmp_path / "jpeg11.jpg"))
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     assert stats[2] >= 3613 and stats[2] <= 3614
     ds = None
 
-    gdal.GetDriverByName("JPEG").Delete("tmp/jpeg11.jpg")
+    gdal.GetDriverByName("JPEG").Delete(str(tmp_path / "jpeg11.jpg"))
 
 
 ###############################################################################
@@ -1513,6 +1506,63 @@ def test_jpeg_dji_thermal_raw():
 
 
 ###############################################################################
+# Open JPEG image with FLIR embedded jpeg image
+
+
+def test_jpeg_flir_embedded_image_metadata(tmp_vsimem):
+
+    # data/jpeg/flir/flir_embedded.jpg has been generated from autotest/gdrivers/data/jpeg/flir/FLIR.jpg
+    # by hacking record 2 of type 32 (FLIR_REC_CAMERA_INFO) with data at offset 0xC7E + 1352
+    # and replacing it by type 14 (FLIR_REC_EMBEDDEDIMAGE)
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.jpg", open("data/jpeg/flir/flir_embedded.jpg", "rb").read()
+    )
+
+    with gdal.Open(tmp_vsimem / "test.jpg") as ds:
+        assert sorted(ds.GetMetadataDomainList()) == [
+            "",
+            "DERIVED_SUBDATASETS",
+            "FLIR",
+            "IMAGE_STRUCTURE",
+            "SUBDATASETS",
+        ]
+        metadata = ds.GetMetadata("FLIR")
+        assert "EmbeddedImageHeight" in metadata
+        assert metadata.get("EmbeddedImageHeight") == "1"
+        assert metadata.get("EmbeddedImageWidth") == "2"
+
+        assert ds.RasterCount == 3
+        assert ds.GetRasterBand(1).Checksum() == 761
+        subds = ds.GetSubDatasets()
+        assert len(subds) == 2
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.jpg.aux.xml") is None
+
+    assert "FLIR_EMBEDDED_IMAGE" in subds[0][0]
+    assert "FLIR embedded image" == subds[0][1]
+    ds = gdal.Open(subds[0][0])
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    # this image is different than the "main" image
+    assert ds.GetRasterBand(1).Checksum() == 7
+
+
+def test_jpeg_flir_embedded_image():
+
+    ds = gdal.Open('JPEG:"data/jpeg/flir/flir_embedded.jpg":FLIR_EMBEDDED_IMAGE')
+    assert ds is not None
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 1
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).Checksum() == 7
+
+
+###############################################################################
 # Write a CMYK image
 
 
@@ -1554,7 +1604,7 @@ def test_jpeg_write_4band_not_cmyk():
 @pytest.mark.parametrize("orientation", [i + 1 for i in range(8)])
 def test_jpeg_apply_orientation(orientation):
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "data/jpeg/exif_orientation/F%d.jpg" % orientation,
         open_options=["APPLY_ORIENTATION=YES"],
     )
@@ -1799,7 +1849,7 @@ def test_jpeg_read_pix4d_xmp_crs_vertcs_ellipsoidal():
     # where pix4d_xmp_crs_vertcs_ellipsoidal.xml is the XMP content
     ds = gdal.Open("data/jpeg/pix4d_xmp_crs_vertcs_ellipsoidal.jpg")
     srs = ds.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "6319"
+    assert srs.GetAuthorityCode() == "6319"
 
 
 ###############################################################################

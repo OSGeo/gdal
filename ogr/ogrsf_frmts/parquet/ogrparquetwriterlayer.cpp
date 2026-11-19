@@ -439,7 +439,8 @@ bool OGRParquetWriterLayer::SetOptions(
 
     m_osFIDColumn = CSLFetchNameValueDef(papszOptions, "FID", "");
 
-    const char *pszCompression = CSLFetchNameValue(papszOptions, "COMPRESSION");
+    const char *pszCompression =
+        CSLFetchNameValue(papszOptions, GDALMD_COMPRESSION);
     if (pszCompression == nullptr)
     {
         auto oResult = arrow::util::Codec::GetCompressionType("snappy");
@@ -504,6 +505,31 @@ bool OGRParquetWriterLayer::SetOptions(
         m_oWriterPropertiesBuilder.enable_write_page_index();
 #endif
 
+    const char *pszGeoParquetVersion =
+        CSLFetchNameValueDef(papszOptions, "GEOPARQUET_VERSION", "1.1");
+    if (EQUAL(pszGeoParquetVersion, "1.1") ||
+        EQUAL(pszGeoParquetVersion, "AUTO"))
+        m_nGeoParquetVersion = OGRGeoParquetVersion::VERSION_1_1;
+    else if (EQUAL(pszGeoParquetVersion, "2.0"))
+    {
+#if ARROW_VERSION_MAJOR >= 21
+        m_nGeoParquetVersion = OGRGeoParquetVersion::VERSION_2_0;
+        if (pszWriteCoveringBBox == nullptr)
+            m_bWriteBBoxStruct = false;
+#else
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "GEOPARQUET_VERSION = 2.0 is only supported in a GDAL build "
+                 "against libarrow >= 21");
+        return false;
+#endif
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unrecognized GeoParquet version: %s", pszGeoParquetVersion);
+        return false;
+    }
+
     const char *pszWriteGeo =
         CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", nullptr);
     m_bWriteGeoMetadata = pszWriteGeo == nullptr || CPLTestBool(pszWriteGeo);
@@ -512,8 +538,13 @@ bool OGRParquetWriterLayer::SetOptions(
     {
 #if ARROW_VERSION_MAJOR >= 21
         const char *pszUseParquetGeoTypes =
-            CSLFetchNameValueDef(papszOptions, "USE_PARQUET_GEO_TYPES", "NO");
-        if (EQUAL(pszUseParquetGeoTypes, "ONLY"))
+            CSLFetchNameValueDef(papszOptions, "USE_PARQUET_GEO_TYPES", "AUTO");
+        if (EQUAL(pszUseParquetGeoTypes, "AUTO"))
+        {
+            m_bUseArrowWKBExtension =
+                (m_nGeoParquetVersion == OGRGeoParquetVersion::VERSION_2_0);
+        }
+        else if (EQUAL(pszUseParquetGeoTypes, "ONLY"))
         {
             m_bUseArrowWKBExtension = true;
             if (pszWriteGeo == nullptr)
@@ -524,6 +555,14 @@ bool OGRParquetWriterLayer::SetOptions(
         else
         {
             m_bUseArrowWKBExtension = CPLTestBool(pszUseParquetGeoTypes);
+            if (!m_bUseArrowWKBExtension &&
+                m_nGeoParquetVersion == OGRGeoParquetVersion::VERSION_2_0)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "GEOPARQUET_VERSION = 2.0 is not compatible with "
+                         "USE_PARQUET_GEO_TYPES = NO");
+                return false;
+            }
         }
 #else
         m_oWriterPropertiesBuilder.disable_statistics(
@@ -583,7 +622,10 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
     if (m_poFeatureDefn->GetGeomFieldCount() != 0 && m_bWriteGeoMetadata)
     {
         CPLJSONObject oRoot;
-        oRoot.Add("version", "1.1.0");
+        oRoot.Add("version",
+                  m_nGeoParquetVersion == OGRGeoParquetVersion::VERSION_1_1
+                      ? "1.1.0"
+                      : "2.0.0");
         oRoot.Add("primary_column",
                   m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef());
         CPLJSONObject oColumns;
@@ -603,10 +645,8 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 {
                     OGRSpatialReference oSRSIdentified(IdentifyCRS(poSRS));
 
-                    const char *pszAuthName =
-                        oSRSIdentified.GetAuthorityName(nullptr);
-                    const char *pszAuthCode =
-                        oSRSIdentified.GetAuthorityCode(nullptr);
+                    const char *pszAuthName = oSRSIdentified.GetAuthorityName();
+                    const char *pszAuthCode = oSRSIdentified.GetAuthorityCode();
 
                     bool bOmitCRS = false;
                     if (pszAuthName != nullptr && pszAuthCode != nullptr &&
@@ -673,7 +713,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
                 bool bHasZ = false;
                 for (const auto eGeomType : m_oSetWrittenGeometryTypes[i])
                 {
-                    bHasZ = OGR_GT_HasZ(eGeomType);
+                    bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeomType));
                     if (bHasZ)
                         break;
                 }
@@ -1177,7 +1217,7 @@ OGRParquetWriterLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-inline int OGRParquetWriterLayer::TestCapability(const char *pszCap) const
+inline bool OGRParquetWriterLayer::TestCapability(const char *pszCap) const
 {
 #if PARQUET_VERSION_MAJOR <= 10
     if (EQUAL(pszCap, OLCFastWriteArrowBatch))

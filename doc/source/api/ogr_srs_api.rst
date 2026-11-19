@@ -11,3 +11,4 @@ ogr_srs_api.h: Spatial Reference System C API
 
 .. doxygenfile:: ogr_srs_api.h
    :project: api
+   :sections: briefdescription related detaileddescription define typedef enum func innerclass public-attrib var

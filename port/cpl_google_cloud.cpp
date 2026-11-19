@@ -745,12 +745,48 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const char *pszURI, const char * /*pszFSPrefix*/,
     const char *pszURIForPathSpecificOption, CSLConstList papszOptions)
 {
-    std::string osPathForOption("/vsigs/");
-    osPathForOption +=
-        pszURIForPathSpecificOption ? pszURIForPathSpecificOption : pszURI;
+    std::string osBucketObject;
+    std::string osGeneration;
 
-    // pszURI == bucket/object
-    const std::string osBucketObject(pszURI);
+    // Optional GCS object generation (version) to read. When set, requests for
+    // this path carry a "generation=<n>" query parameter and the path as "path=<>",
+    // so a specific (possibly non-current) object version is read instead of the
+    // live one. See https://cloud.google.com/storage/docs/object-versioning
+    if (pszURI[0] == '?')
+    {
+        const CPLStringList aosTokens(CSLTokenizeString2(pszURI + 1, "&", 0));
+        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
+        {
+            char *pszUnescapedValue =
+                CPLUnescapeString(pszValue, nullptr, CPLES_URL);
+            if (EQUAL(pszKey, "path"))
+                osBucketObject = pszUnescapedValue;
+            else if (EQUAL(pszKey, "generation"))
+                osGeneration = pszUnescapedValue;
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported option '%s' in /vsigs/ query string",
+                         pszKey);
+            }
+            CPLFree(pszUnescapedValue);
+        }
+        if (osBucketObject.empty())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing 'path' key in /vsigs/ query string");
+            return nullptr;
+        }
+    }
+    else
+    {
+        osBucketObject = pszURI;
+    }
+
+    std::string osPathForOption("/vsigs/");
+    osPathForOption += pszURIForPathSpecificOption ? pszURIForPathSpecificOption
+                                                   : osBucketObject;
+
     std::string osEndpoint(VSIGetPathSpecificOption(osPathForOption.c_str(),
                                                     "CPL_GS_ENDPOINT", ""));
     if (osEndpoint.empty())
@@ -773,9 +809,21 @@ VSIGSHandleHelper *VSIGSHandleHelper::BuildFromURI(
     const std::string osUserProject = VSIGetPathSpecificOption(
         osPathForOption.c_str(), "GS_USER_PROJECT", "");
 
-    return new VSIGSHandleHelper(osEndpoint, osBucketObject, osSecretAccessKey,
-                                 osAccessKeyId, bUseAuthenticationHeader,
-                                 oManager, osUserProject);
+    if (!osGeneration.empty() &&
+        osGeneration.find_first_not_of("0123456789") != std::string::npos)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid generation value '%s': must be a positive integer",
+                 osGeneration.c_str());
+        return nullptr;
+    }
+
+    auto poHandleHelper = new VSIGSHandleHelper(
+        osEndpoint, osBucketObject, osSecretAccessKey, osAccessKeyId,
+        bUseAuthenticationHeader, oManager, osUserProject);
+    if (!osGeneration.empty())
+        poHandleHelper->AddQueryParameter("generation", osGeneration);
+    return poHandleHelper;
 }
 
 /************************************************************************/
@@ -839,9 +887,119 @@ VSIGSHandleHelper::GetCurlHeaders(const std::string &osVerb,
         osCanonicalResource += "/";
     else
     {
-        const auto osQueryString(GetQueryString(false));
-        if (osQueryString == "?uploads" || osQueryString == "?acl")
-            osCanonicalResource += osQueryString;
+        // Per the XML API V2 signing process, only subresources participate
+        // in the canonicalized resource; plain query parameters (such as
+        // generation) do not, even when present alongside a subresource.
+        for (const char *pszSubResource : {"acl", "uploads"})
+        {
+            if (m_oMapQueryParameters.find(pszSubResource) !=
+                m_oMapQueryParameters.end())
+            {
+                osCanonicalResource += '?';
+                osCanonicalResource += pszSubResource;
+                break;
+            }
+        }
+    }
+
+    // If accessing a Google Cloud account from a GC VM, check that
+    // Google is still a sponsor, and if not, make some (kind) noise.
+    if ((m_oManager.GetAuthMethod() == GOA2Manager::GCE &&
+         cpl::starts_with(m_osEndpoint, "https://storage.googleapis.com/"))
+#ifdef DEBUG
+        || CPLTestBool(CPLGetConfigOption("GDAL_TEST_NAME_AND_SHAME", "NO"))
+#endif
+    )
+    {
+        static const bool bCheckSponsoring = []()
+        {
+            if (!CPLTestBool(CPLGetConfigOption("GDAL_NAME_AND_SHAME", "YES")))
+                return true;
+
+            const std::string osCacheDir = []()
+            {
+#ifdef _WIN32
+                const char *pszHome =
+                    CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+                const char *pszHome = CPLGetConfigOption("HOME", nullptr);
+#endif
+                if (pszHome != nullptr)
+                {
+                    return CPLFormFilenameSafe(pszHome, ".gdal", nullptr);
+                }
+                else
+                {
+                    const char *pszDir = CPLGetConfigOption("TEMP", "/tmp");
+                    VSIStatBufL sStat;
+                    if (VSIStatL(pszDir, &sStat) == 0)
+                    {
+                        const char *pszUsername =
+                            CPLGetConfigOption("USERNAME", nullptr);
+                        if (pszUsername == nullptr)
+                            pszUsername = CPLGetConfigOption("USER", nullptr);
+
+                        if (pszUsername != nullptr)
+                        {
+                            return CPLFormFilenameSafe(
+                                pszDir, CPLSPrintf(".gdal_%s", pszUsername),
+                                nullptr);
+                        }
+                    }
+                }
+                return std::string();
+            }();
+            if (!osCacheDir.empty())
+            {
+                VSIStatBufL sStat;
+                if (VSIStatL(osCacheDir.c_str(), &sStat) != 0)
+                    VSIMkdir(osCacheDir.c_str(), 0755);
+                const std::string osCloudCheck = CPLFormFilenameSafe(
+                    osCacheDir.c_str(), "cloud_check_gcs.txt", nullptr);
+                // Sidereal day, why not? "Aim for the stars, expect dust"
+                constexpr int ONE_DAY_IN_SECS = 86164;
+                if (VSIStatL(osCloudCheck.c_str(), &sStat) == 0 &&
+                    sStat.st_mtime + ONE_DAY_IN_SECS >= time(nullptr))
+                {
+                    CPLDebugOnly("GDAL", "%s checked", osCloudCheck.c_str());
+                }
+                else
+                {
+                    FILE *f = fopen(osCloudCheck.c_str(), "wb");
+                    if (f)
+                        fclose(f);
+
+                    const auto PingURL = [](const char *pszURL)
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        const char *const apszOptions[] = {
+                            "CUSTOMREQUEST=HEAD", "TIMEOUT=1", nullptr};
+                        auto res = CPLHTTPFetch(pszURL, apszOptions);
+                        const bool bOK = res && !res->pszErrBuf;
+                        CPLHTTPDestroyResult(res);
+                        return bOK;
+                    };
+                    if (!PingURL("https://gdal.org/en/latest/sponsors/"
+                                 "did_google_sponsor.html") &&
+                        // check that gdal.org is responding to avoid false positive
+                        PingURL("https://gdal.org/en/latest/index.html"))
+                    {
+                        const auto CPLE_NonCooperativeSponsor = CPLE_AppDefined;
+                        CPLError(
+                            CE_Warning, CPLE_NonCooperativeSponsor,
+                            "Due to lack of resources, Google Cloud Storage "
+                            "access is undergoing minimal maintenance and may "
+                            "be removed in the future unless Google Cloud "
+                            "re-evaluates its decision to stop sponsoring "
+                            "GDAL. If you are interested in keeping this "
+                            "functionality please get in touch with your "
+                            "Google Cloud representative.");
+                    }
+                }
+            }
+            return true;
+        }();
+        CPL_IGNORE_RET_VAL(bCheckSponsoring);
     }
 
     return GetGSHeaders("/vsigs/" + m_osBucketObjectKey, osVerb, psHeaders,
@@ -905,6 +1063,16 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
     std::string osCanonicalizedResource(
         "/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
 
+    // A generation pin is a plain query parameter, not a signed subresource:
+    // it is not part of the string-to-sign, but must be preserved in the
+    // returned URL so the pinned version is fetched.
+    std::string osGeneration;
+    {
+        const auto oIter = m_oMapQueryParameters.find("generation");
+        if (oIter != m_oMapQueryParameters.end())
+            osGeneration = oIter->second;
+    }
+
     std::string osStringToSign;
     osStringToSign += osVerb + "\n";
     osStringToSign += "\n";  // Content_MD5
@@ -929,6 +1097,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_osAccessKeyId);
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);
@@ -947,6 +1117,8 @@ std::string VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
         CPLFree(pszBase64);
 
         ResetQueryParameters();
+        if (!osGeneration.empty())
+            AddQueryParameter("generation", osGeneration);
         AddQueryParameter("GoogleAccessId", m_oManager.GetClientEmail());
         AddQueryParameter("Expires", osExpires);
         AddQueryParameter("Signature", osSignature);

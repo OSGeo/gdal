@@ -262,7 +262,8 @@ class DIMAPRasterBand final : public GDALPamRasterBand
     CPLErr ComputeRasterMinMax(int bApproxOK, double adfMinMax[2]) override;
     CPLErr ComputeStatistics(int bApproxOK, double *pdfMin, double *pdfMax,
                              double *pdfMean, double *pdfStdDev,
-                             GDALProgressFunc, void *pProgressData) override;
+                             GDALProgressFunc, void *pProgressData,
+                             CSLConstList papszOptions) override;
 
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                         GUIntBig *panHistogram, int bIncludeOutOfRange,
@@ -395,16 +396,18 @@ CPLErr DIMAPRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                                           double *pdfMax, double *pdfMean,
                                           double *pdfStdDev,
                                           GDALProgressFunc pfnProgress,
-                                          void *pProgressData)
+                                          void *pProgressData,
+                                          CSLConstList papszOptions)
 {
     if (GDALPamRasterBand::GetOverviewCount() > 0)
     {
-        return GDALPamRasterBand::ComputeStatistics(bApproxOK, pdfMin, pdfMax,
-                                                    pdfMean, pdfStdDev,
-                                                    pfnProgress, pProgressData);
+        return GDALPamRasterBand::ComputeStatistics(
+            bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev, pfnProgress,
+            pProgressData, papszOptions);
     }
     return poVRTBand->ComputeStatistics(bApproxOK, pdfMin, pdfMax, pdfMean,
-                                        pdfStdDev, pfnProgress, pProgressData);
+                                        pdfStdDev, pfnProgress, pProgressData,
+                                        papszOptions);
 }
 
 /************************************************************************/
@@ -779,7 +782,8 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (osSelectedSubdataset.empty() && aosSubdatasets.size() > 2)
     {
-        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
+        poDS->GDALDataset::SetMetadata(aosSubdatasets.List(),
+                                       GDAL_MDD_SUBDATASETS);
     }
     poDS->psProduct = psProduct.release();
     poDS->psProductDim = psProductDim.release();
@@ -886,12 +890,12 @@ int DIMAPDataset::ReadImageInformation()
     if (psGeoLoc != nullptr)
     {
         bHaveGeoTransform = TRUE;
-        m_gt[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
-        m_gt[1] = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
-        m_gt[4] = 0.0;
-        m_gt[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
+        m_gt.xorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
+        m_gt.xscale = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
     }
     else
     {
@@ -1122,7 +1126,8 @@ int DIMAPDataset::ReadImageInformation2()
         CPLGetXMLValue(psDoc, "Raster_Data.Data_Access.DATA_FILE_FORMAT", "");
     if (osDataFormat == "image/jp2")
     {
-        SetMetadataItem("COMPRESSION", "JPEG2000", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_COMPRESSION, "JPEG2000",
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // For VHR2020: SPECTRAL_PROCESSING = PAN, MS, MS-FS, PMS, PMS-N, PMS-X,
@@ -1318,8 +1323,8 @@ int DIMAPDataset::ReadImageInformation2()
                 poVRTDS->GetRasterBand(iBand + 1));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poVRTBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         for (const auto &oTileIdxNameTuple : oMapTileIdxToName)
@@ -1404,8 +1409,8 @@ int DIMAPDataset::ReadImageInformation2()
             static_cast<VRTSourcedRasterBand *>(poVRTDS->GetRasterBand(iBand)));
         if (nBits > 0 && nBits != 8 && nBits != 16)
         {
-            poBand->SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                    "IMAGE_STRUCTURE");
+            poBand->SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
         if (bTwoDataFilesPerTile)
         {
@@ -1468,27 +1473,27 @@ int DIMAPDataset::ReadImageInformation2()
     if (psGeoLoc != nullptr)
     {
         bHaveGeoTransform = TRUE;
-        m_gt[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
-        m_gt[1] = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
-        m_gt[4] = 0.0;
-        m_gt[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
+        m_gt.xorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
+        m_gt.xscale = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
     }
     else
     {
         // Try to get geotransform from underlying raster,
         // but make sure it is a real geotransform.
         if (poImageDS->GetGeoTransform(m_gt) == CE_None &&
-            !(m_gt[0] <= 1.5 && fabs(m_gt[3]) <= 1.5))
+            !(m_gt.xorig <= 1.5 && fabs(m_gt.yorig) <= 1.5))
         {
             bHaveGeoTransform = TRUE;
             // fix up the origin if we did not get the geotransform from the
             // top-left tile
-            m_gt[0] -= (nImageDSCol - 1) * m_gt[1] * nTileWidth +
-                       (nImageDSRow - 1) * m_gt[2] * nTileHeight;
-            m_gt[3] -= (nImageDSCol - 1) * m_gt[4] * nTileWidth +
-                       (nImageDSRow - 1) * m_gt[5] * nTileHeight;
+            m_gt.xorig -= (nImageDSCol - 1) * m_gt.xscale * nTileWidth +
+                          (nImageDSRow - 1) * m_gt.xrot * nTileHeight;
+            m_gt.yorig -= (nImageDSCol - 1) * m_gt.yrot * nTileWidth +
+                          (nImageDSRow - 1) * m_gt.yscale * nTileHeight;
         }
     }
 
@@ -1545,26 +1550,53 @@ int DIMAPDataset::ReadImageInformation2()
         "GEOMETRIC_",
         "Processing_Information.Product_Settings.Radiometric_Settings",
         "RADIOMETRIC_",
-        "Quality_Assessment.Imaging_Quality_Measurement",
-        "CLOUDCOVER_",
         nullptr,
         nullptr};
 
     SetMetadataFromXML(psProductDim, apszMetadataTranslationDim);
+
+    if (const CPLXMLNode *psCloudCoverage = CPLGetXMLNode(
+            psProductDim, "=Dimap_Document.Dataset_Content.CLOUD_COVERAGE"))
+    {
+        if (const char *pszValue = CPLGetXMLValue(psCloudCoverage, "", nullptr))
+        {
+            SetMetadataItem("CLOUD_COVERAGE", pszValue);
+            if (const char *pszUnit =
+                    CPLGetXMLValue(psCloudCoverage, "unit", nullptr))
+            {
+                SetMetadataItem("CLOUD_COVERAGE_UNIT", pszUnit);
+                if (EQUAL(pszUnit, "percent"))
+                {
+                    // GDAL standardized metadata domain
+                    SetMetadataItem("CLOUDCOVER", pszValue, "IMAGERY");
+                }
+            }
+        }
+    }
+
+    if (const CPLXMLNode *psSnowCoverage = CPLGetXMLNode(
+            psProductDim, "=Dimap_Document.Dataset_Content.SNOW_COVERAGE"))
+    {
+        if (const char *pszValue = CPLGetXMLValue(psSnowCoverage, "", nullptr))
+        {
+            SetMetadataItem("SNOW_COVERAGE", pszValue);
+            if (const char *pszUnit =
+                    CPLGetXMLValue(psSnowCoverage, "unit", nullptr))
+            {
+                SetMetadataItem("SNOW_COVERAGE_UNIT", pszUnit);
+            }
+        }
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Translate other metadata of interest: STRIP_<product_name>.XML    */
     /* -------------------------------------------------------------------- */
 
     static const char *const apszMetadataTranslationStrip[] = {
-        "Catalog.Full_Strip.Notations.Cloud_And_Quality_Notation."
-        "Data_Strip_Notation",
-        "CLOUDCOVER_",
-        "Acquisition_Configuration.Platform_Configuration."
-        "Ephemeris_Configuration",
-        "EPHEMERIS_",
-        nullptr,
-        nullptr};
+        // clang-format off
+        "Acquisition_Configuration.Platform_Configuration.Ephemeris_Configuration",
+        // clang-format on
+        "EPHEMERIS_", nullptr, nullptr};
 
     if (psProductStrip != nullptr)
         SetMetadataFromXML(psProductStrip, apszMetadataTranslationStrip);
@@ -1576,7 +1608,7 @@ int DIMAPDataset::ReadImageInformation2()
         char **papszRPC = poReader->LoadRPCXmlFile(psDoc);
         delete poReader;
         if (papszRPC)
-            SetMetadata(papszRPC, "RPC");
+            SetMetadata(papszRPC, GDAL_MDD_RPC);
         CSLDestroy(papszRPC);
     }
 
@@ -1741,11 +1773,12 @@ int DIMAPDataset::ReadImageInformation2()
                 CPLAtof(SPECTRAL_RANGE_FWHM_MIN) * dfFactorToMicrometer;
             const double dfMax =
                 CPLAtof(SPECTRAL_RANGE_FWHM_MAX) * dfFactorToMicrometer;
-            poBand->SetMetadataItem("CENTRAL_WAVELENGTH_UM",
+            poBand->SetMetadataItem(GDALMD_CENTRAL_WAVELENGTH_UM,
                                     CPLSPrintf("%.3f", (dfMin + dfMax) / 2),
-                                    "IMAGERY");
-            poBand->SetMetadataItem(
-                "FWHM_UM", CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
+                                    GDAL_MDD_IMAGERY);
+            poBand->SetMetadataItem(GDALMD_FWHM_UM,
+                                    CPLSPrintf("%.3f", dfMax - dfMin),
+                                    GDAL_MDD_IMAGERY);
         }
     }
 

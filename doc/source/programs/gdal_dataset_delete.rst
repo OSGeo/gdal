@@ -1,5 +1,7 @@
 .. _gdal_dataset_delete:
 
+.. program:: gdal_dataset_delete
+
 ================================================================================
 ``gdal dataset delete``
 ================================================================================
@@ -30,6 +32,11 @@ Options
 .. option:: -f, ---format <FORMAT>
 
     Dataset format. Helps if automatic detection does not work.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

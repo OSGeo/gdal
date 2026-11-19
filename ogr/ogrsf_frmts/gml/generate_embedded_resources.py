@@ -25,15 +25,12 @@ files += list(glob.glob(os.path.join(os.path.dirname(__file__), "data/*.xml")))
 for f in sorted(files):
     f = os.path.basename(f)
     c = f.replace(".", "_")
-    embedded_resources_gen1.write(
-        """
+    embedded_resources_gen1.write("""
 static const char %s [] = {
     #embed "data/%s"
             , 0
 };
-"""
-        % (c, f)
-    )
+""" % (c, f))
     embedded_resources_gen2.write("""{ "%s", %s },\n""" % (f, c))
 
 embedded_resources_gen1.close()

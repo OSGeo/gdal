@@ -450,7 +450,7 @@ CPLErr OGROCISession::GetParamInfo(OCIParam *hParamDesc,
         case SQLT_CHR:
         case SQLT_AFC: /* CHAR(), NCHAR() */
             poOGRDefn->SetType(OFTString);
-            if (nOCILen <= 4000)
+            if (nOCILen <= 32767)
                 poOGRDefn->SetWidth(nOCILen);
             break;
 

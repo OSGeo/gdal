@@ -75,7 +75,7 @@ class VSISwiftHandleHelper final : public IVSIS3LikeHandleHelper
     static VSISwiftHandleHelper *BuildFromURI(const char *pszURI,
                                               const char *pszFSPrefix);
 
-    struct curl_slist *GetCurlHeaders(const std::string &osVerbosVerb,
+    struct curl_slist *GetCurlHeaders(const std::string &osVerboseVerb,
                                       struct curl_slist *psHeaders,
                                       const void *pabyDataContent = nullptr,
                                       size_t nBytesContent = 0) const override;

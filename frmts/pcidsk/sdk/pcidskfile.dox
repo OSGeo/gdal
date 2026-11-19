@@ -189,7 +189,7 @@ consists of the values for all the channels in the file in order.
 
 \brief Read a block.
 
-Returnst the pointer to an internal buffer for the indicated  block.  The
+Returns the pointer to an internal buffer for the indicated  block.  The
 buffer is owned by the PCIDSKFile object, but will be considered locked
 and available for the application code to read and modify until the
 UnlockBlock() method is called.  The buffer will contain all the pixel values

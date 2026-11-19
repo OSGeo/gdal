@@ -35,8 +35,8 @@ OGRJMLWriterLayer::OGRJMLWriterLayer(const char *pszLayerName,
 
     if (poSRS)
     {
-        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
-        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName();
+        const char *pszAuthCode = poSRS->GetAuthorityCode();
         if (pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
             pszAuthCode != nullptr)
         {
@@ -414,7 +414,7 @@ OGRErr OGRJMLWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJMLWriterLayer::TestCapability(const char *pszCap) const
+bool OGRJMLWriterLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

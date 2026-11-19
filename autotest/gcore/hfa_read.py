@@ -36,7 +36,7 @@ init_list = [
     ids=[tup[0].split(".")[0] for tup in init_list],
 )
 @pytest.mark.require_driver("HFA")
-def test_hfa_open(filename, checksum):
+def test_hfa_open(filename, checksum, tmp_path):
     ut = gdaltest.GDALTest("HFA", filename, 1, checksum)
     ut.testOpen()
 

@@ -106,7 +106,7 @@ def test_rcm_open_from_product_xml():
         "SAMP_OFF": "0",
         "SAMP_SCALE": "0",
     }
-    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetGCPSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGCPCount() == 1
     assert ds.GetGCPs()[0].GCPPixel == 2
     assert ds.GetGCPs()[0].GCPLine == 1

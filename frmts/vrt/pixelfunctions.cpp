@@ -12,12 +12,15 @@
  *****************************************************************************/
 
 #include <array>
+#include <charconv>
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
 #include "vrtexpression.h"
 #include "vrtreclassifier.h"
 #include "cpl_float.h"
+
+#include "geodesic.h"  // from PROJ
 
 #if defined(__x86_64) || defined(_M_X64) || defined(USE_NEON_OPTIMIZATIONS)
 #define USE_SSE2
@@ -130,6 +133,52 @@ static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName,
                  "Failed to parse pixel function argument: %s", pszName);
         return CE_Failure;
     }
+
+    return CE_None;
+}
+
+static CPLErr FetchIntegerArg(CSLConstList papszArgs, const char *pszName,
+                              int *pnX, int *pnDefault = nullptr)
+{
+    const char *pszVal = CSLFetchNameValue(papszArgs, pszName);
+
+    if (pszVal == nullptr)
+    {
+        if (pnDefault == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing pixel function argument: %s", pszName);
+            return CE_Failure;
+        }
+        else
+        {
+            *pnX = *pnDefault;
+            return CE_None;
+        }
+    }
+
+    char *pszEnd = nullptr;
+    const auto ret = std::strtol(pszVal, &pszEnd, 10);
+    while (std::isspace(*pszEnd))
+    {
+        pszEnd++;
+    }
+    if (*pszEnd != '\0')
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to parse pixel function argument: %s", pszName);
+        return CE_Failure;
+    }
+
+    if (ret > std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Pixel function argument %s is above the maximum value of %d",
+                 pszName, std::numeric_limits<int>::max());
+        return CE_Failure;
+    }
+
+    *pnX = static_cast<int>(ret);
 
     return CE_None;
 }
@@ -333,10 +382,15 @@ static CPLErr PolarPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // PolarPixelFunc
 
+static constexpr char pszModulePixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
 static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
                               int nXSize, int nYSize, GDALDataType eSrcType,
                               GDALDataType eBufType, int nPixelSpace,
-                              int nLineSpace)
+                              int nLineSpace, CSLConstList papszArgs)
 {
     /* ---- Init ---- */
     if (nSources != 1)
@@ -370,15 +424,24 @@ static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
     }
     else
     {
+        double dfNoData{0};
+        const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+        if (bHasNoData &&
+            FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+            return CE_Failure;
+
         /* ---- Set pixels ---- */
         size_t ii = 0;
         for (int iLine = 0; iLine < nYSize; ++iLine)
         {
             for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
             {
+                const double dfVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
                 // Source raster pixels may be obtained with GetSrcVal macro.
-                const double dfPixVal =
-                    fabs(GetSrcVal(papoSources[0], eSrcType, ii));
+                const double dfPixVal = bHasNoData && IsNoData(dfVal, dfNoData)
+                                            ? dfNoData
+                                            : std::fabs(dfVal);
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
@@ -512,6 +575,71 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // ConjPixelFunc
+
+static constexpr char pszRoundPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='digits' description='Digits' type='integer' "
+    "default='0' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr RoundPixelFunc(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+    if (nSources != 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "round: input must be a single band");
+        return CE_Failure;
+    }
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "round: complex data types not supported");
+        return CE_Failure;
+    }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    int nDigits{0};
+    if (FetchIntegerArg(papszArgs, "digits", &nDigits, &nDigits) != CE_None)
+        return CE_Failure;
+
+    const double dfScaleVal = std::pow(10, nDigits);
+    const double dfInvScaleVal = 1. / dfScaleVal;
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            // Source raster pixels may be obtained with GetSrcVal macro.
+            const double dfSrcVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            const double dfDstVal =
+                bHasNoData && IsNoData(dfSrcVal, dfNoData)
+                    ? dfNoData
+                    : std::round(dfSrcVal * dfScaleVal) * dfInvScaleVal;
+
+            GDALCopyWords(&dfDstVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // RoundPixelFunc
 
 #ifdef USE_SSE2
 
@@ -850,9 +978,9 @@ struct TintermediateS<
     Tsrc, Tdest,
     std::enable_if_t<
         (std::is_same_v<Tsrc, uint8_t> || std::is_same_v<Tsrc, int16_t> ||
-         std::is_same_v<Tsrc, uint16_t>)&&(std::is_same_v<Tdest, uint8_t> ||
-                                           std::is_same_v<Tdest, int16_t> ||
-                                           std::is_same_v<Tdest, uint16_t>),
+         std::is_same_v<Tsrc, uint16_t>) &&
+            (std::is_same_v<Tdest, uint8_t> || std::is_same_v<Tdest, int16_t> ||
+             std::is_same_v<Tdest, uint16_t>),
         bool>>
 {
     using type = int32_t;
@@ -2519,6 +2647,41 @@ static void OptimizedMinOrMaxSSE2(const void *const *papoSources, int nSources,
     }
 }
 
+/************************************************************************/
+/*                    NaNAwareMinOrMaxFloat/Double()                    */
+/************************************************************************/
+
+static inline __m128 NaNAwareMinOrMaxFloat(__m128 x, __m128 y, bool bMin)
+{
+    const __m128 xIsNaN = _mm_cmpunord_ps(x, x);
+    const __m128 yIsNaN = _mm_cmpunord_ps(y, y);
+    const __m128 xx =
+        _mm_or_ps(_mm_andnot_ps(xIsNaN, x), _mm_and_ps(xIsNaN, y));
+    const __m128 yy =
+        _mm_or_ps(_mm_andnot_ps(yIsNaN, y), _mm_and_ps(yIsNaN, x));
+    return bMin ? _mm_min_ps(xx, yy) : _mm_max_ps(xx, yy);
+}
+
+static inline __m128d NaNAwareMinOrMaxDouble(__m128d x, __m128d y, bool bMin)
+{
+    const __m128d xIsNaN = _mm_cmpunord_pd(x, x);
+    const __m128d yIsNaN = _mm_cmpunord_pd(y, y);
+    const __m128d xx =
+        _mm_or_pd(_mm_andnot_pd(xIsNaN, x), _mm_and_pd(xIsNaN, y));
+    const __m128d yy =
+        _mm_or_pd(_mm_andnot_pd(yIsNaN, y), _mm_and_pd(yIsNaN, x));
+    return bMin ? _mm_min_pd(xx, yy) : _mm_max_pd(xx, yy);
+}
+
+template <class T> static inline T NaNAwareMinOrMax(T x, T y, bool bMin)
+{
+    if (std::isnan(x))
+        return y;
+    if (std::isnan(y))
+        return x;
+    return bMin ? std::min(x, y) : std::max(x, y);
+}
+
 // clang-format off
 namespace
 {
@@ -2613,8 +2776,8 @@ struct SSEWrapperMinFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_ps(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, true); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
 struct SSEWrapperMaxFloat
@@ -2624,8 +2787,8 @@ struct SSEWrapperMaxFloat
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_ps(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_ps(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_ps(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxFloat(x, y, false); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
 struct SSEWrapperMinDouble
@@ -2635,8 +2798,8 @@ struct SSEWrapperMinDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_min_pd(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::min(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, true); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, true); }
 };
 
 struct SSEWrapperMaxDouble
@@ -2646,8 +2809,8 @@ struct SSEWrapperMaxDouble
 
     static inline Vec LoadU(const T *x) { return _mm_loadu_pd(x); }
     static inline void StoreU(T *x, Vec y) { _mm_storeu_pd(x, y); }
-    static inline Vec MinOrMax(Vec x, Vec y) { return _mm_max_pd(x, y); }
-    static inline T MinOrMax(T x, T y) { return std::max(x, y); }
+    static inline Vec MinOrMax(Vec x, Vec y) { return NaNAwareMinOrMaxDouble(x, y, false); }
+    static inline T MinOrMax(T x, T y) { return NaNAwareMinOrMax(x, y, false); }
 };
 
 }  // namespace
@@ -2895,17 +3058,11 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
             return CE_Failure;
         }
 
-        CPLStringList aosGeoTransform(
-            CSLTokenizeString2(pszGT, ",", CSLT_HONOURSTRINGS));
-        if (aosGeoTransform.size() != 6)
+        if (!gt.Init(pszGT))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid GeoTransform argument");
             return CE_Failure;
-        }
-        for (int i = 0; i < 6; i++)
-        {
-            gt[i] = CPLAtof(aosGeoTransform[i]);
         }
     }
 
@@ -2994,6 +3151,166 @@ static CPLErr ExprPixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }  // ExprPixelFunc
 
+static constexpr char pszAreaPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument type='builtin' value='crs' />"
+    "   <Argument type='builtin' value='xoff' />"
+    "   <Argument type='builtin' value='yoff' />"
+    "   <Argument type='builtin' value='geotransform' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr AreaPixelFunc(void ** /*papoSources*/, int nSources, void *pData,
+                            int nXSize, int nYSize, GDALDataType /* eSrcType */,
+                            GDALDataType eBufType, int nPixelSpace,
+                            int nLineSpace, CSLConstList papszArgs)
+{
+    if (nSources)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "area: unexpected source band(s)");
+        return CE_Failure;
+    }
+
+    const char *pszGT = CSLFetchNameValue(papszArgs, "geotransform");
+    if (pszGT == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "area: VRTDataset has no <GeoTransform>");
+        return CE_Failure;
+    }
+
+    GDALGeoTransform gt;
+    if (!gt.Init(pszGT))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "area: Invalid GeoTransform argument");
+        return CE_Failure;
+    }
+
+    const char *pszXOff = CSLFetchNameValue(papszArgs, "xoff");
+    const int nXOff = std::atoi(pszXOff);
+
+    const char *pszYOff = CSLFetchNameValue(papszArgs, "yoff");
+    const int nYOff = std::atoi(pszYOff);
+
+    const char *pszCrsPtr = CSLFetchNameValue(papszArgs, "crs");
+
+    if (!pszCrsPtr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "area: VRTDataset has no <SRS>");
+        return CE_Failure;
+    }
+
+    std::uintptr_t nCrsPtr = 0;
+    if (auto [end, ec] =
+            std::from_chars(pszCrsPtr, pszCrsPtr + strlen(pszCrsPtr), nCrsPtr);
+        ec != std::errc())
+    {
+        // Since "crs" is populated by GDAL, this should never happen.
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read CRS");
+        return CE_Failure;
+    }
+
+    const OGRSpatialReference *poCRS =
+        reinterpret_cast<const OGRSpatialReference *>(nCrsPtr);
+
+    if (!poCRS)
+    {
+        // can't get here, but cppcheck doesn't know that
+        return CE_Failure;
+    }
+
+    const OGRSpatialReference *poGeographicCRS = nullptr;
+    std::unique_ptr<OGRSpatialReference> poGeographicCRSHolder;
+    std::unique_ptr<OGRCoordinateTransformation> poTransform;
+
+    if (!poCRS->IsGeographic())
+    {
+        poGeographicCRSHolder = std::make_unique<OGRSpatialReference>();
+        if (poGeographicCRSHolder->CopyGeogCSFrom(poCRS) != OGRERR_NONE)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot reproject geometry to geographic CRS");
+            return CE_Failure;
+        }
+        poGeographicCRSHolder->SetAxisMappingStrategy(
+            OAMS_TRADITIONAL_GIS_ORDER);
+
+        poTransform.reset(OGRCreateCoordinateTransformation(
+            poCRS, poGeographicCRSHolder.get()));
+
+        if (!poTransform)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot reproject geometry to geographic CRS");
+            return CE_Failure;
+        }
+
+        poGeographicCRS = poGeographicCRSHolder.get();
+    }
+    else
+    {
+        poGeographicCRS = poCRS;
+    }
+
+    geod_geodesic g{};
+    OGRErr eErr = OGRERR_NONE;
+    double dfSemiMajor = poGeographicCRS->GetSemiMajor(&eErr);
+    if (eErr != OGRERR_NONE)
+        return CE_Failure;
+    const double dfInvFlattening = poGeographicCRS->GetInvFlattening(&eErr);
+    if (eErr != OGRERR_NONE)
+        return CE_Failure;
+    geod_init(&g, dfSemiMajor,
+              dfInvFlattening != 0 ? 1.0 / dfInvFlattening : 0.0);
+
+    std::array<double, 5> adfLon{};
+    std::array<double, 5> adfLat{};
+
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol)
+        {
+            gt.Apply(static_cast<double>(iCol + nXOff),
+                     static_cast<double>(iLine + nYOff), &adfLon[0],
+                     &adfLat[0]);
+            gt.Apply(static_cast<double>(iCol + nXOff + 1),
+                     static_cast<double>(iLine + nYOff), &adfLon[1],
+                     &adfLat[1]);
+            gt.Apply(static_cast<double>(iCol + nXOff + 1),
+                     static_cast<double>(iLine + nYOff + 1), &adfLon[2],
+                     &adfLat[2]);
+            gt.Apply(static_cast<double>(iCol + nXOff),
+                     static_cast<double>(iLine + nYOff + 1), &adfLon[3],
+                     &adfLat[3]);
+            adfLon[4] = adfLon[0];
+            adfLat[4] = adfLat[0];
+
+            if (poTransform &&
+                !poTransform->Transform(adfLon.size(), adfLon.data(),
+                                        adfLat.data(), nullptr))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to reproject cell corners to geographic CRS");
+                return CE_Failure;
+            }
+
+            double dfArea = -1.0;
+            geod_polygonarea(&g, adfLat.data(), adfLon.data(),
+                             static_cast<int>(adfLat.size()), &dfArea, nullptr);
+            dfArea = std::fabs(dfArea);
+
+            GDALCopyWords(&dfArea, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    return CE_None;
+}  // AreaPixelFunc
+
 static const char pszReclassifyPixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
     "   <Argument name='mapping' "
@@ -3075,6 +3392,38 @@ static CPLErr ReclassifyPixelFunc(void **papoSources, int nSources, void *pData,
 
     return CE_None;
 }  // ReclassifyPixelFunc
+
+struct CountKernel
+{
+    static constexpr const char *pszName = "count";
+
+    int nCount = 0;
+
+    void Reset()
+    {
+        nCount = 0;
+    }
+
+    static CPLErr ProcessArguments(CSLConstList)
+    {
+        return CE_None;
+    }
+
+    void ProcessPixel(double)
+    {
+        ++nCount;
+    }
+
+    static bool HasValue()
+    {
+        return true;
+    }
+
+    double GetValue() const
+    {
+        return nCount;
+    }
+};
 
 struct MeanKernel
 {
@@ -3265,6 +3614,86 @@ struct MedianKernel
     }
 };
 
+struct QuantileKernel
+{
+    static constexpr const char *pszName = "quantile";
+
+    mutable std::vector<double> values{};
+    double q = 0.5;
+
+    void Reset()
+    {
+        values.clear();
+        // q intentionally preserved (set via ProcessArguments)
+    }
+
+    CPLErr ProcessArguments(CSLConstList papszArgs)
+    {
+        const char *pszQ = CSLFetchNameValue(papszArgs, "q");
+        if (pszQ)
+        {
+            char *end;
+            const double dq = CPLStrtod(pszQ, &end);
+            while (isspace(*end))
+            {
+                end++;
+            }
+            if (*end != '\0' || dq < 0.0 || dq > 1.0 || std::isnan(dq))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "quantile: q must be between 0 and 1");
+                return CE_Failure;
+            }
+            q = dq;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "quantile: q must be specified");
+            return CE_Failure;
+        }
+        return CE_None;
+    }
+
+    void ProcessPixel(double dfVal)
+    {
+        if (!std::isnan(dfVal))
+        {
+            values.push_back(dfVal);
+        }
+    }
+
+    bool HasValue() const
+    {
+        return !values.empty();
+    }
+
+    double GetValue() const
+    {
+        if (values.empty())
+        {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+
+        std::sort(values.begin(), values.end());
+        const double loc = q * static_cast<double>(values.size() - 1);
+
+        // Use formula from NumPy docs with default linear interpolation
+        // g: fractional component of loc
+        // j: integral component of loc
+        double j;
+        const double g = std::modf(loc, &j);
+
+        if (static_cast<size_t>(j) + 1 == values.size())
+        {
+            return values[static_cast<size_t>(j)];
+        }
+
+        return (1 - g) * values[static_cast<size_t>(j)] +
+               g * values[static_cast<size_t>(j) + 1];
+    }
+};
+
 struct ModeKernel
 {
     static constexpr const char *pszName = "mode";
@@ -3329,6 +3758,13 @@ static const char pszBasicPixelFuncMetadata[] =
     "   <Argument name='propagateNoData' description='Whether the output value "
     "should be NoData as as soon as one source is NoData' type='boolean' "
     "default='false' />"
+    "</PixelFunctionArgumentsList>";
+
+static const char pszQuantilePixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='q' type='float' description='Quantile in [0,1]' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "   <Argument name='propagateNoData' type='boolean' default='false' />"
     "</PixelFunctionArgumentsList>";
 
 #if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
@@ -3579,7 +4015,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
     if constexpr (std::is_same_v<Kernel, MeanKernel>)
     {
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int16 to accumulate
             nSources <= std::numeric_limits<int16_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -3679,7 +4115,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt8 && eBufType == GDT_UInt8 &&
-            nPixelSpace == 1 &&
+            nPixelSpace == 1 && nSources > 0 &&
             // We use signed int32 to accumulate
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint8_t>::max())
@@ -3748,7 +4184,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_UInt16 && eBufType == GDT_UInt16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
@@ -3802,7 +4238,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
         }
 
         if (!bHasNoData && eSrcType == GDT_Int16 && eBufType == GDT_Int16 &&
-            nPixelSpace == 2 &&
+            nPixelSpace == 2 && nSources > 0 &&
             nSources <= std::numeric_limits<int32_t>::max() /
                             std::numeric_limits<uint16_t>::max())
         {
@@ -4010,7 +4446,10 @@ CPLErr GDALRegisterDefaultPixelFunc()
     GDALAddDerivedBandPixelFunc("complex", ComplexPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("polar", PolarPixelFunc,
                                         pszPolarPixelFuncMetadata);
-    GDALAddDerivedBandPixelFunc("mod", ModulePixelFunc);
+    GDALAddDerivedBandPixelFuncWithArgs("mod", ModulePixelFunc,
+                                        pszModulePixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("abs", ModulePixelFunc,
+                                        pszModulePixelFuncMetadata);
     GDALAddDerivedBandPixelFunc("phase", PhasePixelFunc);
     GDALAddDerivedBandPixelFunc("conj", ConjPixelFunc);
     GDALAddDerivedBandPixelFuncWithArgs("sum", SumPixelFunc,
@@ -4064,6 +4503,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszExprPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
                                         pszReclassifyPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("round", RoundPixelFunc,
+                                        pszRoundPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("mean", BasicPixelFunc<MeanKernel>,
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("geometric_mean",
@@ -4074,7 +4515,14 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("median", BasicPixelFunc<MedianKernel>,
                                         pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("quantile",
+                                        BasicPixelFunc<QuantileKernel>,
+                                        pszQuantilePixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("mode", BasicPixelFunc<ModeKernel>,
+                                        pszBasicPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("area", AreaPixelFunc,
+                                        pszAreaPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("count", BasicPixelFunc<CountKernel>,
                                         pszBasicPixelFuncMetadata);
     return CE_None;
 }

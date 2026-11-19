@@ -99,7 +99,7 @@ static bool readraster_acquirebuffer(void** buf,
                 PyBuffer_Release(&view);
                 SWIG_PYTHON_THREAD_END_BLOCK;
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "buffer has not the appropriate alignment");
+                         "buffer does not have appropriate alignment for data type %s", GDALGetDataTypeName(ntype));
                 return false;
             }
         }
@@ -612,9 +612,9 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 }
 
 %inline %{
-void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offset *length)
+void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_offset *length)
 {
-    *out = VSIGetMemFileBuffer(utf8_path, length, 0);
+    *out = VSIGetMemFileBuffer(utf8_string, length, 0);
 }
 %}
 %clear (GByte **out, vsi_l_offset *length);
@@ -715,6 +715,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                      GIntBig *buf_pixel_space = 0,
                      GIntBig *buf_line_space = 0,
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
+                     bool operate_in_buf_type = TRUE,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL,
                      void* inputOutputBuf = NULL) {
@@ -755,6 +756,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.bOperateInBufType = operate_in_buf_type;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
     int nXOff = (int)(xoff + 0.5);
@@ -1020,9 +1022,89 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                  buf_xsize=None, buf_ysize=None, buf_type=None,
                  buf_pixel_space=None, buf_line_space=None,
                  resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                 operate_in_buf_type=True,
                  callback=None,
                  callback_data=None,
                  buf_obj=None):
+
+      """
+      Low-level function that reads data from the band into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
+      Used as an alternative to :py:meth:`ReadAsArray` in specialized situations where NumPy is not available.
+      
+      The bytearray can be converted into a list of standard Python numeric types using `struct.unpack <https://docs.python.org/3/library/struct.html#struct.unpack>`_ or `memoryview.tolist <https://docs.python.org/3/builtins/stdtypes.html#memoryview.tolist>`_.
+      
+      Parameters
+      ----------
+      xoff : float, default=0
+       The pixel offset to left side of the region of the band to
+       be read. This would be zero to start from the left side.
+      yoff : float, default=0
+       The line offset to top side of the region of the band to
+       be read. This would be zero to start from the top side.
+      xsize : float, optional
+         The number of pixels to read in the x direction. By default,
+         equal to the number of columns in the raster.
+      ysize : float, optional
+         The number of rows to read in the y direction. By default,
+         equal to the number of rows in the raster.
+      buf_xsize : int, optional
+         The number of columns in the returned array. If not equal
+         to ``xsize``, the returned values will be determined
+         by ``resample_alg``.
+      buf_ysize : int, optional
+         The number of rows in the returned array. If not equal
+         to ``ysize``, the returned values will be determined
+         by ``resample_alg``.
+      buf_type : int, optional
+         The data type of the returned array
+      buf_pixel_space : int
+         Number of bytes between successive pixel values written to the buffer.
+         Defaults to the size of ``buf_type``.
+      buf_line_space : int, optional
+         Number of bytes between the start of successive scanlines written to the buffer. 
+         Defaults to the size of ``buf_type`` times ``buf_xsize``.
+      resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
+         Specifies the resampling algorithm to use when the size of
+         the read window and the buffer are not equal.
+      operate_in_buf_type : bool, default = True
+         Whether the data type used for the operations (typically non-nearest-neighbour
+         resampling) should be buf_type (operate_in_buf_type=True) or the
+         data type of the band (operate_in_buf_type=False)
+      callback : callable, optional
+         A progress callback function
+      callback_data : any, optional
+         Optional data to be passed to callback function
+      buf_obj : bytearray or memoryview, optional
+         Optional buffer into which data should be read. If not provided,
+         a new buffer of appropriate size will be allocated.
+      
+      Returns
+      -------
+      bytearray, or ``buf_obj`` if provided
+          
+      Examples
+      --------
+      >>> import array
+      >>> # create a 2x2 raster with 2 bands
+      >>> ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 2, eType=gdal.GDT_Int16)
+      >>> # set the raster values. 'h' indicates 16-bit signed integer, see https://docs.python.org/3/library/struct.html#struct-format-strings
+      >>> ds.GetRasterBand(1).WriteRaster(0, 0, 2, 2, array.array('h', [1, 2, 3, 4]))
+      0
+      >>> ds.GetRasterBand(2).WriteRaster(0, 0, 2, 2, array.array('h', [5, 6, 7, 8]))
+      0
+      >>> # read entire raster into a new buffer
+      >>> memoryview(ds.ReadRaster()).cast('h').tolist()
+      [1, 2, 3, 4, 5, 6, 7, 8]
+      >>> # read bands into an existing buffer in pixel-interleaved format
+      >>> buf = memoryview(bytearray(16))
+      >>> ds.GetRasterBand(1).ReadRaster(buf_pixel_space = 4, buf_obj = buf)
+      <memory at 0x7eab253265c0>
+      >>> ds.GetRasterBand(2).ReadRaster(buf_pixel_space = 4, buf_obj = buf[2:])
+      <memory at 0x7eab25326800>
+      >>> buf.cast('h').tolist()
+      [1, 5, 2, 6, 3, 7, 4, 8]
+      
+      """
 
       if xsize is None:
           xsize = self.XSize
@@ -1032,7 +1114,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       return _gdal.Band_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                     buf_xsize, buf_ysize, buf_type,
                                     buf_pixel_space, buf_line_space,
-                                    resample_alg, callback, callback_data,
+                                    resample_alg, operate_in_buf_type,
+                                    callback, callback_data,
                                     buf_obj)
 
   def WriteRaster(self, xoff, yoff, xsize, ysize,
@@ -1067,6 +1150,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
   def ReadAsMaskedArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None,
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                  operate_in_buf_type=True,
                   mask_resample_alg=gdalconst.GRIORA_NearestNeighbour,
                   callback=None,
                   callback_data=None):
@@ -1086,6 +1170,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize,
                                buf_type=buf_type,
                                resample_alg=resample_alg,
+                               operate_in_buf_type=operate_in_buf_type,
                                callback=callback, callback_data=callback_data)
 
       if self.GetMaskFlags() != GMF_ALL_VALID:
@@ -1105,6 +1190,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
   def ReadAsArray(self, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                   buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                   resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                  operate_in_buf_type=True,
                   callback=None,
                   callback_data=None):
       """
@@ -1123,7 +1209,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
            equal to the number of columns in the raster.
       win_ysize : float, optional
            The number of rows to read in the y direction. By default,
-           equal to the number of bands in the raster.
+           equal to the number of rows in the raster.
       buf_xsize : int, optional
            The number of columns in the returned array. If not equal
            to ``win_xsize``, the returned values will be determined
@@ -1141,6 +1227,10 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
       resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
            Specifies the resampling algorithm to use when the size of
            the read window and the buffer are not equal.
+      operate_in_buf_type : bool, default = True
+           Whether the data type used for the operations (typically non-nearest-neighbour
+           resampling) should be buf_type (operate_in_buf_type=True) or the
+           data type of the band (operate_in_buf_type=False)
       callback : callable, optional
           A progress callback function
       callback_data : any, optional
@@ -1189,6 +1279,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
                                          win_xsize, win_ysize,
                                          buf_xsize, buf_ysize, buf_type, buf_obj,
                                          resample_alg=resample_alg,
+                                         operate_in_buf_type=operate_in_buf_type,
                                          callback=callback,
                                          callback_data=callback_data)
 
@@ -1330,6 +1421,31 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %}
 
 %feature("pythonappend") GetOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetSampleOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetDefaultRAT %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetRasterColorTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetColorTable %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetDataset %{
     if hasattr(self, '_parent_ds') and self._parent_ds():
         self._parent_ds()._add_child_ref(val)
 %}
@@ -1510,6 +1626,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     int band_list = 0, int *pband_list = 0,
                     GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0,
                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
+                    bool operate_in_buf_type = TRUE,
                     GDALProgressFunc callback = NULL,
                     void* callback_data=NULL,
                     void* inputOutputBuf = NULL )
@@ -1576,6 +1693,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
     sExtraArg.eResampleAlg = resample_alg;
+    sExtraArg.bOperateInBufType = operate_in_buf_type;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
 
@@ -1657,6 +1775,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
     def ReadAsArray(self, xoff=0, yoff=0, xsize=None, ysize=None, buf_obj=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None,
                     resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                    operate_in_buf_type=True,
                     callback=None,
                     callback_data=None,
                     interleave='band',
@@ -1677,28 +1796,35 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
              equal to the number of columns in the raster.
         ysize : float, optional
              The number of rows to read in the y direction. By default,
-             equal to the number of bands in the raster.
-        buf_xsize : int, optional
-             The number of columns in the returned array. If not equal
-             to ``win_xsize``, the returned values will be determined
-             by ``resample_alg``.
-        buf_ysize : int, optional
-             The number of rows in the returned array. If not equal
-             to ``win_ysize``, the returned values will be determined
-             by ``resample_alg``.
-        buf_type : int, optional
-             The data type of the returned array
+             equal to the number of rows in the raster.
         buf_obj : np.ndarray, optional
              Optional buffer into which values will be read. If ``buf_obj``
              is specified, then ``buf_xsize``/``buf_ysize``/``buf_type``
              should generally not be specified.
+        buf_xsize : int, optional
+             The number of columns in the returned array. If not equal
+             to ``xsize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_ysize : int, optional
+             The number of rows in the returned array. If not equal
+             to ``ysize``, the returned values will be determined
+             by ``resample_alg``.
+        buf_type : int, optional
+             The data type of the returned array
         resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`.
              Specifies the resampling algorithm to use when the size of
              the read window and the buffer are not equal.
+        operate_in_buf_type : bool, default = True
+             Whether the data type used for the operations (typically non-nearest-neighbour
+             resampling) should be buf_type (operate_in_buf_type=True) or the
+             data type of the band (operate_in_buf_type=False)
         callback : callable, optional
             A progress callback function
         callback_data : any, optional
             Optional data to be passed to callback function
+        interleave : str, default = 'band'
+            Whether data should be returned in band-interleaved or
+            pixel-interleaved form.
         band_list : list, optional
             Indexes of bands from which data should be read. By default,
             data will be read from all bands.
@@ -1752,6 +1878,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return gdal_array.DatasetReadAsArray(self, xoff, yoff, xsize, ysize, buf_obj,
                                               buf_xsize, buf_ysize, buf_type,
                                               resample_alg=resample_alg,
+                                              operate_in_buf_type=operate_in_buf_type,
                                               callback=callback,
                                               callback_data=callback_data,
                                               interleave=interleave,
@@ -1873,9 +2000,17 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                    band_list=None,
                    buf_pixel_space=None, buf_line_space=None, buf_band_space=None,
                    resample_alg=gdalconst.GRIORA_NearestNeighbour,
+                   operate_in_buf_type=True,
                    callback=None,
                    callback_data=None,
                    buf_obj=None):
+
+        """
+        Low-level function that reads data from all bands into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
+        
+        See :py:meth:`Band.ReadRaster` for more usage information and a description of the parameters.
+        
+        """
 
         if xsize is None:
             xsize = self.RasterXSize
@@ -1894,7 +2029,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         return _gdal.Dataset_ReadRaster1(self, xoff, yoff, xsize, ysize,
                                             buf_xsize, buf_ysize, buf_type,
                                             band_list, buf_pixel_space, buf_line_space, buf_band_space,
-                                          resample_alg, callback, callback_data, buf_obj )
+                                          resample_alg, operate_in_buf_type, callback, callback_data, buf_obj )
 
     def GetVirtualMemArray(self, eAccess=gdalconst.GF_Read, xoff=0, yoff=0,
                            xsize=None, ysize=None, bufxsize=None, bufysize=None,
@@ -2285,7 +2420,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
 
     .. testsetup::
 
-       >>> src_ds = gdal.OpenEx("poly.shp", gdal.OF_VECTOR)
+       >>> src_ds = gdal.Open("poly.shp", gdal.OF_VECTOR)
        >>> ds = gdal.GetDriverByName("MEM").CreateVector("")
        >>> _ = ds.CopyLayer(src_ds.GetLayer(0), "layer")
 
@@ -2298,7 +2433,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     2. Use keep_ref_on_ds=True to return an object that keeps a reference to its dataset:
 
     >>> def get_sql_lyr():
-    ...     return gdal.OpenEx("poly.shp", gdal.OF_VECTOR).ExecuteSQL("SELECT * FROM poly", keep_ref_on_ds=True)
+    ...     return gdal.Open("poly.shp", gdal.OF_VECTOR).ExecuteSQL("SELECT * FROM poly", keep_ref_on_ds=True)
     ...
     >>> with get_sql_lyr() as lyr:
     ...     print(lyr.GetFeatureCount())
@@ -2580,6 +2715,46 @@ def ComputeInterBandCovarianceMatrix(self,
 %}
 
 %feature("pythonappend") CopyLayer %{
+    self._add_child_ref(val)
+%}
+
+%feature("pythonappend") CreateLayerFromGeomFieldDefn %{
+    self._add_child_ref(val)
+%}
+
+%feature("shadow") GetNextFeature %{
+    def GetNextFeature(self, include_layer=True, include_pct=False, callback=None, callback_data=None):
+        r"""
+        GetNextFeature(Dataset self, include_layer=True, include_pct=False, callback=None, callback_data=None) -> Feature
+
+        Fetch the next available feature from this dataset.
+
+        This method is intended for the few drivers where
+        :py:meth:`OGRLayer.GetNextFeature` is not efficient, but in general
+        :py:meth:`OGRLayer.GetNextFeature` is a more natural API.
+
+        See :cpp:func:`GDALDataset::GetNextFeature`.
+
+        Returns
+        -------
+        Feature
+        """
+
+        val = $action(self, include_layer, include_pct, callback, callback_data)
+        if include_layer:
+            self._add_child_ref(val[1])
+        return val
+%}
+
+%feature("pythonappend") GetFieldDomain %{
+    self._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetStyleTable %{
+    self._add_child_ref(val)
+%}
+
+%feature("pythonappend") GetRelationship %{
     self._add_child_ref(val)
 %}
 
@@ -3011,6 +3186,83 @@ def GetMDArrayNames(self, options = []) -> "list[str]":
         return _gdal.MDArray_SetNoDataValueUInt64(self, value)
 
     return _gdal.MDArray_SetNoDataValueDouble(self, value)
+
+  @staticmethod
+  def _get_as_mdarray_if_possible(o):
+        if hasattr(o, "shape") and not isinstance(o, MDArray):
+            from osgeo import gdal_array
+            ds = gdal_array.OpenMultiDimensionalNumPyArray(o)
+            return ds.GetRootGroup().OpenMDArray("array")
+        else:
+            return o
+
+  def __add__(self, other):
+      """Add this array to another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_ADD, other)
+
+  # Define __array_priority__ so that numpy doesn't just forward us the first
+  # value of the array
+  __array_priority__ = 1000
+
+  def __radd__(self, other):
+      """Add this array to another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_ADD, self)
+
+  def __sub__(self, other):
+      """Subtract this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_SUB, other)
+
+  def __rsub__(self, other):
+      """Subtract this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_SUB, self)
+
+  def __mul__(self, other):
+      """Multiply this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_MUL, other)
+
+  def __rmul__(self, other):
+      """Multiply this array with another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_MUL, self)
+
+  def __truediv__(self, other):
+      """Divide this array by another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(self, GRABO_DIV, other)
+
+  def __rtruediv__(self, other):
+      """Divide this array by another array
+
+         The resulting array is lazily evaluated.
+      """
+      other = MDArray._get_as_mdarray_if_possible(other)
+      return _gdal.MDArray_BinaryOpArray(other, GRABO_DIV, self)
 %}
 
 }
@@ -3169,31 +3421,31 @@ def _WarnIfUserHasNotSpecifiedIfUsingOgrExceptions():
 
 %pythoncode %{
 
-def CreateDataSource(self, utf8_path, options=None):
+def CreateDataSource(self, utf8_string, options=None):
     """
     Synonym for :py:meth:`CreateVector`.
     """
-    return self.Create(utf8_path, 0, 0, 0, GDT_Unknown, options or [])
+    return self.Create(utf8_string, 0, 0, 0, GDT_Unknown, options or [])
 
-def CopyDataSource(self, ds, utf8_path, options=None):
+def CopyDataSource(self, ds, utf8_string, options=None):
     """
     Synonym for :py:meth:`CreateCopy`.
     """
-    return self.CreateCopy(utf8_path, ds, options = options or [])
+    return self.CreateCopy(utf8_string, ds, options = options or [])
 
-def DeleteDataSource(self, utf8_path):
+def DeleteDataSource(self, utf8_string):
     """
     Synonym for :py:meth:`Delete`.
     """
-    return self.Delete(utf8_path)
+    return self.Delete(utf8_string)
 
-def Open(self, utf8_path, update=False):
+def Open(self, utf8_string, update=False):
     """
     Attempt to open a specified path with this driver.
 
     Parameters
     ----------
-    utf8_path : str
+    utf8_string : str
        The path to open
     update : bool, default = False
        Whether to open the dataset in update mode.
@@ -3203,9 +3455,9 @@ def Open(self, utf8_path, update=False):
     Dataset or None
         ``None`` on error
     """
-    return OpenEx(utf8_path,
-                  OF_VECTOR | (OF_UPDATE if update else 0),
-                  [self.GetDescription()])
+    return Open(utf8_string,
+                OF_VECTOR | (OF_UPDATE if update else 0),
+                [self.GetDescription()])
 
 def GetName(self):
     """
@@ -3285,6 +3537,26 @@ def InfoOptions(options=None, format='text', deserialize=True,
 
     return (GDALInfoOptions(new_options), format, deserialize)
 
+
+def _get_allowed_drivers_and_open_options(**kwargs):
+
+    allowed_drivers = []
+    open_options = []
+    if 'options' in kwargs and isinstance(kwargs['options'], list):
+        options = kwargs['options']
+        i = 0
+        while i < len(options):
+            if options[i] == "-if":
+                i += 1
+                allowed_drivers.append(options[i])
+            elif options[i] == "-oo":
+                i += 1
+                open_options.append(options[i])
+            i += 1
+
+    return allowed_drivers, open_options
+
+
 def Info(ds, **kwargs):
     """Return information on a raster dataset.
 
@@ -3300,13 +3572,14 @@ def Info(ds, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
 
     if isinstance(ds, (str, os.PathLike)):
-        ds = Open(ds)
+        ds = Open(ds, allowed_drivers = allowed_drivers, open_options = open_options)
     ret = InfoInternal(ds, opts)
     if format == 'json' and deserialize:
         import json
@@ -3419,13 +3692,14 @@ def VectorInfo(ds, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, format, deserialize) = VectorInfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
 
     if isinstance(ds, (str, os.PathLike)):
-        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_VECTOR)
+        ds = Open(ds, OF_VERBOSE_ERROR | OF_VECTOR, allowed_drivers = allowed_drivers, open_options = open_options)
     ret = VectorInfoInternal(ds, opts)
     if format == 'json' and deserialize:
         import json
@@ -3471,6 +3745,7 @@ def MultiDimInfo(ds, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         opts, as_text = MultiDimInfoOptions(**kwargs)
     else:
@@ -3478,7 +3753,7 @@ def MultiDimInfo(ds, **kwargs):
         as_text = True
 
     if isinstance(ds, (str, os.PathLike)):
-        ds = OpenEx(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER)
+        ds = Open(ds, OF_VERBOSE_ERROR | OF_MULTIDIM_RASTER, allowed_drivers = allowed_drivers, open_options = open_options)
     ret = MultiDimInfoInternal(ds, opts)
     if not as_text:
         import json
@@ -3755,6 +4030,7 @@ def Translate(destName, srcDS, **kwargs):
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
     filenamePrefix = ""
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
         if "format" in kwargs and kwargs["format"].upper() == "ZARR" and "creationOptions" in kwargs:
@@ -3766,7 +4042,7 @@ def Translate(destName, srcDS, **kwargs):
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = Open(filenamePrefix + str(srcDS))
+        srcDS = Open(filenamePrefix + str(srcDS), allowed_drivers = allowed_drivers, open_options = open_options)
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
@@ -4048,18 +4324,19 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
-        srcDSTab = [Open(srcDSOrSrcDSTab)]
+        srcDSTab = [Open(srcDSOrSrcDSTab, allowed_drivers = allowed_drivers, open_options = open_options)]
     elif isinstance(srcDSOrSrcDSTab, list):
         srcDSTab = []
         for elt in srcDSOrSrcDSTab:
             if isinstance(elt, (str, os.PathLike)):
-                srcDSTab.append(Open(elt))
+                srcDSTab.append(Open(elt, allowed_drivers = allowed_drivers, open_options = open_options))
             else:
                 srcDSTab.append(elt)
     else:
@@ -4112,6 +4389,7 @@ def VectorTranslateOptions(options=None, format=None,
          zRes=None,
          mRes=None,
          setCoordPrecision=True,
+         quiet=False,
          callback=None, callback_data=None):
     """
     Create a VectorTranslateOptions() object that can be passed to
@@ -4247,6 +4525,8 @@ def VectorTranslateOptions(options=None, format=None,
         Geometry M coordinate resolution. Numeric value.
     setCoordPrecision : any
         Set to False to unset the geometry coordinate precision.
+    quiet: bool
+        Whether to suppress some warnings
     callback : any
         callback method
     callback_data : any
@@ -4435,6 +4715,8 @@ def VectorTranslateOptions(options=None, format=None,
             new_options += ['-mRes', str(mRes)]
         if setCoordPrecision is False:
             new_options += ["-unsetCoordPrecision"]
+        if quiet:
+            new_options += ["--quiet"]
 
     if callback is not None:
         new_options += ['-progress']
@@ -4470,13 +4752,14 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
+        srcDS = Open(srcDS, gdalconst.OF_VECTOR, allowed_drivers = allowed_drivers, open_options = open_options)
 
     if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALVectorTranslateDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -4735,13 +5018,14 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS)
+        srcDS = Open(srcDS, allowed_drivers = allowed_drivers, open_options = open_options)
 
     if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALNearblackDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -4882,13 +5166,14 @@ def Grid(destName, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
+        srcDS = Open(srcDS, gdalconst.OF_VECTOR, allowed_drivers = allowed_drivers, open_options = open_options)
 
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
@@ -5040,13 +5325,14 @@ def Contour(destNameOrDestDS, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = ContourOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS)
+        srcDS = Open(srcDS, allowed_drivers = allowed_drivers, open_options = open_options)
 
     if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALContourDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -5241,12 +5527,13 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS, gdalconst.OF_VECTOR)
+        srcDS = Open(srcDS, gdalconst.OF_VECTOR, allowed_drivers = allowed_drivers, open_options = open_options)
 
     if isinstance(destNameOrDestDS, (str, os.PathLike)):
         return wrapper_GDALRasterizeDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
@@ -5436,13 +5723,14 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
         kwargs = copy.copy(kwargs)
         kwargs["format"] = "GeoJSON"
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = FootprintOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
 
     if isinstance(srcDS, (str, os.PathLike)):
-        srcDS = OpenEx(srcDS, gdalconst.OF_RASTER)
+        srcDS = Open(srcDS, gdalconst.OF_RASTER, allowed_drivers = allowed_drivers, open_options = open_options)
 
     if inline_geojson_requested or wkt_requested:
         import uuid
@@ -5462,7 +5750,7 @@ def Footprint(destNameOrDestDS, srcDS, **kwargs):
                 return json.loads(data)
             else:
                 assert wkt_requested
-                ds = OpenEx(temp_filename)
+                ds = Open(temp_filename)
                 lyr = ds.GetLayer(0)
                 wkts = []
                 for f in lyr:
@@ -5949,6 +6237,7 @@ def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
 
     _WarnIfUserHasNotSpecifiedIfUsingExceptions()
 
+    allowed_drivers, open_options = _get_allowed_drivers_and_open_options(**kwargs)
     if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
         (opts, callback, callback_data) = MultiDimTranslateOptions(**kwargs)
     else:
@@ -5957,12 +6246,12 @@ def MultiDimTranslate(destName, srcDSOrSrcDSTab, **kwargs):
     import os
 
     if isinstance(srcDSOrSrcDSTab, (str, os.PathLike)):
-        srcDSTab = [OpenEx(srcDSOrSrcDSTab, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER)]
+        srcDSTab = [Open(srcDSOrSrcDSTab, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER, allowed_drivers = allowed_drivers, open_options = open_options)]
     elif isinstance(srcDSOrSrcDSTab, list):
         srcDSTab = []
         for elt in srcDSOrSrcDSTab:
             if isinstance(elt, str):
-                srcDSTab.append(OpenEx(elt, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER))
+                srcDSTab.append(Open(elt, OF_VERBOSE_ERROR | OF_RASTER | OF_MULTIDIM_RASTER, allowed_drivers = allowed_drivers, open_options = open_options))
             else:
                 srcDSTab.append(elt)
     else:
@@ -6034,7 +6323,7 @@ def config_options(options, thread_local=True):
             Dictionary of configuration options passed as key, value
        thread_local : bool, default=True
             Whether the configuration options should be only set on the current
-            thread.
+            thread. Note that GDAL_CACHEMAX cannot be set with thread_local=True.
 
        Returns
        -------
@@ -6051,15 +6340,28 @@ def config_options(options, thread_local=True):
     get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
 
+    if thread_local and "GDAL_CACHEMAX" in options:
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_options()")
+
     oldvals = {key: get_config_option(key) for key in options}
+    old_gdal_cache_max = GetCacheMax() if "GDAL_CACHEMAX" in options else None
 
     for key in options:
-        set_config_option(key, options[key])
+        val = options[key]
+        if key == "GDAL_CACHEMAX":
+            SetCacheMax(int(val))
+        else:
+            if val is None:
+                val = "__CPL_NULL_VALUE__"
+            set_config_option(key, val)
     try:
         yield
     finally:
         for key in options:
-            set_config_option(key, oldvals[key])
+            if key == "GDAL_CACHEMAX":
+                SetCacheMax(int(old_gdal_cache_max))
+            else:
+                set_config_option(key, oldvals[key])
 
 
 def config_option(key, value, thread_local=True):
@@ -6073,7 +6375,7 @@ def config_option(key, value, thread_local=True):
             Value of the configuration option
        thread_local : bool, default=True
             Whether the configuration option should be only set on the current
-            thread.
+            thread. Note that GDAL_CACHEMAX cannot be set with thread_local=True.
 
        Returns
        -------
@@ -6087,6 +6389,10 @@ def config_option(key, value, thread_local=True):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
        <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> >
     """
+
+    if thread_local and key == "GDAL_CACHEMAX":
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_option()")
+
     return config_options({key: value}, thread_local=thread_local)
 
 
@@ -6144,6 +6450,8 @@ def Run(*alg, arguments={}, progress=None, **kwargs):
        :py:meth:`osgeo.gdal.Algorithm.Finalize` will be called at the exit of the
        context manager.  An exception will be raised if the algorithm fails,
        even if :py:meth:`osgeo.gdal.UseExceptions()` has not been called.
+
+       This method must be called at most once per instance.
 
        Parameters
        ----------
@@ -6248,13 +6556,13 @@ def InterpolateAtPoint(self, *args, **kwargs):
        ----------
        pixel : float
        line : float
-       interpolation : str
+       interpolation : int
            Resampling algorithm to use. One of:
 
-           - ``nearest``
-           - ``bilinear``
-           - ``cubic``
-           - ``cubicspline``
+           - :py:const:`GRIORA_NearestNeighbour`
+           - :py:const:`GRIORA_Bilinear`
+           - :py:const:`GRIORA_Cubic`
+           - :py:const:`GRIORA_CubicSpline`
 
        Returns
        -------
@@ -6310,13 +6618,13 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
            taking into account the data-axis-to-crs-axis mapping
        srs : object
            :py:class:`osr.SpatialReference`. If set, override the natural CRS in which geolocX, geolocY are expressed
-       interpolation : str
+       interpolation : int
            Resampling algorithm to use. One of:
 
-           - ``nearest``
-           - ``bilinear``
-           - ``cubic``
-           - ``cubicspline``
+           - :py:const:`GRIORA_NearestNeighbour`
+           - :py:const:`GRIORA_Bilinear`
+           - :py:const:`GRIORA_Cubic`
+           - :py:const:`GRIORA_CubicSpline`
 
        Returns
        -------
@@ -6331,10 +6639,7 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
        >>> with gdal.Open("byte.tif") as ds:
        ...    wgs84_srs = osr.SpatialReference("WGS84")
        ...    wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-       ...    ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree, \
-                                                           latitude_degree, \
-                                                           wgs84_srs, \
-                                                           gdal.GRIORA_Bilinear)
+       ...    ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree, latitude_degree, wgs84_srs, gdal.GRIORA_Bilinear)
        135.62  # interpolated value, rtol: 1e-3
     """
 

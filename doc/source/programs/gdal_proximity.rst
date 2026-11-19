@@ -102,3 +102,8 @@ raster for which the raster pixel value is in the set of target pixel values.
 
     Specify a value to be applied to all pixels that are within the
     -maxdist of target pixels (including the target pixels) instead of a distance value.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

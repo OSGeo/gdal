@@ -514,7 +514,7 @@ void OGRCurveCollection::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurveCollection::IsEmpty() const
+bool OGRCurveCollection::IsEmpty() const
 {
     for (auto &&poSubGeom : *this)
     {
@@ -528,7 +528,7 @@ OGRBoolean OGRCurveCollection::IsEmpty() const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurveCollection::Equals(const OGRCurveCollection *poOCC) const
+bool OGRCurveCollection::Equals(const OGRCurveCollection *poOCC) const
 {
     if (getNumCurves() != poOCC->getNumCurves())
         return FALSE;
@@ -560,7 +560,7 @@ bool OGRCurveCollection::setCoordinateDimension(OGRGeometry *poGeom,
     return poGeom->OGRGeometry::setCoordinateDimension(nNewDimension);
 }
 
-bool OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
+bool OGRCurveCollection::set3D(OGRGeometry *poGeom, bool bIs3D)
 {
     for (auto &&poSubGeom : *this)
     {
@@ -571,8 +571,7 @@ bool OGRCurveCollection::set3D(OGRGeometry *poGeom, OGRBoolean bIs3D)
     return poGeom->OGRGeometry::set3D(bIs3D);
 }
 
-bool OGRCurveCollection::setMeasured(OGRGeometry *poGeom,
-                                     OGRBoolean bIsMeasured)
+bool OGRCurveCollection::setMeasured(OGRGeometry *poGeom, bool bIsMeasured)
 {
     for (auto &&poSubGeom : *this)
     {
@@ -720,7 +719,7 @@ void OGRCurveCollection::swapXY()
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
+bool OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
 {
     for (auto &&poSubGeom : *this)
     {

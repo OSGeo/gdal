@@ -61,7 +61,7 @@ class OGRXLSLayer final : public OGRLayer,
         return wkbNone;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRSpatialReference *GetSpatialRef() const override
     {

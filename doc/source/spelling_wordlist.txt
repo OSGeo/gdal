@@ -64,6 +64,7 @@ Analyse
 analysing
 Analysing
 analytics
+analyzed
 Andrey
 AndreyK
 anMapNewAxisToOldAxis
@@ -91,6 +92,7 @@ argv
 ari
 Arrayname
 arrayStartIdx
+artifacts
 ASC
 ascii
 aspatial
@@ -194,8 +196,10 @@ bCopy
 bDelete
 bDstToSrc
 bedrijven
+behavior
 behaviours
 Belge
+benchmarking
 Benchmarking
 Bergh
 bExactMatch
@@ -306,6 +310,7 @@ Cadcorp
 calc
 Calc
 calloc
+cancelled
 capi
 cardinality
 Cardinality
@@ -322,6 +327,8 @@ CCache
 ceil
 celldepth
 cellDepth
+center
+centered
 centerline
 Centos
 CentOS
@@ -368,6 +375,7 @@ ClassificationCode
 Clayers
 CleanTimeout
 clearerr
+cli
 CLI
 clib
 clipdst
@@ -411,8 +419,11 @@ Codewords
 Coeff
 Coefs
 colname
+color
+coloring
 colorinterp
 ColorInterpretation
+colorized
 colormap
 colormapped
 colorspace
@@ -508,6 +519,8 @@ CurvePolygon
 curvepolygons
 CurveToLine
 CustNo
+customize
+customized
 customly
 cutline
 cutlineDSName
@@ -525,6 +538,7 @@ danlittle
 dat
 DataArray
 dataAxisToSRSAxisMapping
+datacube
 DATADIR
 DataElement
 datafile
@@ -579,6 +593,7 @@ Decompressor
 decompressors
 decrementing
 decrypted
+deduplicate
 Deegree
 defacto
 define'ed
@@ -739,6 +754,8 @@ earthengine
 eas
 easting
 Easting
+eastings
+Eastings
 eBufDataType
 eBufType
 Eckert
@@ -816,6 +833,7 @@ eWorkingDataType
 eXchange
 exe
 executables
+exfiltration
 Exif
 explodeCollections
 eXploration
@@ -1158,6 +1176,7 @@ giga
 Gilad
 Gillingham
 GInt
+Girvin
 GIS
 gisinternals
 github
@@ -1195,6 +1214,7 @@ gpsbabel
 gpx
 gradians
 Grantor
+graticule
 graylevel
 grayscale
 Grayscale
@@ -1287,6 +1307,7 @@ hielev
 hifuel
 hiheight
 hillshade
+hillshaded
 hillshading
 hinorth
 hislope
@@ -1331,6 +1352,9 @@ hSrcBand
 hSrcDataset
 hSrcDS
 hST
+hsv
+HSV
+hsv-value
 hTarget
 hTargetEDT
 hThenBand
@@ -1487,6 +1511,7 @@ jpips
 jportiz
 jpp
 jpx
+jq
 jratike
 js
 json
@@ -1700,6 +1725,7 @@ lwf
 lyr
 macOS
 MacOS
+MacOSX
 magellan
 magnetics
 Mahamood
@@ -1730,6 +1756,9 @@ Maptech
 maptools
 Marek
 marshaller
+materialize
+materialized
+materializing
 Mateusz
 MateuszL
 MateuzL
@@ -1790,6 +1819,7 @@ Minidriver
 minidrivers
 Minidrivers
 Minières
+Miniforge
 minilanguage
 minimalistic
 minimising
@@ -1821,6 +1851,7 @@ modeKnown
 modelisation
 modelled
 modelling
+Modernization
 modis
 MOLA
 Mollweide
@@ -1852,6 +1883,7 @@ msmitherdc
 mssql
 mssqlspatial
 MSVC
+msys
 MSys
 mtime
 mtimeKnown
@@ -1886,6 +1918,7 @@ multiproc
 multiprocess
 multireadtest
 multirecords
+multiscales
 multispectral
 multistring
 multisurface
@@ -1978,6 +2011,7 @@ NearblackOptions
 neatline
 Neatline
 neatlines
+neighbors
 neighbour
 neighbourhood
 neighbouring
@@ -2039,9 +2073,10 @@ nn
 nNewSize
 nNumToRemove
 NOAA
-nodata
-noData
+NoData
 Nodata
+noData
+nodata
 NODATA
 NoDataFromMaskSource
 NoDataValue
@@ -2056,10 +2091,13 @@ noNativeData
 nOpenFlags
 nOptions
 norbit
+normalized
 normanb
 NormanB
 northing
 Northing
+northings
+Northings
 northup
 Northwood
 notnull
@@ -2115,7 +2153,6 @@ nullable
 Nullable
 NullFID
 nullptr
-nulptr
 num
 numaspects
 numbase
@@ -2225,11 +2262,13 @@ opj
 optfile
 optfiles
 optimise
+optimized
 Optionality
 orderByFields
 or'ed
 Organisation
 organisationName
+organization
 ORing
 ortho
 Ortho
@@ -2363,6 +2402,7 @@ parseable
 Parseable
 parsers
 Parsers
+partitioning
 pasGCPList
 pasMimePart
 Pasotti
@@ -2371,6 +2411,7 @@ pathname
 PAux
 pauxdataset
 pbCannotBeExactlyRepresented
+pbError
 pbf
 pbHasNoData
 pbHasNoDataValue
@@ -2402,6 +2443,7 @@ perl
 Petr
 pFct
 pfnCachePage
+pfnClearCaches
 pfnCopy
 pfnCopyFiles
 pfnCreate
@@ -2451,6 +2493,7 @@ pkgconfig
 pkid
 Placemark
 plaintext
+planView
 Plessis
 plmosaic
 plscenes
@@ -2483,6 +2526,7 @@ pnXSize
 pnYSize
 poCRS
 podaac
+Podman
 podofo
 PoDoFo
 poDS
@@ -2522,6 +2566,7 @@ positionName
 posix
 Posix
 posList
+poSR
 poSrcDS
 poSrcFDefn
 poSrcFeature
@@ -2550,6 +2595,7 @@ ppoReturn
 pppppppppppp
 pProgressArg
 ppszAreaName
+ppszData
 ppszDetailedFormat
 ppszDstText
 ppszFailureReason
@@ -2574,9 +2620,11 @@ precompiled
 precompute
 predefine
 predelete
+prefetch
 preinstalled
 preload
 premultiplication
+premultiplied
 Prepar
 preparse
 prepended
@@ -2714,6 +2762,7 @@ Pythonic
 pythonX
 pZ
 qGIS
+qgis
 qix
 qlr
 qml
@@ -2721,6 +2770,7 @@ qtcreator
 quadkey
 Quadrilateralized
 quadtree
+quantile
 Quantile
 quantizeCoordinates
 quantized
@@ -2759,6 +2809,7 @@ rbz
 rc
 rdb
 rdblib
+RDBMS
 rdc
 rdensty
 ReadAsArray
@@ -2810,6 +2861,7 @@ relaxedFieldNameMatch
 relink
 RemoveM
 renderer
+replayable
 repo
 reportings
 reportSrcColumn
@@ -2855,6 +2907,7 @@ rfc
 rgb
 RGB
 rgba
+RGBA
 rgdal
 rgx
 RHEL
@@ -2964,7 +3017,6 @@ setMeasured
 SetNonLinearGeometriesEnabledFlag
 setPoint
 setProperties
-severals
 sg
 sgillies
 sgrd
@@ -2977,6 +3029,7 @@ shapefiles
 Shapefiles
 shapelib
 Shapelib
+sharded
 shortname
 shortnames
 shp
@@ -2989,6 +3042,7 @@ sig
 Sightlines
 signedness
 Simmon
+Simularia
 sinc
 sizeBytes
 sizeKnown
@@ -3078,7 +3132,6 @@ Steinberg
 stepsize
 stereographic
 Stereographic
-Stereograpic
 Stigter
 sto
 storageCRS
@@ -3167,7 +3220,6 @@ subsettings
 substitutable
 substring
 subsubgroup
-subtelty
 subtiles
 subtree
 subtype
@@ -3197,7 +3249,6 @@ sxf
 sym
 symlinked
 syntaxes
-syntaxic
 sys
 sysconfdir
 Szekeres
@@ -3234,7 +3285,6 @@ thescale
 thf
 THH
 Thorne
-thorougful
 threadsafe
 threadsafety
 thresholding
@@ -3278,6 +3328,7 @@ tim
 timePosition
 timesheet
 timezones
+Timișoara
 TinZ
 tippecanoe
 tm
@@ -3294,6 +3345,7 @@ tokenizing
 tolower
 toml
 Toolchain
+toolchain
 toolchains
 toolkits
 toolset
@@ -3314,7 +3366,6 @@ tpkx
 tps
 trac
 Trac
-Traditonal
 transactional
 Transactional
 transcode
@@ -3362,6 +3413,7 @@ unary
 uncached
 uncalibrated
 unclamped
+unclosed
 uncoded
 uncomment
 Uncompress
@@ -3618,7 +3670,6 @@ worldfile
 worldfiles
 WriteArray
 WriteArrowBatch
-wwith
 www
 Wx
 xA

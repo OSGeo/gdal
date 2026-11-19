@@ -196,7 +196,7 @@ public:
  *
  * @return The width of the tile layer.
  */
-    uint32              GetXSize(void) const
+    inline uint32              GetXSize(void) const
     {
         return mpsTileLayer->nXSize;
     }
@@ -206,7 +206,7 @@ public:
  *
  * @return The height of the tile layer.
  */
-    uint32              GetYSize(void) const
+    inline uint32              GetYSize(void) const
     {
         return mpsTileLayer->nYSize;
     }
@@ -216,7 +216,7 @@ public:
  *
  * @return The width of a tile.
  */
-    uint32              GetTileXSize(void) const
+    inline uint32              GetTileXSize(void) const
     {
         return mpsTileLayer->nTileXSize;
     }
@@ -226,7 +226,7 @@ public:
  *
  * @return The height of a tile.
  */
-    uint32              GetTileYSize(void) const
+    inline uint32              GetTileYSize(void) const
     {
         return mpsTileLayer->nTileYSize;
     }

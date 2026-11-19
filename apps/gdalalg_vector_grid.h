@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_GRID_INCLUDED
 #define GDALALG_VECTOR_GRID_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 #include <limits>
 

@@ -35,7 +35,10 @@
 
 static inline bool OGRWKBNeedSwap(GByte b)
 {
-    return b != CPL_IS_LSB;
+    if constexpr (CPL_IS_LSB)
+        return b != 1;
+    else
+        return b != 0;
 }
 
 /************************************************************************/
@@ -1173,8 +1176,8 @@ static bool OGRWKBUpdatePoints(uint8_t *data, const size_t size,
         return true;
     }
 
-    const bool bHasZ = OGR_GT_HasZ(eGeometryType);
-    const bool bHasM = OGR_GT_HasM(eGeometryType);
+    const bool bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeometryType));
+    const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeometryType));
     const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
     if (eFlatType == wkbPoint)

@@ -40,15 +40,22 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
               .SetAddUpdateArgument(false)
               .SetAddUpsertArgument(false)
               .SetAddSkipErrorsArgument(false)
+              .SetOutputLayerNameAvailableInPipelineStep(true)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "contour";
 
-    AddProgressArg();
     if (standaloneStep)
     {
+        AddProgressArg();
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
     }
 
     // gdal_contour specific options
@@ -60,12 +67,14 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
     AddArg("max-name", 0, _("Name of the maximum elevation field"), &m_amax);
     AddArg("3d", 0, _("Force production of 3D vectors instead of 2D"), &m_3d);
 
-    AddArg("src-nodata", 0, _("Input pixel value to treat as 'nodata'"),
-           &m_sNodata);
+    AddArg("input-nodata", 0, _("Input pixel value to treat as 'nodata'"),
+           &m_sNodata)
+        .AddHiddenAlias("src-nodata");
     AddArg("interval", 0, _("Elevation interval between contours"), &m_interval)
         .SetMutualExclusionGroup("levels")
         .SetMinValueExcluded(0);
     AddArg("levels", 0, _("List of contour levels"), &m_levels)
+        .SetDuplicateValuesAllowed(false)
         .SetMutualExclusionGroup("levels");
     AddArg("exp-base", 'e', _("Base for exponential contour level generation"),
            &m_expBase)
@@ -264,7 +273,11 @@ bool GDALRasterContourAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             poDstDS->MarkSuppressOnClose();
             if (bRet)
                 bRet = poDstDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+            // For some unknown reason, unlinking the file on MacOSX
+            // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
             VSIUnlink(outputFilename.c_str());
+#endif
         }
         m_outputDataset.Set(std::unique_ptr<GDALDataset>(poDstDS));
     }

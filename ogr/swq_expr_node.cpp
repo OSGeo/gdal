@@ -75,10 +75,10 @@ swq_expr_node::swq_expr_node(const char *pszValueIn)
 }
 
 /************************************************************************/
-/*                     swq_expr_node(OGRGeometry *)                     */
+/*                  swq_expr_node(const OGRGeometry *)                  */
 /************************************************************************/
 
-swq_expr_node::swq_expr_node(OGRGeometry *poGeomIn)
+swq_expr_node::swq_expr_node(const OGRGeometry *poGeomIn)
     : field_type(SWQ_GEOMETRY), is_null(poGeomIn == nullptr),
       geometry_value(poGeomIn ? poGeomIn->clone() : nullptr)
 {
@@ -805,7 +805,7 @@ swq_expr_node *swq_expr_node::Clone()
 /************************************************************************/
 
 swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
-                                       void *pRecord,
+                                       const void *pRecord,
                                        const swq_evaluation_context &sContext)
 
 {
@@ -813,7 +813,7 @@ swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
 }
 
 swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
-                                       void *pRecord,
+                                       const void *pRecord,
                                        const swq_evaluation_context &sContext,
                                        int nRecLevel)
 

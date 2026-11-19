@@ -24,7 +24,9 @@ jobs:
     container: ubuntu:24.04
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
     - name: Setup environment
       shell: bash -l {0}
       env:
@@ -54,6 +56,8 @@ jobs:
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
             -DGDAL_ENABLE_DRIVER_GTI=ON \
+            -DGDAL_ENABLE_DRIVER_NITF=ON \
+            -DOGR_ENABLE_DRIVER_CSV=ON \
             -DOGR_ENABLE_DRIVER_GPKG=ON \
             -DOGR_ENABLE_DRIVER_OPENFILEGDB=ON
           cmake --build . -j$(nproc)
@@ -65,16 +69,6 @@ jobs:
           python3 --version
           sphinx-build --version
           python3 -m pip list --not-required --format=columns
-
-    - name: Lint .rst files
-      shell: bash -l {0}
-      run: |
-        if find . -name '*.rst' | xargs grep -P '\t'; then echo 'Tabs are bad, please use four spaces in .rst files.'; false; fi
-        if find . -name '*.rst' | xargs grep "\.\.versionadded"; then echo 'Wrong annotation. Should be .. versionadded'; false; fi
-        if find . -name '*.rst' | xargs grep "\.\.note"; then echo 'Wrong annotation. Should be .. note'; false; fi
-        if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
-        if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
-      working-directory: ./doc
 
     - name: Doxygen
       shell: bash -l {0}
@@ -108,7 +102,7 @@ jobs:
       working-directory: build
 
     - name: Upload man pages
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: manpages
         path: build/doc/build/man/
@@ -124,7 +118,7 @@ jobs:
       working-directory: build
 
     - name: Upload PDF
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: gdal.pdf
         path: build/doc/build/latex/gdal.pdf

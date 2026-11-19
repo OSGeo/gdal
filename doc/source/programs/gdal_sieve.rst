@@ -43,3 +43,8 @@ Additional details on the algorithm are available in the :cpp:func:`GDALSieveFil
 
     See :ref:`gdal_raster_sieve`.
 
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

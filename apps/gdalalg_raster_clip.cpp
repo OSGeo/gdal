@@ -87,6 +87,8 @@ GDALRasterClipAlgorithm::GDALRasterClipAlgorithm(bool standaloneStep)
     AddArg("allow-bbox-outside-source", 0,
            _("Allow clipping box to include pixels outside input dataset"),
            &m_allowExtentOutsideSource);
+    // Note: this would be a use case for multiple exclusion groups because it is not
+    //       compatible with "window"
     AddArg("add-alpha", 0,
            _("Adds an alpha mask band to the destination when the source "
              "raster have none."),
@@ -116,6 +118,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         CPLStringList aosOptions;
         aosOptions.AddString("-of");
         aosOptions.AddString("VRT");
+        aosOptions.AddString("--invoked-from-gdal-algorithm");
 
         aosOptions.AddString("-srcwin");
         aosOptions.AddString(CPLSPrintf("%d", m_window[0]));
@@ -155,7 +158,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             "Clipping is not supported on a raster without a geotransform");
         return false;
     }
-    if (gt[2] != 0 && gt[4] != 0)
+    if (!gt.IsAxisAligned())
     {
         ReportError(CE_Failure, CPLE_NotSupported,
                     "Clipping is not supported on a raster whose geotransform "
@@ -183,6 +186,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLStringList aosOptions;
     aosOptions.AddString("-of");
     aosOptions.AddString("VRT");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
 
     OGREnvelope env;
     poClipGeom->getEnvelope(&env);
@@ -194,15 +198,15 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         poClipGeom = std::move(poPoly);
     }
 
-    const bool bBottomUpRaster = gt[5] > 0;
+    const bool bBottomUpRaster = gt.yscale > 0;
 
     if (poClipGeom->IsRectangle() && !m_addAlpha && !bBottomUpRaster)
     {
         aosOptions.AddString("-projwin");
-        aosOptions.AddString(CPLSPrintf("%.17g", env.MinX));
-        aosOptions.AddString(CPLSPrintf("%.17g", env.MaxY));
-        aosOptions.AddString(CPLSPrintf("%.17g", env.MaxX));
-        aosOptions.AddString(CPLSPrintf("%.17g", env.MinY));
+        aosOptions.AddString(env.MinX);
+        aosOptions.AddString(env.MaxY);
+        aosOptions.AddString(env.MaxX);
+        aosOptions.AddString(env.MinY);
 
         auto poClipGeomSRS = poClipGeom->getSpatialReference();
         if (poClipGeomSRS)
@@ -244,8 +248,8 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         if (bBottomUpRaster)
         {
-            gt[3] += gt[5] * poSrcDS->GetRasterYSize();
-            gt[5] = -gt[5];
+            gt.yorig += gt.yscale * poSrcDS->GetRasterYSize();
+            gt.yscale = -gt.yscale;
         }
 
         {
@@ -289,25 +293,29 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
         constexpr double REL_EPS_PIXEL = 1e-3;
         const double dfMinX =
-            gt[0] + floor((env.MinX - gt[0]) / gt[1] + REL_EPS_PIXEL) * gt[1];
+            gt.xorig +
+            floor((env.MinX - gt.xorig) / gt.xscale + REL_EPS_PIXEL) *
+                gt.xscale;
         const double dfMinY =
-            gt[3] + ceil((env.MinY - gt[3]) / gt[5] - REL_EPS_PIXEL) * gt[5];
+            gt.yorig +
+            ceil((env.MinY - gt.yorig) / gt.yscale - REL_EPS_PIXEL) * gt.yscale;
         const double dfMaxX =
-            gt[0] + ceil((env.MaxX - gt[0]) / gt[1] - REL_EPS_PIXEL) * gt[1];
+            gt.xorig +
+            ceil((env.MaxX - gt.xorig) / gt.xscale - REL_EPS_PIXEL) * gt.xscale;
         const double dfMaxY =
-            gt[3] + floor((env.MaxY - gt[3]) / gt[5] + REL_EPS_PIXEL) * gt[5];
+            gt.yorig +
+            floor((env.MaxY - gt.yorig) / gt.yscale + REL_EPS_PIXEL) *
+                gt.yscale;
 
         aosOptions.AddString("-te");
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", bBottomUpRaster ? dfMaxY : dfMinY));
-        aosOptions.AddString(CPLSPrintf("%.17g", dfMaxX));
-        aosOptions.AddString(
-            CPLSPrintf("%.17g", bBottomUpRaster ? dfMinY : dfMaxY));
+        aosOptions.AddString(dfMinX);
+        aosOptions.AddString(bBottomUpRaster ? dfMaxY : dfMinY);
+        aosOptions.AddString(dfMaxX);
+        aosOptions.AddString(bBottomUpRaster ? dfMinY : dfMaxY);
 
         aosOptions.AddString("-tr");
-        aosOptions.AddString(CPLSPrintf("%.17g", gt[1]));
-        aosOptions.AddString(CPLSPrintf("%.17g", std::fabs(gt[5])));
+        aosOptions.AddString(gt.xscale);
+        aosOptions.AddString(std::fabs(gt.yscale));
 
         GDALWarpAppOptions *psOptions =
             GDALWarpAppOptionsNew(aosOptions.List(), nullptr);

@@ -119,9 +119,9 @@ class Layer(BaseLayer):
         for i in range(ogr_f.GetGeomFieldCount()):
             g = ogr_f.GetGeomFieldRef(i)
             if g:
-                geom_fields[
-                    layer_defn.GetGeomFieldDefn(i).GetName()
-                ] = g.ExportToIsoWkb()
+                geom_fields[layer_defn.GetGeomFieldDefn(i).GetName()] = (
+                    g.ExportToIsoWkb()
+                )
         return {
             "id": ogr_f.GetFID(),
             "type": "OGRFeature",

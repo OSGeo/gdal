@@ -194,14 +194,14 @@ struct Float16
             if (iMantissa == 0)
             {
                 // Positive or negative infinity.
-                return static_cast<std::int16_t>((iSign << 15) | 0x7C00);
+                return static_cast<std::uint16_t>((iSign << 15) | 0x7C00);
             }
 
             // NaN -- preserve sign and significand bits.
             if (iMantissa >> 13)
-                return static_cast<std::int16_t>((iSign << 15) | 0x7C00 |
-                                                 (iMantissa >> 13));
-            return static_cast<std::int16_t>((iSign << 15) | 0x7E00);
+                return static_cast<std::uint16_t>((iSign << 15) | 0x7C00 |
+                                                  (iMantissa >> 13));
+            return static_cast<std::uint16_t>((iSign << 15) | 0x7E00);
         }
 
         if (iExponent <= 127 - 15)
@@ -209,18 +209,18 @@ struct Float16
             // Zero, float32 denormalized number or float32 too small normalized
             // number
             if (13 + 1 + 127 - 15 - iExponent >= 32)
-                return static_cast<std::int16_t>(iSign << 15);
+                return static_cast<std::uint16_t>(iSign << 15);
 
             // Return a denormalized number
-            return static_cast<std::int16_t>(
+            return static_cast<std::uint16_t>(
                 (iSign << 15) |
                 ((iMantissa | 0x00800000) >> (13 + 1 + 127 - 15 - iExponent)));
         }
 
         if (iExponent - (127 - 15) >= 31)
         {
-            return static_cast<std::int16_t>((iSign << 15) |
-                                             0x7C00);  // Infinity
+            return static_cast<std::uint16_t>((iSign << 15) |
+                                              0x7C00);  // Infinity
         }
 
         // Normalized number.
@@ -229,8 +229,8 @@ struct Float16
 
         // Assemble sign, exponent and mantissa.
         // coverity[overflow_sink]
-        return static_cast<std::int16_t>((iSign << 15) | (iExponent << 10) |
-                                         iMantissa);
+        return static_cast<std::uint16_t>((iSign << 15) | (iExponent << 10) |
+                                          iMantissa);
     }
 
     // Copied from cpl_float.cpp so that we can inline for performance

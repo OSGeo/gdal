@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+
 using OSGeo.GDAL;
 
 namespace testapp

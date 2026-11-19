@@ -208,28 +208,31 @@ The following configuration options are available:
 Examples
 --------
 
-Accessing data from a public table:
+.. example::
+   :title: Accessing data from a public table
 
-.. code-block::
+   .. code-block:: bash
+   
+       ogrinfo -ro "Carto:gdalautotest2 tables=tm_world_borders_simpl_0_3"
 
-    ogrinfo -ro "Carto:gdalautotest2 tables=tm_world_borders_simpl_0_3"
+.. example::
+   :title: Creating and populating a table from a shapefile
 
-Creating and populating a table from a shapefile:
+   .. code-block:: bash
+   
+       ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" myshapefile.shp
 
-.. code-block::
+.. example::
+   :title: Creating and populating a table from a CSV containing geometries on EPSG:4326
 
-    ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" myshapefile.shp
-
-Creating and populating a table from a CSV containing geometries on EPSG:4326:
-
-.. code-block::
-
-    ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" file.csv -a_srs 4326 -nlt GEOMETRY
-
-.. note::
-
-    The ``-a_srs`` and ``-nlt`` must be provided to CARTODBFY
-    since the information isn't extracted from the CSV.
+   .. code-block:: bash
+   
+       ogr2ogr --config CARTO_API_KEY abcdefghijklmnopqrstuvw -f Carto "Carto:myaccount" file.csv -a_srs 4326 -nlt GEOMETRY
+   
+   .. note::
+   
+       The ``-a_srs`` and ``-nlt`` must be provided to CARTODBFY
+       since the information isn't extracted from the CSV.
 
 See Also
 --------

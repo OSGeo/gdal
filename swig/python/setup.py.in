@@ -33,13 +33,13 @@ if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
     if os.environ['CXX'].strip().startswith('ccache ') and os.environ['CXX'].strip()[len('ccache '):].find(' ') < 0:
         os.environ['CXX'] = os.environ['CXX'].strip()[len('ccache '):]
     else:
-        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CXX'])
+        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible with setuptools' % os.environ['CXX'])
         del os.environ['CXX']
 if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
     if os.environ['CC'].strip().startswith('ccache ') and os.environ['CC'].strip()[len('ccache '):].find(' ') < 0:
         os.environ['CC'] = os.environ['CC'].strip()[len('ccache '):]
     else:
-        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools' % os.environ['CC'])
+        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible with setuptools' % os.environ['CC'])
         del os.environ['CC']
 
 # ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ if is_standalone_build:
     include_dirs = []
     library_dirs = []
 else:
-    include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
+    include_dirs = ['@PROJECT_BINARY_DIR@/port', '@PROJECT_SOURCE_DIR@/port', '@PROJECT_BINARY_DIR@/gcore', '@PROJECT_SOURCE_DIR@/gcore',  '@PROJECT_SOURCE_DIR@/gcore/multidim', '@PROJECT_SOURCE_DIR@/alg', '@PROJECT_SOURCE_DIR@/ogr/', '@PROJECT_SOURCE_DIR@/ogr/ogrsf_frmts', '@PROJECT_SOURCE_DIR@/gnm', '@PROJECT_SOURCE_DIR@/apps']
     library_dirs = [@GDAL_LIB_DIR@]
 libraries = ['@GDAL_LIB_OUTPUT_NAME@']
 
@@ -280,6 +280,11 @@ class gdal_ext(build_ext):
             for ext in self.extensions:
                 ext.extra_compile_args += os.environ["GDAL_PYTHON_CXXFLAGS"].split(" ")
 
+        # workaround for https://github.com/pypa/distutils/issues/439
+        # initialize compiler here, before worker threads start
+        if ct == 'msvc' and not self.compiler.initialized:
+            self.compiler.initialize()
+
         build_ext.build_extensions(self)
 
     def finalize_options(self):
@@ -364,34 +369,34 @@ extra_compile_args = []
 
 gdal_module = Extension('osgeo._gdal',
                         sources=['extensions/gdal_wrap.cpp'],
-                        extra_compile_args=extra_compile_args,
-                        extra_link_args=extra_link_args)
+                        extra_compile_args=list(extra_compile_args),
+                        extra_link_args=list(extra_link_args))
 
 gdalconst_module = Extension('osgeo._gdalconst',
                              sources=['extensions/gdalconst_wrap.c'],
-                             extra_compile_args=extra_compile_args,
-                             extra_link_args=extra_link_args)
+                             extra_compile_args=list(extra_compile_args),
+                             extra_link_args=list(extra_link_args))
 
 osr_module = Extension('osgeo._osr',
                        sources=['extensions/osr_wrap.cpp'],
-                       extra_compile_args=extra_compile_args,
-                       extra_link_args=extra_link_args)
+                       extra_compile_args=list(extra_compile_args),
+                       extra_link_args=list(extra_link_args))
 
 ogr_module = Extension('osgeo._ogr',
                        sources=['extensions/ogr_wrap.cpp'],
-                       extra_compile_args=extra_compile_args,
-                       extra_link_args=extra_link_args)
+                       extra_compile_args=list(extra_compile_args),
+                       extra_link_args=list(extra_link_args))
 
 
 array_module = Extension('osgeo._gdal_array',
                          sources=['extensions/gdal_array_wrap.cpp'],
-                         extra_compile_args=extra_compile_args,
-                         extra_link_args=extra_link_args)
+                         extra_compile_args=list(extra_compile_args),
+                         extra_link_args=list(extra_link_args))
 
 gnm_module = Extension('osgeo._gnm',
                        sources=['extensions/gnm_wrap.cpp'],
-                       extra_compile_args=extra_compile_args,
-                       extra_link_args=extra_link_args)
+                       extra_compile_args=list(extra_compile_args),
+                       extra_link_args=list(extra_link_args))
 
 ext_modules = [gdal_module,
                gdalconst_module,

@@ -269,7 +269,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
 #ifdef OSM_DEBUG
     FILE *f = fopen("keys.txt", "wt");
-    for (int i = 1; i < startic_cast<int>(asKeys.size()); i++)
+    for (int i = 1; i < static_cast<int>(asKeys.size()); i++)
     {
         KeyDesc *psKD = asKeys[i];
         if (psKD)
@@ -4249,7 +4249,7 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGROSMDataSource::TestCapability(const char *pszCap) const
+bool OGROSMDataSource::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, ODsCRandomLayerRead);
 }
@@ -4321,7 +4321,7 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
         return poFeatureDefn;
     }
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

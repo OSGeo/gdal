@@ -1,5 +1,7 @@
 .. _gdal_vector_convert:
 
+.. program:: gdal_vector_convert
+
 ================================================================================
 ``gdal vector convert``
 ================================================================================
@@ -34,9 +36,11 @@ Standard Options
 
     .. include:: gdal_options/if.rst
 
-    .. include:: gdal_options/input_layer.rst
+    .. include:: gdal_options/input_layer_no_active_layer.rst
 
     .. include:: gdal_options/lco.rst
+
+    .. include:: gdal_options/no_create_empty_layers.rst
 
     .. include:: gdal_options/oo.rst
 
@@ -55,6 +59,13 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+    .. include:: gdal_options/quiet.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

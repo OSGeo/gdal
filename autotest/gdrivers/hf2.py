@@ -32,14 +32,14 @@ def test_hf2_1():
 # Test CreateCopy() of byte.tif with options
 
 
-def test_hf2_2():
+def test_hf2_2(tmp_path):
 
     tst = gdaltest.GDALTest(
         "HF2", "byte.tif", 1, 4672, options=["COMPRESS=YES", "BLOCKSIZE=10"]
     )
-    tst.testCreateCopy(new_filename="tmp/hf2_2.hfz")
+    tst.testCreateCopy(new_filename=str(tmp_path / "hf2_2.hfz"))
     try:
-        os.remove("tmp/hf2_2.hfz.properties")
+        os.remove(str(tmp_path / "hf2_2.hfz.properties"))
     except OSError:
         pass
 
@@ -48,9 +48,9 @@ def test_hf2_2():
 # Test CreateCopy() of float.img
 
 
-def test_hf2_3():
+def test_hf2_3(tmp_path):
 
-    tst = gdaltest.GDALTest("HF2", "hfa/float.img", 1, 23529)
+    tst = gdaltest.GDALTest("HF2", "hfa/float.img", 1, 23529, tmpdir=tmp_path)
     tst.testCreateCopy(check_minmax=0)
 
 
@@ -58,9 +58,9 @@ def test_hf2_3():
 # Test CreateCopy() of n43.dt0
 
 
-def test_hf2_4():
+def test_hf2_4(tmp_path):
 
-    tst = gdaltest.GDALTest("HF2", "n43.dt0", 1, 49187)
+    tst = gdaltest.GDALTest("HF2", "n43.dt0", 1, 49187, tmpdir=tmp_path)
     tst.testCreateCopy()
 
 

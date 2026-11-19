@@ -141,11 +141,11 @@ def test_gdalalg_raster_empty_color_map(tmp_vsimem, output_format):
 
 
 def test_gdalalg_raster_color_map_in_pipeline(tmp_vsimem):
-    """Test fix for https://github.com/OSGeo/gdal/issues/13740"""
+    """Test fix for https://github.com/OSGeo/gdal/issues/13740 and also test for current GMT .cpt format"""
 
     with gdal.alg.raster.pipeline(
         input="../gcore/data/byte.tif",
-        pipeline="read ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! color-map   --color-map data/color_file.txt ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! write",
+        pipeline="read ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! color-map   --color-map data/color_file_new.cpt ! clip --bbox 440720.000,3750120.000,441920.000,3751320.000 ! write",
         output_format="MEM",
     ) as alg:
-        assert alg.Output().GetRasterBand(1).Checksum() == 4688
+        assert alg.Output().GetRasterBand(1).Checksum() == 4920

@@ -10405,6 +10405,33 @@ public class SpatialReference:public double[] GetTOWGS84()
 public class SpatialReference:public int GetTOWGS84(double[] argout)
 
 /**
+ * Try to identify a match between this SRS and a related SRS in a catalog.
+ * <p> 
+ * Matching may be partial, or may fail. Returned entries will be sorted by
+ * decreasing match confidence (first entry has the highest match confidence).
+ * <p>
+ * The exact way matching is done may change in future versions. 
+ * Starting with GDAL 3.0, it relies on PROJ' proj_identify() function.
+ * <p>
+ * The confidence_values array structure will contain output values.  The
+ * outer dimension of the array is the 'box', and the method will allocated
+ * the inner dimension to contain the array of confidence values.
+ * <p>
+ * Typical usage:
+<pre><code>
+    int[][] confidence = new int[1][];
+    SpatialReference[] matches = srs.FindMatches(null, confidence);
+    int[] confidenceValues = confidence[0];
+</code></pre>	
+ * @param options a vector of options or null
+ * @param confidence_values a box to contain an output array, one for each matching SpatialReference,
+ * whose values between 0 and 100 indicate the confidence in the match. 100 is the highest confidence level.
+ *
+ * @return an array, possibly empty, of SpatialReferences that match this reference.
+ */
+public class SpatialReference:public org.gdal.osr.SpatialReference[] FindMatches(java.util.Vector options, int[][] confidence_values)
+
+/**
  * Initialize SRS based on EPSG GCS or PCS code.
  * <p>
  * This method will initialize the spatial reference based on the
@@ -11636,6 +11663,44 @@ public class CoordinateTransformation:public int TransformPointWithErrorCode(dou
  * @since GDAL 3.3 and PROJ 8
  */
 public class CoordinateTransformation:public int[] TransformPointsWithErrorCodes(double[][] pointArray)
+
+/**
+ * Inverse transformation object.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetInverse
+ *
+ * @return a copy of the inverse transformation or NULL on error
+ *
+ * @since GDAL 3.4
+ */
+public class CoordinateTransformation:public CoordinateTransformation GetInverse()
+
+/**
+ * Transformation's source coordinate system reference.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetSourceCS
+ *
+ * @return a copy of the transformation's source coordinate system or NULL if not
+ * present.
+ *
+ * @since GDAL 3.4
+ */
+ public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetSource()
+
+/**
+ * Transformation's target coordinate system reference.
+ *
+ * This is the same as the C++ function
+ * OGRCreateCoordinateTransformation::GetTargetCS
+ *
+ * @return a copy of the transformation's target coordinate system or NULL if not
+ * present.
+ *
+ * @since GDAL 3.4
+ */
+ public class CoordinateTransformation:public class CoordinateTransformation:public SpatialReference GetTarget()
 
 
 /**

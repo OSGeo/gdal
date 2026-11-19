@@ -3813,7 +3813,8 @@ void GDALGeoPackageRasterBand::LoadBandMetadata()
                                 oLocalMDMD.GetMetadata(*papszIter));
                             papszMD = CSLMerge(
                                 papszMD,
-                                GDALGPKGMBTilesLikeRasterBand::GetMetadata(""));
+                                l_poBand->GDALGPKGMBTilesLikeRasterBand::
+                                    GetMetadata(""));
                             l_poBand->GDALPamRasterBand::SetMetadata(papszMD);
                             CSLDestroy(papszMD);
                         }

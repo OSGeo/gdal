@@ -59,6 +59,7 @@ set(CPL_SOURCES
     cpl_hash_set.cpp
     cplgetcurrentthreadcount.cpp
     cplkeywordparser.cpp
+    cpl_nasa_earthdata.cpp
     cpl_recode.cpp
     cpl_recode_stub.cpp
     cpl_quad_tree.cpp
@@ -174,6 +175,9 @@ if (HAVE_SSSE3_AT_COMPILE_TIME)
 endif ()
 if (HAVE_AVX_AT_COMPILE_TIME)
   target_compile_definitions(cpl PRIVATE -DHAVE_AVX_AT_COMPILE_TIME)
+endif ()
+if (HAVE_AVX2_AT_COMPILE_TIME)
+  target_compile_definitions(cpl PRIVATE -DHAVE_AVX2_AT_COMPILE_TIME)
 endif ()
 
 if (NOT WIN32 AND CMAKE_DL_LIBS)

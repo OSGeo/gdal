@@ -18,6 +18,7 @@ This driver also supports geometry columns using the GeoParquet specification.
 
 The GeoParquet 1.0.0 specification is supported since GDAL 3.8.0.
 The GeoParquet 1.1.0 specification is supported since GDAL 3.9.0.
+The GeoParquet 2.0.0 specification is supported since GDAL 3.14.0.
 
 Driver capabilities
 -------------------
@@ -74,6 +75,14 @@ Layer creation options
 
 |about-layer-creation-options|
 The following layer creation options are supported:
+
+- .. lco:: GEOPARQUET_VERSION
+     :choices: 1.1, 2.0
+     :default: 1.1
+     :since: 3.14
+
+      GeoParquet specification version. Defaults to 1.1.
+      2.0 can be selected for GDAL built against libarrow >= 21.
 
 - .. lco:: COMPRESSION
      :choices: NONE, UNCOMPRESSED, SNAPPY, GZIP, BROTLI, ZSTD, LZ4_RAW, LZ4_HADOOP
@@ -159,7 +168,8 @@ The following layer creation options are supported:
      necessary for the GeoArrow geometry encoding than for the default WKB, as
      implementations may be able to directly use the geometry columns.
 
-     If the :lco:`USE_PARQUET_GEO_TYPES` layer creation option is set to ``ONLY``,
+     If the :lco:`GEOPARQUET_VERSION` layer creation option is set to ``2.0`` or
+     :lco:`USE_PARQUET_GEO_TYPES` is set to ``ONLY``,
      and :lco:`WRITE_COVERING_BBOX` is set or let to its default ``AUTO`` value,
      no covering bounding box columns is written.
 
@@ -171,8 +181,8 @@ The following layer creation options are supported:
      If not set, it defaults to the geometry column name, suffixed with ``_bbox``.
 
 - .. lco:: USE_PARQUET_GEO_TYPES
-     :choices: YES, NO, ONLY
-     :default: NO
+     :choices: AUTO, YES, NO, ONLY
+     :default: AUTO
      :since: 3.12
 
      Only available with libarrow >= 21.
@@ -180,13 +190,17 @@ The following layer creation options are supported:
      Whether to use Parquet Geometry/Geography logical types (introduced in libarrow 21),
      when using the default GEOMETRY_ENCODING=WKB encoding.
 
+     - ``AUTO`` (added in GDAL 3.14): Evaluates to ``YES`` when :lco:`GEOPARQUET_VERSION`
+       is set to ``2.0``, otherwise evaluates to ``NO``.
+
      - ``YES``: use the Geometry logical type (or the Geography
        one if the EDGES=SPHERICAL creation option is also set), and also
        write file-level GeoParquet metadata. Such files can be read by older
        GDAL, but require libarrow >= 20.
 
-     - ``NO`` (default): only file-level GeoParquet metadata is written. Such
-       files can be read by older GDAL and libarrow versions.
+     - ``NO``: only file-level GeoParquet metadata is written. Such
+       files can be read by older GDAL and libarrow versions. Incompatible with
+       :lco:`GEOPARQUET_VERSION` set to ``2.0``.
 
      - ``ONLY``: use the Geometry logical type (or the Geography
        one if the EDGES=SPHERICAL creation option is also set), but do not

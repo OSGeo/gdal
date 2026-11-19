@@ -84,34 +84,35 @@ VRTRasterBand::~VRTRasterBand() = default;
 /*      interpretation from the provided source band.                   */
 /************************************************************************/
 
-CPLErr VRTRasterBand::CopyCommonInfoFrom(GDALRasterBand *poSrcBand)
+CPLErr VRTRasterBand::CopyCommonInfoFrom(const GDALRasterBand *poSrcBand)
 
 {
-    SetMetadata(poSrcBand->GetMetadata());
-    const char *pszNBits =
-        poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
-    SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+    auto poSrcBandNonConst = const_cast<GDALRasterBand *>(poSrcBand);
+    SetMetadata(poSrcBandNonConst->GetMetadata());
+    const char *pszNBits = poSrcBandNonConst->GetMetadataItem(
+        GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_NBITS, pszNBits, GDAL_MDD_IMAGE_STRUCTURE);
     if (poSrcBand->GetRasterDataType() == GDT_UInt8)
     {
-        poSrcBand->EnablePixelTypeSignedByteWarning(false);
-        const char *pszPixelType =
-            poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
-        poSrcBand->EnablePixelTypeSignedByteWarning(true);
-        SetMetadataItem("PIXELTYPE", pszPixelType, "IMAGE_STRUCTURE");
+        poSrcBandNonConst->EnablePixelTypeSignedByteWarning(false);
+        const char *pszPixelType = poSrcBandNonConst->GetMetadataItem(
+            "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
+        poSrcBandNonConst->EnablePixelTypeSignedByteWarning(true);
+        SetMetadataItem("PIXELTYPE", pszPixelType, GDAL_MDD_IMAGE_STRUCTURE);
     }
-    SetColorTable(poSrcBand->GetColorTable());
-    SetColorInterpretation(poSrcBand->GetColorInterpretation());
+    SetColorTable(poSrcBandNonConst->GetColorTable());
+    SetColorInterpretation(poSrcBandNonConst->GetColorInterpretation());
     if (strlen(poSrcBand->GetDescription()) > 0)
         SetDescription(poSrcBand->GetDescription());
 
-    GDALCopyNoDataValue(this, poSrcBand);
-    SetOffset(poSrcBand->GetOffset());
-    SetScale(poSrcBand->GetScale());
-    SetCategoryNames(poSrcBand->GetCategoryNames());
-    if (!EQUAL(poSrcBand->GetUnitType(), ""))
-        SetUnitType(poSrcBand->GetUnitType());
+    GDALCopyNoDataValue(this, poSrcBandNonConst);
+    SetOffset(poSrcBandNonConst->GetOffset());
+    SetScale(poSrcBandNonConst->GetScale());
+    SetCategoryNames(poSrcBandNonConst->GetCategoryNames());
+    if (!EQUAL(poSrcBandNonConst->GetUnitType(), ""))
+        SetUnitType(poSrcBandNonConst->GetUnitType());
 
-    GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
+    GDALRasterAttributeTable *poRAT = poSrcBandNonConst->GetDefaultRAT();
     if (poRAT != nullptr &&
         static_cast<GIntBig>(poRAT->GetColumnCount()) * poRAT->GetRowCount() <
             1024 * 1024)
@@ -296,11 +297,21 @@ VRTParseColorTable(const CPLXMLNode *psColorTable)
             continue;
         }
 
-        const GDALColorEntry sCEntry = {
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c1", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c2", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c3", "0"))),
-            static_cast<short>(atoi(CPLGetXMLValue(psEntry, "c4", "255")))};
+        auto c1 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c1", "0"));
+        auto c2 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c2", "0"));
+        auto c3 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c3", "0"));
+        auto c4 = cpl::strict_parse<short>(CPLGetXMLValue(psEntry, "c4", "0"));
+
+        if (!c1.has_value() || !c2.has_value() || !c3.has_value() ||
+            !c4.has_value())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid VRT color table entry");
+            return nullptr;
+        }
+
+        const GDALColorEntry sCEntry = {c1.value(), c2.value(), c3.value(),
+                                        c4.value()};
 
         poColorTable->SetColorEntry(iEntry++, &sCEntry);
     }
@@ -435,6 +446,8 @@ CPLErr VRTRasterBand::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
         auto poColorTable = VRTParseColorTable(psColorTable);
         if (poColorTable)
             SetColorTable(poColorTable.get());
+        else
+            return CE_Failure;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1336,7 +1349,9 @@ int VRTRasterBand::GetOverviewCount()
         return static_cast<int>(m_aoOverviewInfos.size());
 
     // If not found, external .ovr overviews
-    const int nOverviewCount = GDALRasterBand::GetOverviewCount();
+    const int nOverviewCount = poVRTDS->GetDescription()[0] == '\0'
+                                   ? 0
+                                   : GDALRasterBand::GetOverviewCount();
     if (nOverviewCount)
         return nOverviewCount;
 
@@ -1363,6 +1378,22 @@ int VRTRasterBand::GetOverviewCount()
     }
     if (!poVRTDS->m_apoOverviews.empty() && poVRTDS->m_apoOverviews[0])
         return static_cast<int>(poVRTDS->m_apoOverviews.size());
+
+    // Deal with external .ovr with a per-dataset mask band
+    if (poVRTDS->m_poMaskBand.get() == this)
+    {
+        auto poFirstBand = poVRTDS->GetRasterBand(1);
+        const int nOvrCountFirstBand = poFirstBand->GetOverviewCount();
+        int nCount = 0;
+        for (int i = 0; i < nOvrCountFirstBand; ++i)
+        {
+            if (poFirstBand->GetOverview(i)->GetMaskFlags() == GMF_PER_DATASET)
+            {
+                ++nCount;
+            }
+        }
+        return nCount;
+    }
 
     return 0;
 }
@@ -1430,6 +1461,24 @@ GDALRasterBand *VRTRasterBand::GetOverview(int iOverview)
         if (m_bIsMaskBand)
             return poOvrBand->GetMaskBand();
         return poOvrBand;
+    }
+
+    // Deal with external .ovr with a per-dataset mask band
+    if (poVRTDS->m_poMaskBand.get() == this)
+    {
+        auto poFirstBand = poVRTDS->GetRasterBand(1);
+        const int nOvrCountFirstBand = poFirstBand->GetOverviewCount();
+        int nCount = 0;
+        for (int i = 0; i < nOvrCountFirstBand; ++i)
+        {
+            auto poOvrBand = poFirstBand->GetOverview(i);
+            if (poOvrBand->GetMaskFlags() == GMF_PER_DATASET)
+            {
+                if (iOverview == nCount)
+                    return poOvrBand->GetMaskBand();
+                ++nCount;
+            }
+        }
     }
 
     return nullptr;

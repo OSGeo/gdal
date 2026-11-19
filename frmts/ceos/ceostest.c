@@ -20,7 +20,7 @@ int main(int nArgc, char **papszArgv)
 
 {
     const char *pszFilename;
-    FILE *fp;
+    VSILFILE *fp;
     CEOSRecord *psRecord;
     int nPosition = 0;
 
@@ -29,22 +29,22 @@ int main(int nArgc, char **papszArgv)
     else
         pszFilename = "imag_01.dat";
 
-    fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    CEOSImage *psCEOS = CEOSOpen(pszFilename, "rb");
+    if (psCEOS == NULL)
     {
         fprintf(stderr, "Can't open %s at all.\n", pszFilename);
         exit(1);
     }
 
-    while (!VSIFEofL(fp) && (psRecord = CEOSReadRecord(fp)) != NULL)
+    while ((psRecord = CEOSReadRecord(psCEOS)) != NULL)
     {
         printf("%9d:%4d:%8x:%d\n", nPosition, psRecord->nRecordNum,
                psRecord->nRecordType, psRecord->nLength);
         CEOSDestroyRecord(psRecord);
 
-        nPosition = (int)VSIFTellL(fp);
+        nPosition = (int)VSIFTellL(psCEOS->fpImage);
     }
-    VSIFCloseL(fp);
+    CEOSClose(psCEOS);
 
     exit(0);
 }

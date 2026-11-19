@@ -175,7 +175,7 @@ void OGRJSONCollectionStreamingParser::EndObject()
             m_abFirstMember.pop_back();
             m_osJson += "}";
             m_nTotalOGRFeatureMemEstimate +=
-                m_osJson.size() + strlen("application/vnd.geo+json");
+                m_osJson.size() + strlen("application/geo+json");
         }
 
         json_object *poObjTypeObj =

@@ -40,7 +40,7 @@ def test_gdalwarp_1(gdalwarp_path, tmp_path):
 
     dst_tif = str(tmp_path / "testgdalwarp1.tif")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif}"
     )
     assert err is None or err == "", "got error/warning"
@@ -412,7 +412,7 @@ def test_gdalwarp_18(gdalwarp_path, tmp_path):
 
     dst_tif = str(tmp_path / "testgdalwarp18.tif")
 
-    (_, ret_stderr) = gdaltest.runexternal_out_and_err(
+    _, ret_stderr = gdaltest.runexternal_out_and_err(
         f"{gdalwarp_path} -wm 20MB -multi ../gcore/data/byte.tif {dst_tif}"
     )
 
@@ -822,7 +822,7 @@ def test_gdalwarp_31(gdalwarp_path, tmp_path):
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -t_srs EPSG:4326"
     )
 
@@ -830,7 +830,7 @@ def test_gdalwarp_31(gdalwarp_path, tmp_path):
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    (_, err2) = gdaltest.runexternal_out_and_err(
+    _, err2 = gdaltest.runexternal_out_and_err(
         f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -t_srs EPSG:4326 -overwrite"
     )
 
@@ -1260,8 +1260,7 @@ def test_gdalwarp_41(gdalwarp_path, tmp_path):
             -10010.510510510510358,
         ]
     )
-    src_ds.SetProjection(
-        """PROJCS["WGS_1984_Stereographic_South_Pole",
+    src_ds.SetProjection("""PROJCS["WGS_1984_Stereographic_South_Pole",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -1277,8 +1276,7 @@ def test_gdalwarp_41(gdalwarp_path, tmp_path):
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]]]"""
-    )
+        AUTHORITY["EPSG","9001"]]]""")
     src_ds.GetRasterBand(1).Fill(255)
     src_ds = None
 

@@ -67,7 +67,7 @@ bool OGRADBCBigQueryLayer::GetBigQueryDatasetAndTableId(
 
 void OGRADBCBigQueryLayer::BuildLayerDefn()
 {
-    if (!BuildLayerDefnInit())
+    if (!BuildLayerDefnInit(true))
         return;
 
     std::map<std::string, std::unique_ptr<OGRSpatialReference>> oMapGeomColumns;
@@ -289,7 +289,7 @@ GIntBig OGRADBCBigQueryLayer::GetFeatureCount(int /*bForce*/)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRADBCBigQueryLayer::TestCapability(const char *pszCap) const
+bool OGRADBCBigQueryLayer::TestCapability(const char *pszCap) const
 {
     if (!m_poAdapterLayer)
         const_cast<OGRADBCBigQueryLayer *>(this)->BuildLayerDefn();

@@ -112,6 +112,11 @@ More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
 
 Bands should be in the same projection.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Example
 -------
 

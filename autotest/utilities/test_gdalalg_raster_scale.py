@@ -68,8 +68,11 @@ def test_gdalalg_raster_scale_srcmin_srcmax_only():
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (85, 170)
 
+    assert out_ds.GetRasterBand(1).GetScale() == 3 / 255
+    assert out_ds.GetRasterBand(1).GetOffset() is None
 
-def test_gdalalg_raster_scale_dstcmin_dstmax_only():
+
+def test_gdalalg_raster_scale_dstmin_dstmax_only():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 2)
     src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02")
@@ -84,6 +87,9 @@ def test_gdalalg_raster_scale_dstcmin_dstmax_only():
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 3)
 
+    assert out_ds.GetRasterBand(1).GetScale() == 1 / 3
+    assert out_ds.GetRasterBand(1).GetOffset() == 1
+
 
 def test_gdalalg_raster_scale_missing_srcmin():
 
@@ -94,8 +100,11 @@ def test_gdalalg_raster_scale_missing_srcmin():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["src-max"] = 0
-    with pytest.raises(Exception, match="scale: src-min must be specified"):
+    alg["output-max"] = 0
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'output-max' require\(s\) that the following argument\(s\) are also specified: output-min.",
+    ):
         alg.Run()
 
 
@@ -109,7 +118,10 @@ def test_gdalalg_raster_scale_missing_srcmax():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["src-min"] = 0
-    with pytest.raises(Exception, match="scale: src-max must be specified"):
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'input-min' require\(s\) that the following argument\(s\) are also specified: input-max.",
+    ):
         alg.Run()
 
 
@@ -122,8 +134,11 @@ def test_gdalalg_raster_scale_missing_dstmin():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dst-max"] = 0
-    with pytest.raises(Exception, match="scale: dst-min must be specified"):
+    alg["output-max"] = 0
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'output-max' require\(s\) that the following argument\(s\) are also specified: output-min.",
+    ):
         alg.Run()
 
 
@@ -136,12 +151,15 @@ def test_gdalalg_raster_scale_missing_dstmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dst-min"] = 0
-    with pytest.raises(Exception, match="scale: dst-max must be specified"):
+    alg["output-min"] = 0
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'output-min' require\(s\) that the following argument\(s\) are also specified: output-max.",
+    ):
         alg.Run()
 
 
-def test_gdalalg_raster_scale_srcmin_srcmax_destmin_dstmax():
+def test_gdalalg_raster_scale_srcmin_srcmax_dstmin_dstmax():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 2)
     src_ds.GetRasterBand(1).Fill(15)
@@ -151,14 +169,20 @@ def test_gdalalg_raster_scale_srcmin_srcmax_destmin_dstmax():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["src-min"] = 10
-    alg["src-max"] = 20
-    alg["dst-min"] = 100
-    alg["dst-max"] = 200
+    alg["input-min"] = 10
+    alg["input-max"] = 20
+    alg["output-min"] = 100
+    alg["output-max"] = 200
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (150, 150)
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (100, 100)
+
+    assert out_ds.GetRasterBand(1).GetScale() == 1 / 10
+    assert out_ds.GetRasterBand(1).GetOffset() is None
+
+    assert out_ds.GetRasterBand(2).GetScale() == 1 / 10
+    assert out_ds.GetRasterBand(2).GetOffset() is None
 
 
 def test_gdalalg_raster_scale_band():
@@ -181,6 +205,12 @@ def test_gdalalg_raster_scale_band():
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (150, 150)
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (10, 10)
 
+    assert out_ds.GetRasterBand(1).GetScale() == 1 / 10
+    assert out_ds.GetRasterBand(1).GetOffset() is None
+
+    assert out_ds.GetRasterBand(2).GetScale() is None
+    assert out_ds.GetRasterBand(2).GetOffset() is None
+
 
 def test_gdalalg_raster_exponent():
 
@@ -201,6 +231,12 @@ def test_gdalalg_raster_exponent():
     out_ds = alg["output"].GetDataset()
     assert out_ds.GetRasterBand(1).ComputeRasterMinMax() == (135, 135)
     assert out_ds.GetRasterBand(2).ComputeRasterMinMax() == (125, 125)
+
+    assert out_ds.GetRasterBand(1).GetScale() is None
+    assert out_ds.GetRasterBand(1).GetOffset() is None
+
+    assert out_ds.GetRasterBand(2).GetScale() is None
+    assert out_ds.GetRasterBand(2).GetOffset() is None
 
 
 def test_gdalalg_raster_band_exponent_datatype():
@@ -250,6 +286,9 @@ def test_gdalalg_raster_scale_clip():
         200,
     )
 
+    assert out_ds.GetRasterBand(1).GetScale() == 1 / 50
+    assert out_ds.GetRasterBand(1).GetOffset() == -1
+
 
 def test_gdalalg_raster_scale_no_clip():
 
@@ -274,6 +313,9 @@ def test_gdalalg_raster_scale_no_clip():
         200,
         250,
     )
+
+    assert out_ds.GetRasterBand(1).GetScale() == 1 / 50
+    assert out_ds.GetRasterBand(1).GetOffset() == -1
 
 
 def test_gdalalg_raster_scale_no_clip_exponent():
@@ -300,3 +342,6 @@ def test_gdalalg_raster_scale_no_clip_exponent():
         200,
         255,
     )
+
+    assert out_ds.GetRasterBand(1).GetScale() is None
+    assert out_ds.GetRasterBand(1).GetOffset() is None

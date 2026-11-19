@@ -155,7 +155,8 @@ TEST_F(test_ms_polygon, dummy)
     std::vector<double> data = {2.0};
     TestPolygonWriter w;
     {
-        PolygonRingAppender<TestPolygonWriter> appender(w);
+        PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                        100);
         IntervalLevelRangeIterator levels(
             0.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
@@ -219,7 +220,8 @@ TEST_F(test_ms_polygon, four_pixels)
     std::vector<double> data = {5.0, 10.0, 10.0, 5.0};
     TestPolygonWriter w;
     {
-        PolygonRingAppender<TestPolygonWriter> appender(w);
+        PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                        100);
         IntervalLevelRangeIterator levels(
             0.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
@@ -290,7 +292,8 @@ TEST_F(test_ms_polygon, four_pixels_2)
     {
         TestPolygonWriter w;
         {
-            PolygonRingAppender<TestPolygonWriter> appender(w);
+            PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                            100);
             const double levels[] = {155.0};
             FixedLevelRangeIterator levelGenerator(
                 levels, 1, -std::numeric_limits<double>::infinity(),
@@ -328,7 +331,8 @@ TEST_F(test_ms_polygon, four_pixels_2)
     {
         TestPolygonWriter w;
         {
-            PolygonRingAppender<TestPolygonWriter> appender(w);
+            PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                            100);
             const double levels[] = {155.0};
             FixedLevelRangeIterator levelGenerator(
                 levels, 1, -std::numeric_limits<double>::infinity(),
@@ -428,7 +432,8 @@ TEST_F(test_ms_polygon, nine_pixels)
     std::vector<double> data = {0.0, 4.0, 0.0, 4.0, 12.0, 4.0, 0.0, 4.0, 0.0};
     TestPolygonWriter w;
     {
-        PolygonRingAppender<TestPolygonWriter> appender(w);
+        PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                        100);
         IntervalLevelRangeIterator levels(
             1.0, 10.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<PolygonRingAppender<TestPolygonWriter>,
@@ -481,7 +486,8 @@ TEST_F(test_ms_polygon, three_nested_rings)
                                 4, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 2};
     TestPolygonWriter w;
     {
-        PolygonRingAppender<TestPolygonWriter> appender(w);
+        PolygonRingAppender<TestPolygonWriter> appender(w, -100, -100, 100,
+                                                        100);
         IntervalLevelRangeIterator levels(
             1.0, 2.0, -std::numeric_limits<double>::infinity());
         SegmentMerger<PolygonRingAppender<TestPolygonWriter>,

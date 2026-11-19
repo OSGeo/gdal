@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
@@ -312,7 +316,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                 }
 
                 poDS->GDALDataset::SetMetadata(aosSubDSList.List(),
-                                               "SUBDATASETS");
+                                               GDAL_MDD_SUBDATASETS);
 
                 // Setup/check for pam .aux.xml.
                 poDS->SetDescription(osFilename.c_str());
@@ -557,19 +561,20 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
                 "SUBDATASET_1_NAME",
                 CPLSPrintf("S102:\"%s\":BathymetryCoverage",
                            osFilename.c_str()),
-                "SUBDATASETS");
-            poDS->GDALDataset::SetMetadataItem(
-                "SUBDATASET_1_DESC", "Bathymetric gridded data", "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
+            poDS->GDALDataset::SetMetadataItem("SUBDATASET_1_DESC",
+                                               "Bathymetric gridded data",
+                                               GDAL_MDD_SUBDATASETS);
 
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_2_NAME",
                 CPLSPrintf("S102:\"%s\":%s", osFilename.c_str(),
                            pszNameOfQualityGroup),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
             poDS->GDALDataset::SetMetadataItem(
                 "SUBDATASET_2_DESC",
                 CPLSPrintf("Georeferenced metadata %s", pszNameOfQualityGroup),
-                "SUBDATASETS");
+                GDAL_MDD_SUBDATASETS);
         }
     }
 
@@ -658,7 +663,9 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
     {
         const auto &oType = poValuesArray->GetDataType();
         if (oType.GetClass() == GEDTC_NUMERIC &&
-            oType.GetNumericDataType() == GDT_UInt32)
+            (oType.GetNumericDataType() == GDT_UInt32 ||
+             // Also accept Int32 as in /vsizip//vsicurl/https://services.data.shom.fr/static/jeux_test/S-102_FR.zip/S100_ROOT/S-102/DATASET_FILES/102FR0014581G013000/102FR0014581G013000.H5
+             oType.GetNumericDataType() == GDT_Int32))
         {
             // ok
         }
@@ -850,8 +857,8 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
     const GDALRasterAttributeTable *poRAT = nullptr;
     if (!pszQualityDataset && !bAppendSubdataset)
     {
-        const char *pszSubDSName =
-            m_poSrcDS->GetMetadataItem("SUBDATASET_2_NAME", "SUBDATASETS");
+        const char *pszSubDSName = m_poSrcDS->GetMetadataItem(
+            "SUBDATASET_2_NAME", GDAL_MDD_SUBDATASETS);
         if (pszSubDSName &&
             cpl::starts_with(std::string_view(pszSubDSName), "S102:") &&
             cpl::ends_with(std::string_view(pszSubDSName),
@@ -1651,7 +1658,7 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<float> afValues(static_cast<size_t>(nBlockYSize) * nBlockXSize *
                                 nComponents);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinDepth = std::numeric_limits<float>::infinity();
     float fMaxDepth = -std::numeric_limits<float>::infinity();
@@ -1705,7 +1712,8 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
 
             if (bRet)
             {
-                for (int i = 0; i < nReqCountY * nReqCountX; i++)
+                for (size_t i = 0;
+                     i < static_cast<size_t>(nReqCountY) * nReqCountX; i++)
                 {
                     {
                         float fVal = afValues[i * nComponents];
@@ -1854,7 +1862,7 @@ bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<uint32_t> anValues(static_cast<size_t>(nBlockYSize) *
                                    nBlockXSize);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     int bHasSrcNoData = FALSE;
     const double dfSrcNoData =

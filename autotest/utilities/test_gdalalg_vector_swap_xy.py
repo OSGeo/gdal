@@ -43,9 +43,7 @@ def test_gdalalg_vector_swap_xy():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
-    assert (
-        out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "32631"
-    )
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef() is None
     assert out_lyr.GetFeatureCount() == 2
@@ -57,3 +55,28 @@ def test_gdalalg_vector_swap_xy():
     assert out_lyr.GetExtent() == (2, 2, 1, 1)
     assert out_lyr.GetFeature(0).GetFID() == 0
     assert out_lyr.GetFeature(-1) is None
+
+
+def test_gdalalg_vector_swap_xy_active_geometry_extent():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer")
+    src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom2"))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    f.SetGeomField(1, ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    src_lyr.CreateFeature(f)
+
+    alg = get_alg()
+    alg["input"] = src_ds
+    alg["output"] = ""
+    alg["output-format"] = "stream"
+    alg["active-geometry"] = "geom2"
+
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    out_lyr = out_ds.GetLayer(0)
+    assert out_lyr.GetExtent(geom_field=0) == (1, 1, 2, 2)
+    assert out_lyr.GetExtent(geom_field=1) == (4, 4, 3, 3)

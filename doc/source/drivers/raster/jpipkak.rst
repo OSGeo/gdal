@@ -43,14 +43,14 @@ are made at the 1:1 resolution level.
    that can be used to identify the image on the server and a JPIP-cnew
    response header which includes the path to the JPIP server which will
    handle all future requests and a cid session identifier. A session is
-   required so that that the server can model the state of the client
+   required so that the server can model the state of the client
    connection, only sending the data that is required.
 #. Client requests particular view windows on the target image with a
    maximum response length and includes the session identifier
    established in the previous communication. 'fsiz' is used to identify
    the resolution associated with the requested view-window. The values
    'fx' and 'fy' specify the dimensions of the desired image resolution.
-   'roff' is used to identify the upper left hand corner off the spatial
+   'roff' is used to identify the upper left hand corner of the spatial
    region associated with the requested view-window. 'rsiz' is used to
    identify the horizontal and vertical extents of the spatial region
    associated with the requested view-window.
@@ -216,7 +216,7 @@ been made to the GDAL HTTP portability library to support this.
    The region passed into this function is passed by reference, and the
    caller can read this region when the result returns to find the
    region that has been decompressed. The image data is packed into the
-   buffer, e.g. RGB if the region requested has 3 components.
+   buffer, e.g., RGB if the region requested has 3 components.
 
 #. GDALUnlockBuffer
 

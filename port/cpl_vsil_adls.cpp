@@ -449,7 +449,7 @@ bool VSIDIRADLS::AnalysePathList(const std::string &osBaseURL,
             prop.eExists = EXIST_YES;
             prop.bHasComputedFileSize = true;
             prop.fileSize = entry->nSize;
-            prop.bIsDirectory = CPL_TO_BOOL(VSI_ISDIR(entry->nMode));
+            prop.bIsDirectory = VSI_ISDIR(entry->nMode);
             prop.nMode = entry->nMode;
             prop.mTime = static_cast<time_t>(entry->nMTime);
             prop.ETag = std::move(ETag);
@@ -614,7 +614,7 @@ bool VSIDIRADLS::IssueListDir()
     const CPLStringList aosHTTPOptions(
         CPLHTTPGetOptionsFromEnv(osFilename.c_str()));
 
-    struct curl_slist *headers = VSICurlSetOptions(
+    struct curl_slist *headers = m_poFS->SetOptions(
         hCurlHandle, poHandleHelper->GetURL().c_str(), aosHTTPOptions.List());
     headers = poHandleHelper->GetCurlHeaders("GET", headers);
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -829,8 +829,8 @@ int VSIADLSFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
         poHandleHelper->AddQueryParameter("resource", "filesystem");
 
         struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+            SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                       aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -928,8 +928,8 @@ char **VSIADLSFSHandler::GetFileMetadata(const char *pszFilename,
                                                         : "getAccessControl");
 
         struct curl_slist *headers =
-            VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
-                              aosHTTPOptions.List());
+            SetOptions(hCurlHandle, poHandleHelper->GetURL().c_str(),
+                       aosHTTPOptions.List());
 
         headers = poHandleHelper->GetCurlHeaders("HEAD", headers);
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1101,7 +1101,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
                 }
                 else
                 {
-                    CPLDebug(GetDebugKey(), "Ignorizing metadata item %s",
+                    CPLDebug(GetDebugKey(), "Ignoring metadata item %s",
                              *papszIter);
                 }
             }
@@ -1294,7 +1294,7 @@ int VSIADLSFSHandler::Rename(const char *oldpath, const char *newpath,
     VSIStatBufL sStat;
     if (VSIStatL(oldpath, &sStat) != 0)
     {
-        CPLDebug(GetDebugKey(), "%s is not a object", oldpath);
+        CPLDebug(GetDebugKey(), "%s is not an object", oldpath);
         errno = ENOENT;
         return -1;
     }
@@ -2029,20 +2029,7 @@ char **VSIADLSFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 
 const char *VSIADLSFSHandler::GetOptions()
 {
-    static std::string osOptions(
-        std::string("<Options>") +
-        "  <Option name='AZURE_STORAGE_CONNECTION_STRING' type='string' "
-        "description='Connection string that contains account name and "
-        "secret key'/>"
-        "  <Option name='AZURE_STORAGE_ACCOUNT' type='string' "
-        "description='Storage account. To use with AZURE_STORAGE_ACCESS_KEY'/>"
-        "  <Option name='AZURE_STORAGE_ACCESS_KEY' type='string' "
-        "description='Secret key'/>"
-        "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
-        "description='Size in MB for chunks of files that are uploaded' "
-        "default='4' min='1' max='4'/>" +
-        VSICurlFilesystemHandlerBase::GetOptionsStatic() + "</Options>");
-    return osOptions.c_str();
+    return VSIAzureBlobHandleHelper::GetOptions();
 }
 
 /************************************************************************/

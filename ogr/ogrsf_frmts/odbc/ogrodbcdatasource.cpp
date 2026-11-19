@@ -419,7 +419,7 @@ int OGRODBCDataSource::Open(GDALOpenInfo *poOpenInfo)
 
                 if (pszSRText)
                 {
-                    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(new OGRSpatialReference());
+                    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
                     poSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);
                     if (poSRS->importFromWkt(pszSRText) == OGRERR_NONE )
@@ -473,7 +473,7 @@ int OGRODBCDataSource::OpenTable(const char *pszNewName, const char *pszGeomCol)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCDataSource::TestCapability(const char *) const
+bool OGRODBCDataSource::TestCapability(const char *) const
 {
     return FALSE;
 }

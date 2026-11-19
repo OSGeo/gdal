@@ -746,7 +746,7 @@ OGRFeature *OGRPDSLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSLayer::TestCapability(const char *pszCap) const
+bool OGRPDSLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_poFilterGeom == nullptr &&
@@ -785,7 +785,9 @@ OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
         return nullptr;
 
     nNextFID = (int)nFID;
-    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
+    VSIFSeekL(fpPDS,
+              nStartBytes + static_cast<uint64_t>(nNextFID) * nRecordSize,
+              SEEK_SET);
     return GetNextRawFeature();
 }
 
@@ -805,7 +807,9 @@ OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
     }
 
     nNextFID = (int)nIndex;
-    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
+    VSIFSeekL(fpPDS,
+              nStartBytes + static_cast<uint64_t>(nNextFID) * nRecordSize,
+              SEEK_SET);
     return OGRERR_NONE;
 }
 

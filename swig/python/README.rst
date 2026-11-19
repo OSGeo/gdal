@@ -31,7 +31,7 @@ special about gdal.)
 
  * SWIG (4 or greater).
 
- * libgdal (3.12.0 or greater).
+ * libgdal (3.13.0 or greater).
 
  * numpy (1.0.0 or greater).  This is not force-required by the build,
    but many examples and utilities will not work without it.  At least
@@ -128,7 +128,7 @@ Potential issues with GDAL >= 3.9, Python >= 3.9 and NumPy 2.0 (pip)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The pyproject.toml file of GDAL 3.9 requires numpy >= 2.0.0rc1 (for Python >= 3.9)
-at build time to be able to build bindings that are compatible of both NumPy 1
+at build time to be able to build bindings that are compatible with both NumPy 1
 and NumPy 2.
 If for some reason the numpy >= 2.0.0rc1 build dependency can not be installed,
 it is possible to manually install the build requirements, and invoke ``pip install``

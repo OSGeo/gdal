@@ -10,6 +10,11 @@ include(CheckCXXCompilerFlag)
 set(GDAL_C_WARNING_FLAGS)
 set(GDAL_CXX_WARNING_FLAGS)
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(PUSH)
+  cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+endif()
+
 if (MSVC)
   # 1. conditional expression is constant
   # 2. 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
@@ -32,7 +37,9 @@ if (MSVC)
       /wd4245
       /wd4206
       /wd4351
-      /wd4611)
+      /wd4611
+      /w44800   # Enable Implicit conversion from 'type' to bool.
+  )
   set(GDAL_CXX_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS})
   add_compile_options(/EHsc /Zc:__cplusplus)
 
@@ -170,6 +177,11 @@ else ()
     endif ()
   endif ()
 
+  check_c_compiler_flag(-fsanitize-ignorelist=${PROJECT_SOURCE_DIR}/cmake/helpers/ubsan_ignore_list.txt HAVE_SANITIZE_IGNORE_LIST)
+  if (HAVE_SANITIZE_IGNORE_LIST)
+      add_compile_options(-fsanitize-ignorelist=${PROJECT_SOURCE_DIR}/cmake/helpers/ubsan_ignore_list.txt)
+  endif()
+
 endif ()
 
 add_compile_definitions($<$<CONFIG:DEBUG>:DEBUG>)
@@ -246,3 +258,7 @@ if (MINGW)
     add_compile_options(-Os)
   endif ()
 endif ()
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(POP)
+endif()

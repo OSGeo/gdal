@@ -491,8 +491,10 @@ def test_gdal_alg_module(tmp_vsimem):
        filename: str
            File or directory name
        output_format: Optional[str]=None
+           Aliases: format
            Output format
        long_listing: Optional[bool]=None
+           Aliases: long
            Use a long listing format
        recursive: Optional[bool]=None
            List subdirectories recursively
@@ -519,3 +521,175 @@ def test_gdal_alg_module(tmp_vsimem):
     gdal.reregister_gdal_alg()
 
     assert gdal.alg.vsi.list(filename=tmp_vsimem).Output() == ["a"]
+
+    with pytest.raises(
+        Exception, match="'i-do-not-exist' is not a valid argument of 'list'"
+    ):
+        gdal.alg.vsi.list(filename="foo", i_do_not_exist=True)
+
+
+###############################################################################
+# Test gdal algorithm with mutual dependencies between arguments
+
+
+def test_algorithm_mutual_dependencies(tmp_path):
+
+    reg = gdal.GetGlobalAlgorithmRegistry()
+
+    # Check no deps
+    alg = reg["raster"]["info"]
+    # We should really return an empty list here but SWIG CSLToList typemap returns PyNone
+    assert alg.GetArgDependencies("input") is None
+    assert alg.GetArg("input").GetMutualDependencyGroup() == ""
+    assert alg.GetArg("input").GetDirectDependencies() is None
+
+    alg = reg["raster"]["create"]
+
+    assert alg.GetArg("copy-metadata").GetDirectDependencies() == ["input"]
+    assert alg.GetArg("copy-overviews").GetDirectDependencies() == ["input"]
+    assert alg.GetArgDependencies("copy-metadata") == ["input"]
+    assert alg.GetArgDependencies("copy-overviews") == ["input"]
+
+    usage = json.loads(alg.GetUsageAsJSON())
+    copy_md = [a for a in usage["input_arguments"] if a["name"] == "copy-metadata"][0]
+    assert copy_md["depends_on"] == ["input"]
+
+    copy_ov = [a for a in usage["input_arguments"] if a["name"] == "copy-overviews"][0]
+    assert copy_ov["depends_on"] == ["input"]
+
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["copy-metadata"] = True
+
+    with pytest.raises(
+        RuntimeError,
+        match=" Argument 'copy-metadata' depends on argument 'input' that has not been specified.",
+    ):
+        alg.Run()
+
+    alg = reg["raster"]["create"]
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["copy-overviews"] = True
+
+    with pytest.raises(
+        RuntimeError,
+        match=" Argument 'copy-overviews' depends on argument 'input' that has not been specified.",
+    ):
+        alg.Run()
+
+
+def test_algorithm_mutual_dependency_group(tmp_path):
+
+    reg = gdal.GetGlobalAlgorithmRegistry()
+
+    # Check mutual dependency group
+    alg = reg["raster"]["scale"]
+
+    usage = json.loads(alg.GetUsageAsJSON())
+    src_min = [a for a in usage["input_arguments"] if a["name"] == "input-min"][0]
+    src_max = [a for a in usage["input_arguments"] if a["name"] == "input-max"][0]
+    dst_min = [a for a in usage["input_arguments"] if a["name"] == "output-min"][0]
+    dst_max = [a for a in usage["input_arguments"] if a["name"] == "output-max"][0]
+
+    assert src_min["mutual_dependency_group"] == "input-max-min"
+    assert src_max["mutual_dependency_group"] == "input-max-min"
+    assert dst_min["mutual_dependency_group"] == "output-max-min"
+    assert dst_max["mutual_dependency_group"] == "output-max-min"
+
+    src_min_arg = alg.GetArg("input-min")
+    src_max_arg = alg.GetArg("input-max")
+    dst_min_arg = alg.GetArg("output-min")
+    dst_max_arg = alg.GetArg("output-max")
+
+    assert src_min_arg.GetMutualDependencyGroup() == "input-max-min"
+    assert src_max_arg.GetMutualDependencyGroup() == "input-max-min"
+    assert dst_min_arg.GetMutualDependencyGroup() == "output-max-min"
+    assert dst_max_arg.GetMutualDependencyGroup() == "output-max-min"
+
+    assert src_min["depends_on"] == ["input-max"]
+    assert src_max["depends_on"] == ["input-min"]
+    assert dst_min["depends_on"] == ["output-max"]
+    assert dst_max["depends_on"] == ["output-min"]
+
+    # This does not include mutual dependencies
+    assert src_min_arg.GetDirectDependencies() is None
+    assert src_max_arg.GetDirectDependencies() is None
+    assert dst_min_arg.GetDirectDependencies() is None
+    assert dst_max_arg.GetDirectDependencies() is None
+
+    # This includes both direct and mutual dependencies
+    assert alg.GetArgDependencies("input-max") == ["input-min"]
+    assert alg.GetArgDependencies("input-min") == ["input-max"]
+    assert alg.GetArgDependencies("output-min") == ["output-max"]
+    assert alg.GetArgDependencies("output-max") == ["output-min"]
+
+    alg["input-min"] = 1
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["input"] = "data/byte.tif"
+    with pytest.raises(
+        RuntimeError,
+        match=r"Argument\(s\) 'input-min' require\(s\) that the following argument\(s\) are also specified: input-max.",
+    ):
+        alg.Run()
+
+    alg = reg["raster"]["scale"]
+    alg["input-max"] = 10
+    alg["input"] = "data/byte.tif"
+    alg["output"] = str(tmp_path / "out.tif")
+    with pytest.raises(
+        RuntimeError,
+        match=r"Argument\(s\) 'input-max' require\(s\) that the following argument\(s\) are also specified: input-min.",
+    ):
+        alg.Run()
+
+
+def test_gdalalgorithm_check_quiet():
+
+    def check(alg):
+        print(alg.GetName())
+        subalgs = alg.GetSubAlgorithmNames()
+        if subalgs:
+            for subalgname in subalgs:
+                subalg = alg[subalgname]
+                check(subalg)
+        else:
+            assert alg.GetArg("quiet"), alg.GetName()
+
+    check(gdal.GetGlobalAlgorithmRegistry()["gdal"])
+
+
+###############################################################################
+# check that we don't accidentally introduce new argument names that are
+# similar to existing ones
+
+
+def test_gdalalgorithm_arg_names():
+
+    arg_names = {}
+
+    def collect_arg_names(alg, name_root=""):
+        alg_name = f"{name_root} {alg.GetName()}" if name_root else alg.GetName()
+
+        usage = json.loads(alg.GetUsageAsJSON())
+
+        for arg in usage["input_arguments"] + usage["output_arguments"]:
+            if arg["name"] not in arg_names:
+                arg_names[arg["name"]] = []
+            arg_names[arg["name"]].append(alg_name)
+
+        if alg.HasSubAlgorithms():
+            for subalg in alg.GetSubAlgorithmNames():
+                collect_arg_names(alg[subalg], alg_name)
+
+    root = gdal.GetGlobalAlgorithmRegistry()["gdal"]
+    collect_arg_names(root)
+
+    with open("reference_arg_names.txt") as argfile:
+        expected_arg_names = set([arg.strip() for arg in argfile])
+
+    errors = []
+
+    for arg_name, algorithms in arg_names.items():
+        if arg_name not in expected_arg_names:
+            errors.append(f"--{arg_name} (used by {', '.join(algorithms)})")
+
+    assert errors == []

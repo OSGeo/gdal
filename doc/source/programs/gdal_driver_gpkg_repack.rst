@@ -23,6 +23,11 @@ Description
 Runs the ``VACUUM`` SQLite3 operation on a GeoPackage dataset to recover
 lost space due to updates or deletions.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

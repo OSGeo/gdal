@@ -1,5 +1,7 @@
 .. _gdal_mdim_mosaic:
 
+.. program:: gdal_mdim_mosaic
+
 ================================================================================
 ``gdal mdim mosaic``
 ================================================================================
@@ -28,7 +30,7 @@ or in a more conventional multidimensional format such as :ref:`raster.netcdf` o
 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
 names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
-Alternatively if a input dataset name is prefixed by the `@` character, it will
+Alternatively if an input dataset name is prefixed by the `@` character, it will
 be assumed to contain the list of actual dataset names (one per line) to use
 as input datasets.
 
@@ -64,6 +66,8 @@ Different typical use cases that can be addressed by this program are:
 
 By default, a target array is created for each array with two or more dimensions.
 This behavior can be restricted to specific arrays using the :option:`--array` option.
+
+Starting with GDAL 3.14, :program:`gdal mdim mosaic` can be used as a step of a :ref:`gdal_mdim_pipeline`.
 
 The following options are available:
 
@@ -122,11 +126,16 @@ Advanced options
 
 .. include:: gdal_options/if.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
-   :title: Mosaic together several all netCDF files starting with ``slice`` that are slices of a 3D array
+   :title: Mosaic together all netCDF files starting with ``slice`` that are slices of a 3D array
 
    .. code-block:: bash
 

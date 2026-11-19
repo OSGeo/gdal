@@ -262,8 +262,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual const OGRSpatialReference *GetSpatialRef() const;
 
     /** Return type of OGRLayer::GetSupportedSRSList() */
-    typedef std::vector<
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
+    typedef std::vector<OGRSpatialReferenceRefCountedPtr>
         GetSupportedSRSListRetType;
     virtual const GetSupportedSRSListRetType &
     GetSupportedSRSList(int iGeomField);
@@ -280,7 +279,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     OGRErr GetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
                        bool bForce = true) CPL_WARN_UNUSED_RESULT;
 
-    virtual int TestCapability(const char *) const = 0;
+    virtual bool TestCapability(const char *) const = 0;
 
     virtual OGRErr Rename(const char *pszNewName) CPL_WARN_UNUSED_RESULT;
 
@@ -619,7 +618,7 @@ class CPL_DLL OGRSFDriver : public GDALDriver
     virtual OGRDataSource *Open(const char *pszName, int bUpdate = FALSE)
         OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
-    virtual int TestCapability(const char *pszCap)
+    virtual bool TestCapability(const char *pszCap)
         OGR_DEPRECATED("Use GDALDriver class instead") = 0;
 
     virtual OGRDataSource *CreateDataSource(const char *pszName,
@@ -696,7 +695,11 @@ void OGRRegisterAllInternal();
 void CPL_DLL RegisterOGRFileGDB();
 void DeclareDeferredOGRFileGDBPlugin();
 void CPL_DLL RegisterOGRShape();
+void CPL_DLL RegisterOGRNTF();
+void CPL_DLL RegisterOGRTiger();
 void CPL_DLL RegisterOGRS57();
+void CPL_DLL RegisterOGRS101();
+void DeclareDeferredOGRS101Plugin();
 void CPL_DLL RegisterOGRTAB();
 void CPL_DLL RegisterOGRMIF();
 void CPL_DLL RegisterOGRODBC();

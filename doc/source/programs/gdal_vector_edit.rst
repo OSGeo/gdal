@@ -1,5 +1,7 @@
 .. _gdal_vector_edit:
 
+.. program:: gdal_vector_edit
+
 ================================================================================
 ``gdal vector edit``
 ================================================================================
@@ -55,6 +57,11 @@ Program-Specific Options
    ``SURFACE``, ``CURVEPOLYGON``, ``MULTICURVE``, ``MULTISURFACE``, ``POLYHEDRALSURFACE`` or ``TIN``.
    ``Z``, ``M`` or ``ZM`` suffixes can be appended to the above values to
    indicate the dimensionality.
+
+   That value can be found in existing datasets by looking at lines like
+   ``Geometry: 3D Multi Polygon (MULTIPOLYGONZ)`` in the output of
+   :program:`gdal vector info`.
+
    Note that feature geometries themselves are not modified. Thus this option
    can be used to fix an inappropriate geometry type at the layer level.
 
@@ -118,6 +125,11 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -127,3 +139,13 @@ Examples
    .. code-block:: bash
 
         $ gdal vector edit --crs=EPSG:4326 --geometry-type=POLYGONZM in.gpkg out.gpkg --overwrite
+
+.. example::
+   :title: Apply a CRS to a Shapefile
+
+   If a Shapefile is missing its associated ``.prj`` file, it can be created as follows:
+
+   .. code-block:: bash
+
+        $ gdal vector edit --crs=EPSG:3857 in.shp out.shp
+

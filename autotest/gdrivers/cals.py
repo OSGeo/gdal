@@ -23,9 +23,9 @@ pytestmark = pytest.mark.require_driver("CALS")
 # Source has no color table
 
 
-def test_cals_1():
+def test_cals_1(tmp_path):
 
-    tst = gdaltest.GDALTest("CALS", "hfa/small1bit.img", 1, 9907)
+    tst = gdaltest.GDALTest("CALS", "hfa/small1bit.img", 1, 9907, tmpdir=tmp_path)
 
     tst.testCreateCopy()
 
@@ -34,10 +34,12 @@ def test_cals_1():
 # Source has a color table (0,0,0),(255,255,255)
 
 
-def test_cals_2():
+def test_cals_2(tmp_path):
 
     # Has no color table
-    tst = gdaltest.GDALTest("CALS", "../../gcore/data/oddsize1bit.tif", 1, 3883)
+    tst = gdaltest.GDALTest(
+        "CALS", "../../gcore/data/oddsize1bit.tif", 1, 3883, tmpdir=tmp_path
+    )
 
     tst.testCreateCopy()
 

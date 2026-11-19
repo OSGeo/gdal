@@ -49,3 +49,8 @@ This utility will attach a color table file from an input raster file or a color
 .. option:: <dest_file>
 
     The output RGB file that will be created.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

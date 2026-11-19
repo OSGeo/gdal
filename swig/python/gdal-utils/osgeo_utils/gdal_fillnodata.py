@@ -52,7 +52,7 @@ def gdal_fillnodata(
         options.append("INTERPOLATION=" + interpolation)
 
     # =============================================================================
-    # 	Verify we have next gen bindings with the sievefilter method.
+    # Verify we have next gen bindings with the sievefilter method.
     # =============================================================================
     try:
         gdal.FillNodata

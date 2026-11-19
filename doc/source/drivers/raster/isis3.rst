@@ -193,11 +193,11 @@ The available creation options are:
 -  .. co:: GEOTIFF_OPTIONS
 
       Comma separated list of KEY=VALUE
-      tuples to forward to the GeoTIFF driver. e.g.
+      tuples to forward to the GeoTIFF driver, e.g.,
       ``GEOTIFF_OPTIONS=COMPRESS=LZW``.
 
 -  .. co:: EXTERNAL_FILENAME
-      :choices: <filena,e>
+      :choices: <filename>
 
       Override default external filename.
       Only for DATA_LOCATION=EXTERNAL or GEOTIFF.

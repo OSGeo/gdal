@@ -202,7 +202,7 @@ class CPLHTTPRetryContext
 
 void CPL_DLL *CPLHTTPIgnoreSigPipe();
 void CPL_DLL CPLHTTPRestoreSigPipeHandler(void *old_handler);
-bool CPLMultiPerformWait(void *hCurlMultiHandle, int &repeats);
+bool CPLMultiPerformWait(void *hCurlMultiHandle);
 /*! @endcond */
 
 bool CPL_DLL CPLIsMachinePotentiallyGCEInstance();

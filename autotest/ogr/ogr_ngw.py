@@ -150,7 +150,7 @@ def test_ogr_ngw_4():
 
     gdaltest.ngw_ds = None
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(
+    gdaltest.ngw_ds = gdal.Open(
         url,
         gdal.OF_UPDATE,
         open_options=[
@@ -179,7 +179,7 @@ def test_ogr_ngw_4():
     resource_type = gdaltest.ngw_ds.GetMetadataItem("resource_type", "")
     assert (
         resource_type is not None
-    ), "Did not get expected datasource metadata item. Resourse type should be present."
+    ), "Did not get expected datasource metadata item. Resource type should be present."
 
 
 def create_fields(lyr):
@@ -357,7 +357,7 @@ def test_ogr_ngw_5():
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
 
-    gdaltest.ngw_ds = gdal.OpenEx(
+    gdaltest.ngw_ds = gdal.Open(
         url,
         gdal.OF_UPDATE,
         open_options=[
@@ -395,7 +395,7 @@ def test_ogr_ngw_5():
         resource_type = lyr.GetMetadataItem("resource_type", "")
         assert (
             resource_type is not None
-        ), "Did not get expected layer metadata item. Resourse type should be present."
+        ), "Did not get expected layer metadata item. Resource type should be present."
 
         assert lyr.GetGeomType() != ogr.wkbUnknown and lyr.GetGeomType() != ogr.wkbNone
 
@@ -431,7 +431,7 @@ def test_ogr_ngw_6():
     lyr = gdaltest.ngw_ds.GetLayerByName("test_pt_layer")
     lyr_resource_id = lyr.GetMetadataItem("id", "")
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + lyr_resource_id
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         url,
         open_options=[
             f"TIMEOUT={NET_TIMEOUT}",
@@ -494,7 +494,7 @@ def test_ogr_ngw_8():
     gdaltest.ngw_ds = None
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(
+    gdaltest.ngw_ds = gdal.Open(
         url,
         gdal.OF_UPDATE,
         open_options=[
@@ -555,7 +555,7 @@ def test_ogr_ngw_9():
     gdaltest.ngw_ds = None
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(
+    gdaltest.ngw_ds = gdal.Open(
         url,
         gdal.OF_UPDATE,
         open_options=[
@@ -595,7 +595,7 @@ def test_ogr_ngw_10():
     gdaltest.ngw_ds = None
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + ds_resource_id
-    gdaltest.ngw_ds = gdal.OpenEx(
+    gdaltest.ngw_ds = gdal.Open(
         url,
         gdal.OF_UPDATE,
         open_options=[

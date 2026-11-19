@@ -14,6 +14,7 @@
 
 import struct
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -144,3 +145,47 @@ def test_nodatamaskband_1(dt, struct_type, v):
     data_ar = struct.unpack("H" * 3 * 2, data)
     expected_ar = (255, 0, 255, 0, 255, 255)
     assert data_ar == expected_ar, dt
+
+
+@pytest.mark.parametrize(
+    "src_dt,buf_dt,nodata",
+    [
+        (gdal.GDT_Int16, gdal.GDT_Int32, 30),
+        (gdal.GDT_Byte, gdal.GDT_Float32, 99),
+        (gdal.GDT_Int64, gdal.GDT_Byte, 9007199254740993),
+        (gdal.GDT_UInt64, gdal.GDT_Byte, 9223372036854775807),
+        (gdal.GDT_Float32, gdal.GDT_Int16, float("nan")),
+        (gdal.GDT_Float64, gdal.GDT_Float32, float("nan")),
+    ],
+)
+def test_nodatamaskband_resample_mode(src_dt, buf_dt, nodata):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, src_dt)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
+    ds.WriteArray(np.array([[nodata, nodata], [nodata, 0]]))
+
+    # bottom-right corner is a valid pixel, so nearest-neighbour returns 255
+    assert (
+        255
+        == ds.GetRasterBand(1)
+        .GetMaskBand()
+        .ReadAsArray(
+            buf_xsize=1,
+            buf_ysize=1,
+            buf_type=buf_dt,
+            resample_alg=gdal.GRIORA_NearestNeighbour,
+        )[0, 0]
+    )
+
+    # 3/4 pixels are not valid, so mode returns 0
+    assert (
+        0
+        == ds.GetRasterBand(1)
+        .GetMaskBand()
+        .ReadAsArray(
+            buf_xsize=1, buf_ysize=1, buf_type=buf_dt, resample_alg=gdal.GRIORA_Mode
+        )[0, 0]
+    )

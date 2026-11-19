@@ -843,7 +843,7 @@ Utilities:
  * gdal2xyz.py: fix output of -csv mode with multi-band raster
  * gdal_contour / gdal_rasterize / gdal_translate: accept numeric values in scientific format.
  * crs2crs2grid.py: New sample Python script
- * gdalcompare.py: New sample Python scrip to compare GDAL datasets
+ * gdalcompare.py: New sample Python script to compare GDAL datasets
  * gdal_calc.py: add --co creation option flag (#4964)
  * gdaladdo: add a -b flag
  * pct2rgb.py: deal with color tables with more than 256 entries (#4905)
@@ -3952,7 +3952,7 @@ GTM (GPSTrackMaker) driver :
 
 ILI driver :
  * Improved curve segmentation algorithm
- * ILI1: Support for multiple point geomtries
+ * ILI1: Support for multiple point geometries
  * ILI1: Support Real and Integer column types
 
 Ingres driver:
@@ -5808,7 +5808,7 @@ VRT Driver:
   - Fixed serious error in handling cleanup of VRT datasources, was often
    causing a crash.
 
-SQLLite Driver:
+SQLite Driver:
   - Fixed substantial memory leaks.
 
 MySQL Driver:

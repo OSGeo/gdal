@@ -233,7 +233,7 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
 
     const char *GetFIDColumn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr StartTransaction() override;
     OGRErr CommitTransaction() override;
@@ -398,7 +398,7 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
     OGRFeature *GetNextFeature() override;
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     CSLConstList GetMetadata(const char *pszDomain = "") override;
     virtual const char *GetMetadataItem(const char *pszName,
@@ -462,7 +462,7 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
     CPLString m_osQuery{};
     bool m_bHasCheckedSpatialIndexTable = false;
 
-    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_None;
+    OGRSQLiteGeomFormat m_eGeomFormat = OSGF_Unknown;
     CPLString m_osGeomColumn{};
     bool m_bHasSpatialIndex = false;
 
@@ -522,7 +522,7 @@ class OGRSQLiteViewLayer final : public OGRSQLiteLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     bool HasSpatialIndex(int) const override
     {
@@ -563,7 +563,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
                                      const OGRGeometry *) override;
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -628,7 +628,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
         return OGRSQLiteLayer::GetFeatureCount(bForce);
     }
 
-    int BaseTestCapability(const char *pszCap) const override
+    bool BaseTestCapability(const char *pszCap) const override
     {
         return OGRSQLiteLayer::TestCapability(pszCap);
     }
@@ -661,14 +661,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
-    OGRSpatialReference *AddSRIDToCache(
-        int nId,
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            &&poSRS);
+    OGRSpatialReference *AddSRIDToCache(int nId,
+                                        OGRSpatialReferenceRefCountedPtr poSRS);
 
     bool m_bHaveGeometryColumns = false;
     bool m_bIsSpatiaLiteDB = false;
@@ -759,7 +755,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
                                    CSLConstList papszOptions) override;
     OGRErr DeleteLayer(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

@@ -16,6 +16,7 @@
 #include "gdal_rasterblock.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "wcsdataset.h"
 #include "wcsrasterband.h"
@@ -128,7 +129,7 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     // todo: in 2.0.1 the band list in this dataset may be user-defined
 
     int band_count = 1;
-    if (EQUAL(CPLGetXMLValue(poODS->psService, "INTERLEAVE", ""), "PIXEL"))
+    if (EQUAL(CPLGetXMLValue(poODS->psService, GDALMD_INTERLEAVE, ""), "PIXEL"))
     {
         band_count = 0;
     }
@@ -217,8 +218,16 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             if (iOverview != -1)
                 poTargBand = poTargBand->GetOverview(iOverview);
 
+            assert(poTargBand);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             GDALRasterBlock *poBlock =
                 poTargBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
             if (poBlock != nullptr)
             {

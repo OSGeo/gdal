@@ -1,6 +1,6 @@
 /**********************************************************************
  *
- * Name:     cpl_alibaba_oss.h
+ * Name:     cpl_alibaba_oss.cpp
  * Project:  CPL - Common Portability Library
  * Purpose:  Alibaba Cloud Object Storage Service
  * Author:   Even Rouault <even.rouault at spatialys.com>

@@ -26,21 +26,40 @@
 /*            GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()            */
 /************************************************************************/
 
-GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm(bool standaloneStep,
+                                             bool openForMixedRasterVector)
+    : GDALMdimPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetInputDatasetMaxCount(1)
+              .SetAddDefaultArguments(false)
+              .SetInputDatasetHelpMsg(_("Input multidimensional dataset"))
+              .SetInputDatasetAlias("dataset"))
 {
-    AddOutputFormatArg(&m_format).SetHidden().SetDefault("json").SetChoices(
-        "json", "text");
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_MULTIDIM_RASTER});
-    AddInputDatasetArg(&m_dataset, GDAL_OF_MULTIDIM_RASTER).AddAlias("dataset");
-    AddOutputStringArg(&m_output);
+    if (standaloneStep)
+    {
+        AddProgressArg(/* hidden = */ true);
+        AddMdimInputArgs(openForMixedRasterVector,
+                         /* hiddenForCLI = */ false,
+                         /* acceptRaster = */ false);
+    }
+    else
+    {
+        AddMdimHiddenInputDatasetArg();
+    }
+
+    AddOutputFormatArg(&m_format).SetChoices("json", "text");
+    AddArg("summary", 0,
+           _("Report only group and array hierarchy, without detailed "
+             "information on attributes or dimensions."),
+           &m_summary)
+        .SetMutualExclusionGroup("structure_detailed");
     AddArg(
         "detailed", 0,
         _("Most verbose output. Report attribute data types and array values."),
-        &m_detailed);
+        &m_detailed)
+        .SetMutualExclusionGroup("structure_detailed");
     AddArrayNameArg(&m_array, _("Name of the array, used to restrict the "
                                 "output to the specified array."));
 
@@ -62,17 +81,22 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
             [this](const std::string &currentValue)
             {
                 std::vector<std::string> ret;
-
-                if (auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        m_dataset.GetName().c_str(), GDAL_OF_MULTIDIM_RASTER,
-                        nullptr, nullptr, nullptr)))
+                if (m_inputDataset.size() == 1)
                 {
-                    if (auto poDriver = poDS->GetDriver())
+                    if (auto poDS =
+                            std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                                m_inputDataset[0].GetName().c_str(),
+                                GDAL_OF_MULTIDIM_RASTER, nullptr, nullptr,
+                                nullptr)))
                     {
-                        if (const char *pszXML = poDriver->GetMetadataItem(
-                                GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST))
+                        if (auto poDriver = poDS->GetDriver())
                         {
-                            AddOptionsSuggestions(pszXML, 0, currentValue, ret);
+                            if (const char *pszXML = poDriver->GetMetadataItem(
+                                    GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST))
+                            {
+                                AddOptionsSuggestions(pszXML, 0, currentValue,
+                                                      ret);
+                            }
                         }
                     }
                 }
@@ -82,22 +106,32 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
     }
     AddArg("stats", 0, _("Read and display image statistics."), &m_stats);
 
+    AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
 }
 
 /************************************************************************/
-/*                   GDALMdimInfoAlgorithm::RunImpl()                   */
+/*                   GDALMdimInfoAlgorithm::RunStep()                   */
 /************************************************************************/
 
-bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALMdimInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
 {
-    CPLAssert(m_dataset.GetDatasetRef());
+    CPLAssert(m_inputDataset.size() == 1);
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
+    if (m_format.empty())
+        m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     CPLStringList aosOptions;
 
+    aosOptions.AddString("-format");
+    aosOptions.AddString(m_format);
     if (m_stdout)
         aosOptions.AddString("-stdout");
-    if (m_detailed)
+    if (m_summary)
+        aosOptions.AddString("-summary");
+    else if (m_detailed)
         aosOptions.AddString("-detailed");
     if (m_stats)
         aosOptions.AddString("-stats");
@@ -117,7 +151,7 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         aosOptions.AddString(opt.c_str());
     }
 
-    GDALDatasetH hDS = GDALDataset::ToHandle(m_dataset.GetDatasetRef());
+    GDALDatasetH hDS = GDALDataset::ToHandle(poSrcDS);
     GDALMultiDimInfoOptions *psOptions =
         GDALMultiDimInfoOptionsNew(aosOptions.List(), nullptr);
     char *ret = GDALMultiDimInfo(hDS, psOptions);
@@ -131,5 +165,7 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     return bOK;
 }
+
+GDALMdimInfoAlgorithmStandalone::~GDALMdimInfoAlgorithmStandalone() = default;
 
 //! @endcond

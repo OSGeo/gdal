@@ -72,12 +72,9 @@ EDBFile *GDAL_EDBOpen(const std::string &osFilename,
 {
     GDALDataset *poDS = nullptr;
 
-    if (osAccess == "r")
-        poDS =
-            GDALDataset::FromHandle(GDALOpen(osFilename.c_str(), GA_ReadOnly));
-    else
-        poDS = GDALDataset::FromHandle(GDALOpen(osFilename.c_str(), GA_Update));
-
+    const int nFlags = (osAccess == "r") ? GDAL_OF_READONLY : GDAL_OF_UPDATE;
+    poDS = GDALDataset::Open(osFilename.c_str(),
+                             nFlags | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR);
     if (poDS == nullptr)
         ThrowPCIDSKException("%s", CPLGetLastErrorMsg());
 

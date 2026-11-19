@@ -534,6 +534,35 @@ def test_georaster_pool():
 #
 
 
+def test_georaster_int8():
+    if gdaltest.oci_ds is None:
+        pytest.skip()
+
+    ds_src = gdal.Open("data/gtiff/int8.tif")
+
+    ds = gdaltest.georasterDriver.CreateCopy(
+        get_connection_str() + ",GDAL_TEST,RASTER",
+        ds_src,
+        1,
+        [
+            "DESCRIPTION=(id number, raster sdo_georaster)",
+            "INSERT=(1016, sdo_geor.init('GDAL_TEST_RDT',1016))",
+        ],
+    )
+
+    ds_name = ds.GetDescription()
+
+    ds = None
+
+    tst = gdaltest.GDALTest("GeoRaster", ds_name, 1, 1046, filename_absolute=1)
+
+    tst.testOpen()
+
+
+###############################################################################
+#
+
+
 def test_georaster_cleanup():
     if gdaltest.oci_ds is None:
         pytest.skip()

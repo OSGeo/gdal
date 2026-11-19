@@ -16,6 +16,8 @@ const uint8_t TILETYPE_MVT = 0x1;
 const uint8_t TILETYPE_PNG = 0x2;
 const uint8_t TILETYPE_JPEG = 0x3;
 const uint8_t TILETYPE_WEBP = 0x4;
+const uint8_t TILETYPE_AVIF = 0x5;
+const uint8_t TILETYPE_MAPLIBRE_VECTOR_TILE = 0x6;
 
 const uint8_t COMPRESSION_UNKNOWN = 0x0;
 const uint8_t COMPRESSION_NONE = 0x1;

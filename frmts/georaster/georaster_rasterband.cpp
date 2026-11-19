@@ -13,6 +13,7 @@
 
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <string.h>
 
 #include "georaster_priv.h"
@@ -830,7 +831,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
                 continue;
         }
         osColumnList +=
-            CPLSPrintf("substr(%s,1,%d),", szField, MIN(nSize, OWNAME));
+            CPLSPrintf("substr(%s,1,%d),", szField, std::min(nSize, OWNAME));
 
         iCol++;
     }
@@ -964,6 +965,25 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
 
     switch (eDataType)
     {
+        case GDT_Int8:
+        {
+            GInt8 *pnBuffer = (GInt8 *)pBuffer;
+
+            for (i = 0; i < n; i++)
+            {
+                for (j = 0; j < nNoDataArraySz; j++)
+                {
+                    if (pnBuffer[i] == (GInt8)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (GInt8)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (GInt8)pahNoDataArray[j].dfUpper))
+                    {
+                        pnBuffer[i] = (GInt8)dfNoData;
+                    }
+                }
+            }
+
+            break;
+        }
         case GDT_UInt8:
         {
             GByte *pbBuffer = (GByte *)pBuffer;

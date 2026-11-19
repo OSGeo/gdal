@@ -27,6 +27,7 @@ pytestmark = pytest.mark.require_curl()
 #
 
 
+@pytest.mark.network
 def test_vsicurl_streaming_real_resource():
     # Occasionally fails on Travis graviton2 configuration
     gdaltest.skip_on_travis()
@@ -213,7 +214,7 @@ def test_vsicurl_streaming_retry_at_beginning(webserver_port):
         {
             "GDAL_HTTP_MAX_RETRY": "2",
             "GDAL_HTTP_RETRY_DELAY": "0.01",
-            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
+            "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
         },
         thread_local=False,
     ):
@@ -249,7 +250,7 @@ def test_vsicurl_streaming_retry_in_middle(webserver_port):
         {
             "GDAL_HTTP_MAX_RETRY": "2",
             "GDAL_HTTP_RETRY_DELAY": "0.01",
-            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
+            "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
         },
         thread_local=False,
     ):
@@ -317,7 +318,7 @@ def test_vsicurl_streaming_retry_in_middle_failed(webserver_port):
         {
             "GDAL_HTTP_MAX_RETRY": "2",
             "GDAL_HTTP_RETRY_DELAY": "0.01",
-            "CPL_VSIL_CURL_STREMAING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
+            "CPL_VSIL_CURL_STREAMING_SIMULATED_CURL_ERROR": "Send failure: Connection was reset",
         },
         thread_local=False,
     ):

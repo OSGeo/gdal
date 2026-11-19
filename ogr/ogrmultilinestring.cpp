@@ -98,8 +98,7 @@ const char *OGRMultiLineString::getGeometryName() const
 /*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiLineString::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiLineString::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
     return wkbFlatten(eGeomType) == wkbLineString;
 }
@@ -159,8 +158,7 @@ std::string OGRMultiLineString::exportToWkt(const OGRWktOptions &opts,
 /*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiLineString::hasCurveGeometry(int /* bLookForNonLinear */) const
+bool OGRMultiLineString::hasCurveGeometry(int /* bLookForNonLinear */) const
 {
     return false;
 }

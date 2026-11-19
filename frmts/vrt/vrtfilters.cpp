@@ -564,7 +564,17 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
                     double dfMean = 0.0;
                     double dfM2 = 0.0;
                     std::vector<double> adfVals;
-                    std::map<double, size_t> mapValToCount;
+
+                    struct CompareNaNAware
+                    {
+                        bool operator()(double lhs, double rhs) const
+                        {
+                            return (std::isnan(lhs) && !std::isnan(rhs)) ||
+                                   lhs < rhs;
+                        }
+                    };
+
+                    std::map<double, size_t, CompareNaNAware> mapValToCount;
                     size_t maxCount = 0;
 
                     for (GPtrDiff_t iII = -m_nExtraEdgePixels, iK = 0;

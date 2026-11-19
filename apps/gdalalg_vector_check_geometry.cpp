@@ -28,11 +28,17 @@
 
 GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetNoCreateEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-field", 0,
-           _("Fields from input layer to include in output"), &m_includeFields);
+           _("Fields from input layer to include in output (special values: "
+             "ALL and NONE)"),
+           &m_includeFields)
+        .SetDefault("NONE");
 
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),
@@ -55,7 +61,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                              bool bSingleLayerOutput, int srcGeomField,
                              bool skipValid)
         : GDALVectorPipelineOutputLayer(layer),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn(
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(
               bSingleLayerOutput ? "error_location"
                                  : std::string("error_location_")
                                        .append(layer.GetDescription())
@@ -63,8 +69,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_geosContext(OGRGeometry::createGEOSContext()),
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
-        m_defn->Reference();
-        m_defn->SetGeomType(wkbPoint);
+        m_defn->SetGeomType(wkbMultiPoint);
 
         if (!srcFieldIndices.empty())
         {
@@ -90,19 +95,24 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
     ~GDALInvalidLocationLayer() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return false;
     }
 
+    const char *GetDescription() const override
+    {
+        return GetName();
+    }
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     std::unique_ptr<OGRFeature> CreateFeatureFromLastError() const
     {
-        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
 
         std::string msg = CPLGetLastErrorMsg();
 
@@ -126,7 +136,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
         return poErrorFeature;
     }
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutputFeatures) override
     {
@@ -136,127 +146,123 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
         if (poGeom)
         {
-            if (poGeom->getDimension() < 1)
+            auto eType = wkbFlatten(poGeom->getGeometryType());
+            GEOSGeometry *poGeosGeom = poGeom->exportToGEOS(m_geosContext);
+
+            if (!poGeosGeom)
             {
-                CPLErrorOnce(CE_Warning, CPLE_AppDefined,
-                             "Point geometry passed to 'gdal vector "
-                             "check-geometry'. Point geometries are "
-                             "always valid/simple.");
+                // Try to find a useful message / coordinate from
+                // GEOS exception message.
+                poErrorFeature = CreateFeatureFromLastError();
+
+                if (eType == wkbPolygon)
+                {
+                    const OGRLinearRing *poRing =
+                        poGeom->toPolygon()->getExteriorRing();
+                    if (poRing != nullptr && !poRing->IsEmpty())
+                    {
+                        auto poPoint = std::make_unique<OGRPoint>();
+                        poRing->StartPoint(poPoint.get());
+                        auto poMultiPoint = std::make_unique<OGRMultiPoint>();
+                        poMultiPoint->addGeometry(std::move(poPoint));
+                        poErrorFeature->SetGeometry(std::move(poMultiPoint));
+                    }
+                    else
+                    {
+                        // TODO get a point from somewhere else?
+                    }
+                }
             }
             else
             {
-                auto eType = wkbFlatten(poGeom->getGeometryType());
-                GEOSGeometry *poGeosGeom = poGeom->exportToGEOS(m_geosContext);
+                char *pszReason = nullptr;
+                GEOSGeometry *location = nullptr;
+                char ret = 1;
+                bool warnAboutGeosVersion = false;
+                bool checkedSimple = false;
 
-                if (!poGeosGeom)
+                // check all geometry types for validity; IsSimple does not
+                // detect NaN/Inf coordinates
+                ret = GEOSisValidDetail_r(m_geosContext, poGeosGeom, 0,
+                                          &pszReason, &location);
+
+                if (ret == 1 &&
+                    (eType == wkbLineString || eType == wkbMultiLineString ||
+                     eType == wkbCircularString || eType == wkbCompoundCurve ||
+                     eType == wkbGeometryCollection))
                 {
-                    // Try to find a useful message / coordinate from
-                    // GEOS exception message.
-                    poErrorFeature = CreateFeatureFromLastError();
-
-                    if (eType == wkbPolygon)
-                    {
-                        const OGRLinearRing *poRing =
-                            poGeom->toPolygon()->getExteriorRing();
-                        if (poRing != nullptr && !poRing->IsEmpty())
-                        {
-                            auto poPoint = std::make_unique<OGRPoint>();
-                            poRing->StartPoint(poPoint.get());
-                            poErrorFeature->SetGeometry(std::move(poPoint));
-                        }
-                        else
-                        {
-                            // TODO get a point from somewhere else?
-                        }
-                    }
-                }
-                else
-                {
-                    char *pszReason = nullptr;
-                    GEOSGeometry *location = nullptr;
-                    char ret = 1;
-                    bool warnAboutGeosVersion = false;
-                    bool checkedSimple = false;
-
-                    if (eType == wkbPolygon || eType == wkbMultiPolygon ||
-                        eType == wkbCurvePolygon || eType == wkbMultiSurface ||
-                        eType == wkbGeometryCollection)
-                    {
-                        ret = GEOSisValidDetail_r(m_geosContext, poGeosGeom, 0,
-                                                  &pszReason, &location);
-                    }
-
-                    if (eType == wkbLineString || eType == wkbMultiLineString ||
-                        eType == wkbCircularString ||
-                        eType == wkbCompoundCurve ||
-                        (ret == 1 && eType == wkbGeometryCollection))
-                    {
-                        checkedSimple = true;
+                    checkedSimple = true;
 #if GEOS_VERSION_MAJOR > 3 ||                                                  \
     (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 14)
-                        ret = GEOSisSimpleDetail_r(m_geosContext, poGeosGeom, 1,
-                                                   &location);
+                    ret = GEOSisSimpleDetail_r(m_geosContext, poGeosGeom, 1,
+                                               &location);
 #else
-                        ret = GEOSisSimple_r(m_geosContext, poGeosGeom);
-                        warnAboutGeosVersion = true;
+                    ret = GEOSisSimple_r(m_geosContext, poGeosGeom);
+                    warnAboutGeosVersion = true;
 #endif
+                }
+
+                GEOSGeom_destroy_r(m_geosContext, poGeosGeom);
+                if (ret == 0)
+                {
+                    if (warnAboutGeosVersion)
+                    {
+                        CPLErrorOnce(
+                            CE_Warning, CPLE_AppDefined,
+                            "Detected a non-simple linear geometry, but "
+                            "cannot output self-intersection points "
+                            "because GEOS library version is < 3.14.");
                     }
 
-                    GEOSGeom_destroy_r(m_geosContext, poGeosGeom);
-                    if (ret == 0)
+                    poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
+                    if (pszReason == nullptr)
                     {
-                        if (warnAboutGeosVersion)
-                        {
-                            CPLErrorOnce(
-                                CE_Warning, CPLE_AppDefined,
-                                "Detected a non-simple linear geometry, but "
-                                "cannot output self-intersection points "
-                                "because GEOS library version is < 3.14.");
-                        }
-
-                        poErrorFeature = std::make_unique<OGRFeature>(m_defn);
-                        if (pszReason == nullptr)
-                        {
-                            if (checkedSimple)
-                            {
-                                poErrorFeature->SetField(
-                                    ERROR_DESCRIPTION_FIELD,
-                                    "self-intersection");
-                            }
-                        }
-                        else
+                        if (checkedSimple)
                         {
                             poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD,
-                                                     pszReason);
-                            GEOSFree_r(m_geosContext, pszReason);
-                        }
-
-                        if (location != nullptr)
-                        {
-                            std::unique_ptr<OGRGeometry> poErrorGeom(
-                                OGRGeometryFactory::createFromGEOS(
-                                    m_geosContext, location));
-                            GEOSGeom_destroy_r(m_geosContext, location);
-
-                            poErrorGeom->assignSpatialReference(
-                                m_srcLayer.GetLayerDefn()
-                                    ->GetGeomFieldDefn(m_srcGeomField)
-                                    ->GetSpatialRef());
-
-                            poErrorFeature->SetGeometry(std::move(poErrorGeom));
+                                                     "self-intersection");
                         }
                     }
-                    else if (ret == 2)
+                    else
                     {
-                        poErrorFeature = CreateFeatureFromLastError();
+                        poErrorFeature->SetField(ERROR_DESCRIPTION_FIELD,
+                                                 pszReason);
+                        GEOSFree_r(m_geosContext, pszReason);
                     }
+
+                    if (location != nullptr)
+                    {
+                        std::unique_ptr<OGRGeometry> poErrorGeom(
+                            OGRGeometryFactory::createFromGEOS(m_geosContext,
+                                                               location));
+                        GEOSGeom_destroy_r(m_geosContext, location);
+
+                        if (poErrorGeom->getGeometryType() == wkbPoint)
+                        {
+                            auto poMultiPoint =
+                                std::make_unique<OGRMultiPoint>();
+                            poMultiPoint->addGeometry(std::move(poErrorGeom));
+                            poErrorGeom = std::move(poMultiPoint);
+                        }
+
+                        poErrorGeom->assignSpatialReference(
+                            m_srcLayer.GetLayerDefn()
+                                ->GetGeomFieldDefn(m_srcGeomField)
+                                ->GetSpatialRef());
+
+                        poErrorFeature->SetGeometry(std::move(poErrorGeom));
+                    }
+                }
+                else if (ret == 2)
+                {
+                    poErrorFeature = CreateFeatureFromLastError();
                 }
             }
         }
 
         if (!poErrorFeature && !m_skipValid)
         {
-            poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+            poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
             // TODO Set geometry to POINT EMPTY ?
         }
 
@@ -268,15 +274,18 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                     poSrcFeature.get(), m_srcFieldMap.data(), false, false);
             }
             poErrorFeature->SetFID(poSrcFeature->GetFID());
-            apoOutputFeatures.push_back(std::move(poErrorFeature));
+            if (PassesFilters(poErrorFeature.get()))
+                apoOutputFeatures.push_back(std::move(poErrorFeature));
         }
+
+        return true;
     }
 
     CPL_DISALLOW_COPY_ASSIGN(GDALInvalidLocationLayer)
 
   private:
     std::vector<int> m_srcFieldMap{};
-    OGRFeatureDefn *const m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     const GEOSContextHandle_t m_geosContext;
     const int m_srcGeomField;
     const bool m_skipValid;
@@ -284,7 +293,6 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
 GDALInvalidLocationLayer::~GDALInvalidLocationLayer()
 {
-    m_defn->Release();
     finishGEOS_r(m_geosContext);
 }
 
@@ -335,19 +343,11 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             }
 
             std::vector<int> includeFieldIndices;
-            for (const auto &fieldName : m_includeFields)
+            if (!GetFieldIndices(m_includeFields,
+                                 OGRLayer::ToHandle(poSrcLayer),
+                                 includeFieldIndices))
             {
-                auto iSrcField =
-                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
-                if (iSrcField == -1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Specified field '%s' does not exist in layer '%s'",
-                        fieldName.c_str(), poSrcLayer->GetDescription());
-                    return false;
-                }
-                includeFieldIndices.push_back(iSrcField);
+                return false;
             }
 
             outDS->AddLayer(*poSrcLayer,

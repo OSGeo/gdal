@@ -1,5 +1,7 @@
 .. _gdal_raster_update:
 
+.. program:: gdal_raster_update
+
 ================================================================================
 ``gdal raster update``
 ================================================================================
@@ -70,7 +72,9 @@ Program-Specific Options
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
 
-.. include:: gdal_options/warp_resampling.rst
+.. option:: -r, --resampling <RESAMPLING>
+
+    .. include:: gdal_options/warp_resampling.rst
 
 .. option:: --wo, --warp-option <NAME>=<VALUE>
 
@@ -83,6 +87,11 @@ Program-Specific Options
 .. include:: gdal_options/if.rst
 
 .. include:: gdal_options/oo.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

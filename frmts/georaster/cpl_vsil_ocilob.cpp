@@ -94,10 +94,10 @@ char **WSIOCILobFSHandle::ParseIdentificator(const char *pszFilename)
         return nullptr;
     }
 
-    char **papszParam =
-        CSLTokenizeString2(&pszFilename[strlen("/vsiocilob/")], ",",
-                           CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
-                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
+    char **papszParam = CSLTokenizeString2(
+        &pszFilename[strlen("/vsiocilob/")], ",",
+        CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_STRIPLEADSPACES |
+            CSLT_STRIPENDSPACES | CSLT_PRESERVEQUOTES);
 
     if (CSLCount(papszParam) < 6)
     {

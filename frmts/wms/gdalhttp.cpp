@@ -151,7 +151,7 @@ CPLErr WMSHTTPFetchMulti(WMSHTTPRequest *pasRequest, int nRequestCount)
     const char *max_conn_opt =
         CSLFetchNameValue(const_cast<char **>(pasRequest->options), "MAXCONN");
     max_conn =
-        (max_conn_opt == nullptr) ? 5 : MAX(1, MIN(atoi(max_conn_opt), 1000));
+        (max_conn_opt == nullptr) ? 5 : std::clamp(atoi(max_conn_opt), 1, 1000);
 
     // If the first url starts with vsimem, assume all do and defer to
     // CPLHTTPFetch

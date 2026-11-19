@@ -142,7 +142,7 @@ def test_derived_test3():
         gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:dataset_does_not_exist")
 
     with pytest.raises(Exception):
-        # Raster with zero band
+        # Raster with zero bands
         gdal.Open("DERIVED_SUBDATASET:LOGAMPLITUDE:data/hdf5/CSK_DGM.h5")
 
 

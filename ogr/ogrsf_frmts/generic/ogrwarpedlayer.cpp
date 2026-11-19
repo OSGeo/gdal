@@ -107,12 +107,13 @@ OGRErr OGRWarpedLayer::ISetSpatialFilter(int iGeomField,
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-void OGRWarpedLayer::TranslateFeature(
+bool OGRWarpedLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
     apoOutFeatures.push_back(
         SrcFeatureToWarpedFeature(std::move(poSrcFeature)));
+    return true;
 }
 
 /************************************************************************/
@@ -535,12 +536,12 @@ int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWarpedLayer::TestCapability(const char *pszCapability) const
+bool OGRWarpedLayer::TestCapability(const char *pszCapability) const
 {
     if (EQUAL(pszCapability, OLCFastGetExtent) && sStaticEnvelope.IsInit())
         return TRUE;
 
-    int bVal = m_poDecoratedLayer->TestCapability(pszCapability);
+    bool bVal = m_poDecoratedLayer->TestCapability(pszCapability);
 
     if (EQUAL(pszCapability, OLCFastGetArrowStream))
         return false;

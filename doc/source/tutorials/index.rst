@@ -45,12 +45,13 @@ Geographic Network Model
 
    gnm_api_tut
 
-Projections and Spatial Reference Systems tutorial (OSR - OGRSpatialReference)
-------------------------------------------------------------------------------
+Projections / CRS
+-----------------
 
 .. toctree::
    :maxdepth: 1
 
+   reprojecting_data
    osr_api_tut
 
 Workshops

@@ -17,6 +17,7 @@
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
 #include "gdalorienteddataset.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <cassert>
@@ -177,8 +178,8 @@ JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
     if ((eDataType == GDT_UInt8 && nBitsPerSample < 8) ||
         (eDataType == GDT_UInt16 && nBitsPerSample < 16))
     {
-        SetMetadataItem("NBITS", CPLSPrintf("%d", nBitsPerSample),
-                        "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBitsPerSample),
+                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
 
@@ -802,24 +803,19 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
                                      ? "LOSSLESS (possibly)"
                                      : "LOSSY",
-                                 "IMAGE_STRUCTURE");
+                                 GDAL_MDD_IMAGE_STRUCTURE);
 #ifdef HAVE_JXL_BOX_API
     if (m_bHasJPEGReconstructionData)
     {
         GDALDataset::SetMetadataItem("ORIGINAL_COMPRESSION", "JPEG",
-                                     "IMAGE_STRUCTURE");
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 
 #ifdef HAVE_JXL_THREADS
-    const char *pszNumThreads =
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads =
+        GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                          /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads = std::min(
         nMaxThreads,
         JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
@@ -918,7 +914,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (l_nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.
@@ -1200,7 +1196,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }
@@ -1224,7 +1220,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }
@@ -1786,7 +1782,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None;
     const OGRSpatialReference *poSRS = poSrcDS->GetSpatialRef();
     const int nGCPCount = poSrcDS->GetGCPCount();
-    CSLConstList papszRPCMD = poSrcDS->GetMetadata("RPC");
+    CSLConstList papszRPCMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
     std::unique_ptr<GDALJP2Box> poJUMBFBox;
     if (bWriteGeoJP2 &&
         (poSRS != nullptr || bHasGeoTransform || nGCPCount || papszRPCMD))
@@ -2205,10 +2201,10 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNBits = CSLFetchNameValue(papszOptions, "NBITS");
+    const char *pszNBits = CSLFetchNameValue(papszOptions, GDALMD_NBITS);
     if (pszNBits == nullptr)
         pszNBits = poSrcDS->GetRasterBand(1)->GetMetadataItem(
-            "NBITS", "IMAGE_STRUCTURE");
+            GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
     const int nBits =
         ((eDT == GDT_UInt8 || eDT == GDT_UInt16) && pszNBits != nullptr)
             ? atoi(pszNBits)
@@ -2297,15 +2293,9 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
-    if (pszNumThreads == nullptr)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads =
         std::min(nMaxThreads, JxlResizableParallelRunnerSuggestThreads(
                                   basic_info.xsize, basic_info.ysize));
@@ -2389,7 +2379,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     void *pJPEGContent = nullptr;
     size_t nJPEGContent = 0;
     char *pszDetailedFormat = nullptr;
-    // If the source dataset is a JPEG file or compatible of it, try to
+    // If the source dataset is a JPEG file or compatible with it, try to
     // losslessly add it
     if ((EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
         poSrcDS->ReadCompressedData(

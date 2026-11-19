@@ -262,7 +262,7 @@ OGRLineString *OGRWAsPLayer::Simplify(const OGRLineString &line) const
     OGRPoint startPt, endPt;
     poLine->StartPoint(&startPt);
     poLine->EndPoint(&endPt);
-    const bool isRing = CPL_TO_BOOL(startPt.Equals(&endPt));
+    const bool isRing = startPt.Equals(&endPt);
 
     if (pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
@@ -813,7 +813,7 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWAsPLayer::TestCapability(const char *pszCap) const
+bool OGRWAsPLayer::TestCapability(const char *pszCap) const
 
 {
     return (WRITE_ONLY == eMode && (EQUAL(pszCap, OLCSequentialWrite) ||

@@ -345,7 +345,7 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
         const bool bHasCurve = poGeom->hasCurveGeometry(true);
         if (bHasCurve)
             m_bCurveWritten = true;
-        const bool bHasMeasure = CPL_TO_BOOL(poGeom->IsMeasured());
+        const bool bHasMeasure = poGeom->IsMeasured();
         if (bHasMeasure)
             m_bMeasureWritten = true;
         bool bWritePlace = false;
@@ -473,7 +473,7 @@ OGRErr OGRJSONFGWriteLayer::CreateField(const OGRFieldDefn *poField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRJSONFGWriteLayer::TestCapability(const char *pszCap) const
+bool OGRJSONFGWriteLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCCreateField))
         return TRUE;

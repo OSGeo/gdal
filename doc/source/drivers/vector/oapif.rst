@@ -152,9 +152,10 @@ The following open options are available:
 Examples
 --------
 
--  Listing the types of a OGC API - Features server :
+.. example::
+   :title: Listing the types of a OGC API - Features server
 
-   ::
+   .. code-block:: console
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr
 
@@ -162,9 +163,10 @@ Examples
             using driver `OAPIF' successful.
       1: governmentalservice (title: Feuerwehrleitstellen) (Point)
 
--  Listing the summary information of a OGC API - Features layer :
+.. example::
+   :title: Listing the summary information of a OGC API - Features layer
 
-   ::
+   .. code-block:: console
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -so
 
@@ -216,9 +218,12 @@ Examples
       inGovernmentalDistrict.title: String (0.0)
       inGovernmentalDistrict.href: String (0.0)
 
--  Filtering on a property (depending on if the server exposes filtering capabilities of the properties, part or totally of the filter might be evaluated on client side)
+.. example::
+   :title: Filtering on a property 
+     
+   Depending on if the server exposes filtering capabilities of the properties, part or totally of the filter might be evaluated on client side.
 
-   ::
+   .. code-block:: console
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -where "name = 'Schwelm'"
 
@@ -249,9 +254,10 @@ Examples
         POINT (7.29854802787082 51.2855116825595)
 
 
--  Spatial filtering
+.. example::
+   :title: Spatial filtering
 
-   ::
+   .. code-block:: console
 
       $ ogrinfo OAPIF:https://ogc-api.nrw.de/inspire-us-feuerwehr governmentalservice -al -q -spat 7.1 51.2 7.2 51.5
 

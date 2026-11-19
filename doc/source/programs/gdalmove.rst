@@ -65,3 +65,8 @@ could be produced using a least squares fit of at least all four corner points.
 
     The file to be operated on. To update this must be a file format that
     supports in place updates of the geotransform and SRS.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

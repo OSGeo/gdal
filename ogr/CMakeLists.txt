@@ -39,6 +39,7 @@ add_library(
   ogr_srs_esri.cpp
   ogr_srs_pci.cpp
   ogr_srs_usgs.cpp
+  ogr_srs_isis.cpp
   ogr_srs_dict.cpp
   ogr_srs_panorama.cpp
   ogr_srs_ozi.cpp
@@ -186,6 +187,7 @@ target_public_header(
   ogr_geomcoordinateprecision.h
   ogr_p.h
   ogr_spatialref.h
+  ogr_refcountedptr.h
   ogr_swq.h
   ogr_srs_api.h
   ogrsf_frmts/ogrsf_frmts.h)

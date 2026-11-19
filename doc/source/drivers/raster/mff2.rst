@@ -70,7 +70,7 @@ example,
 specifies an image that is 1040 lines by 800 pixels in extent. The
 pixels are 32 bits of real data in "most significant byte first" (msbf)
 order, encoded according to the ieee_754 specification. In MFF2, when a
-value must belong to a certain subset (eg. pixel.order must be either
+value must belong to a certain subset (e.g., pixel.order must be either
 lsbf or msbf), all options are displayed between curly brackets, and the
 one appropriate for the current file is indicated with a "*".
 
@@ -202,7 +202,7 @@ Explanation of fields
 ::
 
    channel.enumeration:  (optional- only needed for multiband)
-   Number of channels of data (eg. 3 for rgb)
+   Number of channels of data (e.g., 3 for rgb)
 
    channel.interleave = { *pixel tile sequential } :  (optional- only
    needed for multiband)

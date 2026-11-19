@@ -155,7 +155,7 @@ OGRFeature *OGRDWGBlocksLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRDWGBlocksLayer::TestCapability(const char *pszCap) const
+bool OGRDWGBlocksLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCStringsAsUTF8))

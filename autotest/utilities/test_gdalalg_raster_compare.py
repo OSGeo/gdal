@@ -114,7 +114,7 @@ def test_gdalalg_raster_compare_same_content_but_not_same_binary(tmp_vsimem):
         ret = alg["output-string"].split("\n")[:-1]
         assert len(ret) == 1
         assert ret[0].startswith(
-            "Reference file has size 736 bytes, whereas input file has size"
+            "Reference file '../gcore/data/byte.tif' has size 736 bytes, whereas input file has size"
         )
 
     with gdal.Run(
@@ -123,7 +123,7 @@ def test_gdalalg_raster_compare_same_content_but_not_same_binary(tmp_vsimem):
         pipeline=f"read {tmp_vsimem}/tmp.tif ! compare --reference=../gcore/data/byte.tif",
     ) as alg:
         assert alg["output-string"].startswith(
-            "Reference file has size 736 bytes, whereas input file has size"
+            "Reference file '../gcore/data/byte.tif' has size 736 bytes, whereas input file has size"
         )
 
     with gdal.Run(
@@ -241,7 +241,7 @@ def test_gdalalg_raster_compare_binary_comparison(tmp_vsimem):
         f.seek(0, os.SEEK_END)
         pos = f.tell()
         f.seek(pos - 1, os.SEEK_SET)
-        f.write(b"\xFF")
+        f.write(b"\xff")
 
     with gdal.Run(
         "raster",
@@ -253,6 +253,27 @@ def test_gdalalg_raster_compare_binary_comparison(tmp_vsimem):
             alg["output-string"]
             == "Reference file and input file differ at the binary level.\n"
         )
+
+
+def test_gdalalg_raster_compare_diff_by_one_pixel_everywhere(tmp_vsimem):
+
+    gdal.alg.raster.scale(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "byte.tif",
+        input_min=0,
+        input_max=255,
+        output_min=1,
+        output_max=256,
+    )
+
+    with gdal.alg.raster.compare(
+        input="../gcore/data/byte.tif",
+        reference=tmp_vsimem / "byte.tif",
+        skip_binary=True,
+    ) as alg:
+        assert alg["output-string"] == """Band 1: pixels differing: 399
+Band 1: maximum pixel value difference: 1
+"""
 
 
 def test_gdalalg_raster_compare_crs():
@@ -1033,7 +1054,7 @@ def test_gdalalg_raster_compare_mask():
     ) as alg:
         assert (
             alg["output-string"]
-            == "mask of band 1: pixels differing: 1\nmask of band 1: maximum pixel value difference: 1\n"
+            == "Band mask of band 1: pixels differing: 1\nBand mask of band 1: maximum pixel value difference: 1\n"
         )
 
 
@@ -1347,3 +1368,250 @@ def test_gdalalg_raster_compare_same_file_pipeline():
         pipeline="read ! compare --reference ../gcore/data/byte.tif",
     ) as alg:
         assert alg["output-string"] == ""
+
+
+def test_gdalalg_raster_compare_rmse():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="RMSD",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: RMSD: 1\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 48.1308\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr_nbits():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1)
+    ref_ds.GetRasterBand(1).Fill(2)
+    ref_ds.GetRasterBand(1).SetMetadataItem("NBITS", "2", "IMAGE_STRUCTURE")
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 9.54243\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_psnr_floating_point():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    ref_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, array.array("f", [1, 2]))
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="PSNR",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == "Band 1: PSNR (dB): 3.0103\n"
+
+    assert tab_pct[0] == 1.0
+
+
+def test_gdalalg_raster_compare_all():
+
+    if "muparser" not in gdal.GetDriverByName("VRT").GetMetadataItem(
+        "ExpressionDialects"
+    ):
+        pytest.skip("muparser not available")
+
+    input_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    input_ds.GetRasterBand(1).Fill(1)
+    ref_ds = gdal.GetDriverByName("MEM").Create("", 1, 2, 1, gdal.GDT_Float32)
+    ref_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, array.array("f", [1, 2]))
+
+    tab_pct = [0]
+
+    def my_progress(pct, msg, user_data):
+        assert pct >= tab_pct[0]
+        tab_pct[0] = pct
+        return True
+
+    with gdal.Run(
+        "raster",
+        "compare",
+        input=input_ds,
+        reference=ref_ds,
+        skip_binary=True,
+        metric="all",
+        progress=my_progress,
+    ) as alg:
+        assert alg["output-string"] == """Band 1: pixels differing: 1
+Band 1: maximum pixel value difference: 1.000000
+Band 1: RMSD: 0.707107
+Band 1: PSNR (dB): 3.0103
+"""
+
+    assert tab_pct[0] == 1.0
+
+
+@pytest.mark.require_driver("Zarr")
+def test_gdalalg_raster_compare_zarr(tmp_vsimem):
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test2.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert alg["output-string"] == ""
+
+    with gdaltest.tempfile(
+        tmp_vsimem / "test.zarr" / "foo", ""
+    ), gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert (
+            alg["output-string"]
+            == "Input file foo does not exist in reference directory\n"
+        )
+
+    with gdaltest.tempfile(
+        tmp_vsimem / "test2.zarr" / "bar", ""
+    ), gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert (
+            alg["output-string"]
+            == f"Input file {tmp_vsimem}/test.zarr/bar does not exist\n"
+        )
+
+    with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "rb") as f:
+        data = f.read()
+    with gdal.VSIFile(tmp_vsimem / "test.zarr" / "zarr.json", "wb") as f:
+        f.write(data + b" ")
+
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        len_data = len(data)
+        len_data_p1 = len(data) + 1
+        assert (
+            alg["output-string"]
+            == f"Reference file '{tmp_vsimem}/test2.zarr/zarr.json' has size {len_data} bytes, whereas input file has size {len_data_p1} bytes.\n"
+        )
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "test.zarr",
+        gdal.Open("../gcore/data/byte.tif"),
+        options={"ARRAY_NAME": "test"},
+    )
+    gdal.RmdirRecursive(tmp_vsimem / "test.zarr" / "test" / "c")
+    gdal.FileFromMemBuffer(tmp_vsimem / "test.zarr" / "test" / "c", "")
+    gdal.RmdirRecursive(tmp_vsimem / "test2.zarr" / "test" / "c")
+    gdal.Mkdir(tmp_vsimem / "test2.zarr" / "test" / "c", 0o755)
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test.zarr", reference=tmp_vsimem / "test2.zarr"
+    ) as alg:
+        assert alg["output-string"].startswith(
+            f"Reference file {tmp_vsimem}/test2.zarr/test/c is a directory, but input file {tmp_vsimem}/test.zarr/test/c is not\n"
+        )
+    with gdal.quiet_errors(), gdal.alg.raster.compare(
+        input=tmp_vsimem / "test2.zarr", reference=tmp_vsimem / "test.zarr"
+    ) as alg:
+        assert alg["output-string"].startswith(
+            f"Reference file {tmp_vsimem}/test.zarr/test/c is not a directory, but input file {tmp_vsimem}/test2.zarr/test/c is\n"
+        )

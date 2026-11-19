@@ -1,5 +1,7 @@
 .. _gdal_raster_tpi:
 
+.. program:: gdal_raster_tpi
+
 ================================================================================
 ``gdal raster tpi``
 ================================================================================
@@ -69,6 +71,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

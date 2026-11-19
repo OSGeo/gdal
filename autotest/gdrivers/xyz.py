@@ -38,16 +38,17 @@ def test_xyz_1():
 # Test CreateCopy() of float.img
 
 
-def test_xyz_2():
+def test_xyz_2(tmp_path):
 
     src_ds = gdal.Open("data/hfa/float.img")
     ds = gdal.GetDriverByName("XYZ").CreateCopy(
-        "tmp/float.xyz", src_ds, options=["COLUMN_SEPARATOR=,", "ADD_HEADER_LINE=YES"]
+        tmp_path / "float.xyz",
+        src_ds,
+        options=["COLUMN_SEPARATOR=,", "ADD_HEADER_LINE=YES"],
     )
     got_cs = ds.GetRasterBand(1).Checksum()
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = None
-    gdal.GetDriverByName("XYZ").Delete("tmp/float.xyz")
     assert got_cs == expected_cs or got_cs == 24387
 
 
@@ -565,7 +566,7 @@ def test_xyz_column_order_basic_yxz():
     content = yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
-    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    ds = gdal.Open("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
     assert ds.RasterXSize == 2 and ds.RasterYSize == 3
     buf = ds.ReadRaster(0, 2, 2, 1)
     assert struct.unpack("B" * 2, buf) == (69, 70)
@@ -585,14 +586,11 @@ def test_xyz_column_order_basic_yxz():
 
 def test_xyz_column_order_overrides_header():
 
-    content = (
-        """x y z
-"""
-        + yxzContent()
-    )
+    content = """x y z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
-    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
+    ds = gdal.Open("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
     assert ds.RasterXSize == 2 and ds.RasterYSize == 3
     buf = ds.ReadRaster(0, 2, 2, 1)
     assert struct.unpack("B" * 2, buf) == (69, 70)
@@ -606,14 +604,11 @@ def test_xyz_column_order_overrides_header():
 
 def test_xyz_column_order_auto():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
-    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=AUTO"])
+    ds = gdal.Open("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=AUTO"])
     assert ds.RasterXSize == 2 and ds.RasterYSize == 3
     buf = ds.ReadRaster(0, 2, 2, 1)
     assert struct.unpack("B" * 2, buf) == (69, 70)
@@ -627,15 +622,12 @@ def test_xyz_column_order_auto():
 
 def test_xyz_column_order_wrong_option():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
     with pytest.raises(Exception):
-        gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=WRONG"])
+        gdal.Open("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=WRONG"])
     gdal.Unlink("/vsimem/grid.xyz")
 
 
@@ -645,14 +637,11 @@ def test_xyz_column_order_wrong_option():
 
 def test_xyz_column_order_xyz():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
-    ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=XYZ"])
+    ds = gdal.Open("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=XYZ"])
     assert ds.RasterXSize == 3 and ds.RasterYSize == 2
     ds = None
     gdal.Unlink("/vsimem/grid.xyz")

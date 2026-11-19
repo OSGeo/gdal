@@ -26,6 +26,7 @@ pytestmark = [
     pytest.mark.random_order(disabled=True),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -219,7 +220,7 @@ def test_gdb(openfilegdb_drv, tmp_path, test_gdb_datalist):
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
             feat.SetField("xml", "<foo></foo>")
-            feat.SetField("binary", b"\x00\xFF\x7F")
+            feat.SetField("binary", b"\x00\xff\x7f")
             feat.SetField("binary2", b"\x12\x34\x56")
             feat.SetField("smallint2", -32768)
             feat.SetField("float2", 1.5)
@@ -455,16 +456,18 @@ def test_ogr_fgdb_15(tmp_path):
 # Test fix for #5674
 
 
-def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
+def test_ogr_fgdb_16(tmp_path, openfilegdb_drv, fgdb_drv):
     if fgdb_drv is None or openfilegdb_drv is None:
         pytest.skip()
 
     try:
-        gdaltest.unzip("tmp/cache", "data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip")
+        gdaltest.unzip(
+            tmp_path / "cache", "data/filegdb/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip"
+        )
     except OSError:
         pass
     try:
-        os.stat("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        os.stat(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
     except OSError:
         pytest.skip()
 
@@ -475,13 +478,13 @@ def test_ogr_fgdb_16(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
 
     try:
-        ds = ogr.Open("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        ds = ogr.Open(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
         assert ds is not None
     finally:
         # Deregister OpenFileGDB again
         openfilegdb_drv.Deregister()
 
-        shutil.rmtree("tmp/cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
+        shutil.rmtree(tmp_path / "cache/ESSENCE_NAIPF_ORI_PROV_sub93.gdb")
 
 
 ###############################################################################
@@ -552,9 +555,10 @@ def test_ogr_fgdb_17(openfilegdb_drv, tmp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_fgdb_22():
+def test_ogr_fgdb_22(tmp_path):
 
-    ds = ogr.Open("data/filegdb/curves.gdb")
+    shutil.copytree("data/filegdb/curves.gdb", tmp_path / "curves.gdb")
+    ds = ogr.Open(tmp_path / "curves.gdb")
     lyr = ds.GetLayerByName("line")
     ds_ref = ogr.Open("data/filegdb/curves_line.csv")
     lyr_ref = ds_ref.GetLayer(0)
@@ -569,7 +573,11 @@ def test_ogr_fgdb_22():
         f_ref = lyr_ref.GetNextFeature()
         ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
-    ds = ogr.Open("data/filegdb/curve_circle_by_center.gdb")
+    shutil.copytree(
+        "data/filegdb/curve_circle_by_center.gdb",
+        tmp_path / "curve_circle_by_center.gdb",
+    )
+    ds = ogr.Open(tmp_path / "curve_circle_by_center.gdb")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/filegdb/curve_circle_by_center.csv")
     lyr_ref = ds_ref.GetLayer(0)
@@ -582,11 +590,15 @@ def test_ogr_fgdb_22():
 # Test opening '.'
 
 
-def test_ogr_fgdb_23():
+def test_ogr_fgdb_23(tmp_path):
 
-    os.chdir("data/filegdb/curves.gdb")
-    ds = ogr.Open(".")
-    os.chdir("../../..")
+    shutil.copytree("data/filegdb/curves.gdb", tmp_path / "curves.gdb")
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(tmp_path / "curves.gdb")
+        ds = ogr.Open(".")
+    finally:
+        os.chdir(old_cwd)
     assert ds is not None
 
 
@@ -596,9 +608,13 @@ def test_ogr_fgdb_23():
 
 
 @pytest.mark.require_driver("CSV")
-def test_ogr_fgdb_24():
+def test_ogr_fgdb_24(tmp_path):
 
-    ds = ogr.Open("data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb")
+    shutil.copytree(
+        "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
+        tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb",
+    )
+    ds = ogr.Open(tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open(
         "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv"
@@ -608,7 +624,11 @@ def test_ogr_fgdb_24():
         f_ref = lyr_ref.GetNextFeature()
         ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
-    ds = ogr.Open("data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb")
+    shutil.copytree(
+        "data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb",
+        tmp_path / "filegdb_polygonzm_nan_m_with_curves.gdb",
+    )
+    ds = ogr.Open(tmp_path / "filegdb_polygonzm_nan_m_with_curves.gdb")
     lyr = ds.GetLayer(0)
     ds_ref = ogr.Open("data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb.csv")
     lyr_ref = ds_ref.GetLayer(0)
@@ -621,9 +641,10 @@ def test_ogr_fgdb_24():
 # Test selecting FID column with OGRSQL
 
 
-def test_ogr_fgdb_25():
+def test_ogr_fgdb_25(tmp_path):
 
-    ds = ogr.Open("data/filegdb/curves.gdb")
+    shutil.copytree("data/filegdb/curves.gdb", tmp_path / "curves.gdb")
+    ds = ogr.Open(tmp_path / "curves.gdb")
     sql_lyr = ds.ExecuteSQL("SELECT OBJECTID FROM polygon WHERE OBJECTID = 2")
     assert sql_lyr is not None
     f = sql_lyr.GetNextFeature()
@@ -665,9 +686,12 @@ def test_ogr_fgdb_weird_winding_order(tmp_path):
 # where a polygon with inner rings has its exterior ring with wrong orientation
 
 
-def test_ogr_fgdb_utc_datetime():
+def test_ogr_fgdb_utc_datetime(tmp_path):
 
-    ds = ogr.Open("data/filegdb/testdatetimeutc.gdb")
+    shutil.copytree(
+        "data/filegdb/testdatetimeutc.gdb", tmp_path / "testdatetimeutc.gdb"
+    )
+    ds = ogr.Open(tmp_path / "testdatetimeutc.gdb")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     # Check that the timezone +00 is present
@@ -717,9 +741,10 @@ def _check_domains(ds):
     assert domain.GetEnumeration() == {"0": "None", "1": "Cement"}
 
 
-def test_ogr_fgdb_read_domains():
+def test_ogr_fgdb_read_domains(tmp_path):
 
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    shutil.copytree("data/filegdb/Domains.gdb", tmp_path / "domains.gdb")
+    ds = gdal.Open(tmp_path / "domains.gdb", gdal.OF_VECTOR)
     _check_domains(ds)
 
 
@@ -728,7 +753,7 @@ def test_ogr_fgdb_read_domains():
 
 
 @gdaltest.disable_exceptions()
-def test_ogr_fgdb_read_layer_hierarchy():
+def test_ogr_fgdb_read_layer_hierarchy(tmp_path):
 
     if False:
         # Test dataset produced with:
@@ -752,7 +777,8 @@ def test_ogr_fgdb_read_layer_hierarchy():
             "fd2_lyr", srs=srs3, geom_type=ogr.wkbPoint, options=["FEATURE_DATASET=fd2"]
         )
 
-    ds = gdal.OpenEx("data/filegdb/featuredataset.gdb")
+    shutil.copytree("data/filegdb/featuredataset.gdb", tmp_path / "featuredataset.gdb")
+    ds = gdal.Open(tmp_path / "featuredataset.gdb")
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["fd1", "fd2"]
@@ -789,7 +815,9 @@ def test_ogr_fgdb_read_layer_hierarchy():
 
 
 @pytest.mark.require_driver("OpenFileGDB")
-def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_drv):
+def test_ogr_filegdb_non_spatial_table_outside_gdb_items(
+    tmp_path, openfilegdb_drv, fgdb_drv
+):
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
 
@@ -797,7 +825,11 @@ def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_d
     fgdb_drv.Register()
     openfilegdb_drv.Register()
 
-    ds = ogr.Open("data/filegdb/table_outside_gdbitems.gdb")
+    shutil.copytree(
+        "data/filegdb/table_outside_gdbitems.gdb",
+        tmp_path / "table_outside_gdbitems.gdb",
+    )
+    ds = ogr.Open(tmp_path / "table_outside_gdbitems.gdb")
     assert ds is not None
     assert ds.GetDriver().GetName() == "FileGDB"
 
@@ -811,21 +843,32 @@ def test_ogr_filegdb_non_spatial_table_outside_gdb_items(openfilegdb_drv, fgdb_d
 # table is not consistent with the one of the feature dataset
 
 
-def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table():
-    ds = ogr.Open("data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb")
+def test_ogr_filegdb_inconsistent_crs_feature_dataset_and_feature_table(tmp_path):
+
+    shutil.copytree(
+        "data/filegdb/inconsistent_crs_feature_dataset_and_feature_table.gdb",
+        tmp_path / "inconsistent_crs_feature_dataset_and_feature_table.gdb",
+    )
+    ds = ogr.Open(tmp_path / "inconsistent_crs_feature_dataset_and_feature_table.gdb")
     assert ds is not None
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
 
 
 ###############################################################################
 # Test reading .gdb with LengthFieldName / AreaFieldName
 
 
-def test_ogr_filegdb_shape_length_shape_area_as_default_in_field_defn(fgdb_drv):
-    ds = ogr.Open("data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb")
+def test_ogr_filegdb_shape_length_shape_area_as_default_in_field_defn(
+    tmp_path, fgdb_drv
+):
+    shutil.copytree(
+        "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
+        tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb",
+    )
+    ds = ogr.Open(tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb")
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     assert (
@@ -919,9 +962,13 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(fgdb_drv, tmp_
     dirname = (
         tmp_path / "test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit.gdb"
     )
+    shutil.copytree(
+        "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
+        tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb",
+    )
     gdal.VectorTranslate(
         dirname,
-        "data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb",
+        tmp_path / "filegdb_polygonzm_m_not_closing_with_curves.gdb",
         options="-f FileGDB -unsetfid -fid 1",
     )
 
@@ -941,7 +988,7 @@ def test_ogr_filegdb_CREATE_SHAPE_AREA_AND_LENGTH_FIELDS_implicit(fgdb_drv, tmp_
 
 
 @pytest.mark.require_driver("OpenFileGDB")
-def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
+def test_ogr_filegdb_read_relationships(tmp_path, openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
 
@@ -950,11 +997,13 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
 
     # no relationships
-    ds = gdal.OpenEx("data/filegdb/Domains.gdb", gdal.OF_VECTOR)
+    shutil.copytree("data/filegdb/Domains.gdb", tmp_path / "Domains.gdb")
+    ds = gdal.Open(tmp_path / "Domains.gdb", gdal.OF_VECTOR)
     assert ds.GetRelationshipNames() is None
 
     # has relationships
-    ds = gdal.OpenEx("data/filegdb/relationships.gdb", gdal.OF_VECTOR)
+    shutil.copytree("data/filegdb/relationships.gdb", tmp_path / "relationships.gdb")
+    ds = gdal.Open(tmp_path / "relationships.gdb", gdal.OF_VECTOR)
     assert ds.GetDriver().GetDescription() == "FileGDB"
     assert set(ds.GetRelationshipNames()) == {
         "composite_many_to_many",
@@ -1071,10 +1120,11 @@ def test_ogr_filegdb_read_relationships(openfilegdb_drv, fgdb_drv):
 # Test reading an empty polygon
 
 
-def test_ogr_filegdb_read_empty_polygon():
+def test_ogr_filegdb_read_empty_polygon(tmp_path):
 
     # Dataset generated by OpenFileGDB driver
-    ds = ogr.Open("data/filegdb/empty_polygon.gdb")
+    shutil.copytree("data/filegdb/empty_polygon.gdb", tmp_path / "empty_polygon.gdb")
+    ds = ogr.Open(tmp_path / "empty_polygon.gdb")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsEmpty()
@@ -1085,7 +1135,7 @@ def test_ogr_filegdb_read_empty_polygon():
 
 
 @pytest.mark.require_driver("OpenFileGDB")
-def test_ogr_filegdb_read_cdf_if_openfilegdb(openfilegdb_drv, fgdb_drv):
+def test_ogr_filegdb_read_cdf_if_openfilegdb(tmp_path, openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Deregister()
     fgdb_drv.Deregister()
 
@@ -1093,7 +1143,8 @@ def test_ogr_filegdb_read_cdf_if_openfilegdb(openfilegdb_drv, fgdb_drv):
     openfilegdb_drv.Register()
     fgdb_drv.Register()
 
-    ds = ogr.Open("data/filegdb/with_cdf.gdb")
+    shutil.copytree("data/filegdb/with_cdf.gdb", tmp_path / "with_cdf.gdb")
+    ds = ogr.Open(tmp_path / "with_cdf.gdb")
     assert ds.GetDriver().GetDescription() == "FileGDB"
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 3
@@ -1103,8 +1154,9 @@ def test_ogr_filegdb_read_cdf_if_openfilegdb(openfilegdb_drv, fgdb_drv):
 # Test reading a database with a compressed layer (.cdf)
 
 
-def test_ogr_filegdb_read_cdf():
+def test_ogr_filegdb_read_cdf(tmp_path):
 
-    ds = ogr.Open("data/filegdb/with_cdf.gdb")
+    shutil.copytree("data/filegdb/with_cdf.gdb", tmp_path / "with_cdf.gdb")
+    ds = ogr.Open(tmp_path / "with_cdf.gdb")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 3

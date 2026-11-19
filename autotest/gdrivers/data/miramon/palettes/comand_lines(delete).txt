@@ -2,6 +2,8 @@
 
 "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Categorical\Assigned\real_2x3_6_categs.img" "D:\tmp\Categorical_Assigned_real_2x3_6_categs.tiff" -if MiraMonRaster
 
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Categorical\Assigned\double_2x3_6.img" "D:\tmp\Categorical_Assigned_double_2x3_6.tiff" -if MiraMonRaster
+
 "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Categorical\Authomatic\byte_2x3_6_categs.img" "D:\tmp\Categorical_Authomatic_byte_2x3_6_categs.rst" -if MiraMonRaster
 
 "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Categorical\ThematicNoDataBeg\MUCSC_2002_30_m_v_6_retI.rel" "D:\tmp\Categorical_Thematic_MUCSC_2002_30_m_v_6_ret.tiff" -if MiraMonRaster
@@ -17,7 +19,11 @@
 "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\DBF_nodata_beg\Plrkan1c_p_remI.rel" "D:\tmp\DBF_nodata_beg_Plrkan1c_p_rem.tiff" -if MiraMonRaster
 
 
-"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\byte_2x3_6_categs.img" "D:\tmp\Constant_byte_2x3_6_categs.tiff" -if MiraMonRaster
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\byte_2x3_6_categs.img" "D:\tmp\Constant_byte_2x3_6_categs.vrt" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\real_2x3_6_categs.img" "D:\tmp\Constant_real_2x3_6_categs.vrt" -if MiraMonRaster
+
+"D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Constant\integer_2x3_6_categs.img" "D:\tmp\Constant_integer_2x3_6_categs.vrt" -if MiraMonRaster
 
 "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\palettes\Categorical\Assignedp25\byte_2x3_6_categsI.rel" "D:\tmp\kk.tiff" -if MiraMonRaster
 

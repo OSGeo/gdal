@@ -102,6 +102,10 @@ void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)
                               "AlternativeName Domain");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+                              "<CreationOptionList>"
+                              "</CreationOptionList>");
+
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"

@@ -718,6 +718,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                             PyArrayObject *psArray,
                             GDALDataType buf_type,
                             GDALRIOResampleAlg resample_alg,
+                            int operate_in_buf_type,
                             GDALProgressFunc callback = NULL,
                             void* callback_data = NULL) {
 
@@ -758,6 +759,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    sExtraArg.bOperateInBufType = operate_in_buf_type;
     int nXOff = (int)(xoff + 0.5);
     int nYOff = (int)(yoff + 0.5);
     int nXSize = (int)(xsize + 0.5);
@@ -785,6 +787,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                          PyArrayObject *psArray,
                          GDALDataType buf_type,
                          GDALRIOResampleAlg resample_alg,
+                         int operate_in_buf_type,
                          GDALProgressFunc callback = NULL,
                          void* callback_data = NULL,
                          bool binterleave = true,
@@ -839,6 +842,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.eResampleAlg = resample_alg;
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
+    sExtraArg.bOperateInBufType = operate_in_buf_type;
     int nXOff = (int)(xoff + 0.5);
     int nYOff = (int)(yoff + 0.5);
     int nXSize = (int)(xsize + 0.5);
@@ -2653,6 +2657,7 @@ def _to_primitive_type(x):
 def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
                        buf_xsize=None, buf_ysize=None, buf_type=None,
                        resample_alg=gdal.GRIORA_NearestNeighbour,
+                       operate_in_buf_type=True,
                        callback=None, callback_data=None, interleave='band',
                        band_list=None):
     """Pure python implementation of reading a chunk of a GDAL file
@@ -2696,6 +2701,7 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
                                buf_obj=buf_obj,
                                resample_alg=resample_alg,
+                               operate_in_buf_type=operate_in_buf_type,
                                callback=callback,
                                callback_data=callback_data)
 
@@ -2748,7 +2754,9 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         buf_type = datatype
 
     if DatasetIONumPy(ds, 0, xoff, yoff, win_xsize, win_ysize,
-                      buf_obj, buf_type, resample_alg, callback, callback_data,
+                      buf_obj, buf_type, resample_alg,
+                      operate_in_buf_type,
+                      callback, callback_data,
                       interleave, band_list) != 0:
         _RaiseException()
         return None
@@ -2826,7 +2834,8 @@ def DatasetWriteArray(ds, array, xoff=0, yoff=0,
         raise ValueError("array does not have corresponding GDAL data type")
 
     ret = DatasetIONumPy(ds, 1, xoff, yoff, xsize, ysize,
-                         array, datatype, resample_alg, callback, callback_data,
+                         array, datatype, resample_alg, True,
+                         callback, callback_data,
                          interleave, band_list)
     if ret != 0:
         _RaiseException()
@@ -2836,6 +2845,7 @@ def DatasetWriteArray(ds, array, xoff=0, yoff=0,
 def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
                     buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                     resample_alg=gdal.GRIORA_NearestNeighbour,
+                    operate_in_buf_type=True,
                     callback=None, callback_data=None):
     """Pure python implementation of reading a chunk of a GDAL file
     into a numpy array.  Used by the gdal.Band.ReadAsArray method."""
@@ -2899,7 +2909,8 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
         buf_type = datatype
 
     if BandRasterIONumPy(band, 0, xoff, yoff, win_xsize, win_ysize,
-                         buf_obj, buf_type, resample_alg, callback, callback_data) != 0:
+                         buf_obj, buf_type, resample_alg, operate_in_buf_type,
+                         callback, callback_data) != 0:
         _RaiseException()
         return None
 
@@ -2941,7 +2952,8 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
         raise ValueError("array does not have corresponding GDAL data type")
 
     ret = BandRasterIONumPy(band, 1, xoff, yoff, xsize, ysize,
-                             array, datatype, resample_alg, callback, callback_data)
+                             array, datatype, resample_alg, True,
+                             callback, callback_data)
     if ret != 0:
         _RaiseException()
     return ret

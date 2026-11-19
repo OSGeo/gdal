@@ -229,6 +229,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
   add_test(NAME java_ogrinfo_3 COMMAND ${JAVA_RUN} ogrinfo -ro -al tmp_test/out2.shp)
   set_tests_properties(java_ogrinfo_3 PROPERTIES DEPENDS java_ogr2ogr_3)
   add_test(NAME java_OSRTransform COMMAND ${JAVA_RUN} OSRTransform)
+  add_test(NAME java_OSRTransform2 COMMAND ${JAVA_RUN} OSRTransform2Test)
   add_test(NAME java_gdalmajorobject COMMAND ${JAVA_RUN} gdalmajorobject)
   add_test(NAME java_GDALTestIO COMMAND ${JAVA_RUN} GDALTestIO)
   add_test(NAME java_GDALTestVSI COMMAND ${JAVA_RUN} GDALTestVSI)
@@ -251,6 +252,7 @@ if (Java_Runtime_FOUND AND BUILD_TESTING)
           java_ogr2ogr_3
           java_ogrinfo_3
           java_OSRTransform
+          java_OSRTransform2
           java_gdalmajorobject
           java_GDALTestIO
           java_GDALTestVSI

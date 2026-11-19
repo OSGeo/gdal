@@ -1,5 +1,7 @@
 .. _gdal_vsi_delete:
 
+.. program:: gdal_vsi_delete
+
 ================================================================================
 ``gdal vsi delete``
 ================================================================================
@@ -36,6 +38,11 @@ Options
 .. option:: -r, -R, --recursive
 
     Delete directories recursively.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

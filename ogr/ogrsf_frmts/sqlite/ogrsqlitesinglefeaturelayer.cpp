@@ -101,7 +101,7 @@ const OGRFeatureDefn *OGRSQLiteSingleFeatureLayer::GetLayerDefn() const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteSingleFeatureLayer::TestCapability(const char *) const
+bool OGRSQLiteSingleFeatureLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

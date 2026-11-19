@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
 import shutil
 import struct
 import sys
@@ -19,7 +18,7 @@ import sys
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -319,8 +318,7 @@ def test_vrtwarp_9(tmp_vsimem):
     gdal.CopyFile("../gcore/data/sstgeo.tif", tmp_vsimem / "sstgeo.tif")
 
     f = gdal.VSIFile(tmp_vsimem / "sstgeo.vrt", "wb")
-    f.write(
-        f"""<VRTDataset rasterXSize="60" rasterYSize="39">
+    f.write(f"""<VRTDataset rasterXSize="60" rasterYSize="39">
   <Metadata domain="GEOLOCATION">
     <MDI key="SRS">GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]</MDI>
     <MDI key="X_DATASET">{tmp_vsimem}/sstgeo.tif</MDI>
@@ -343,31 +341,28 @@ def test_vrtwarp_9(tmp_vsimem):
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
-""".encode(
-            "ascii"
-        )
-    )
+""".encode("ascii"))
     f.close()
     ds = gdal.Open(tmp_vsimem / "sstgeo.vrt", gdal.GA_Update)
     ds.BuildOverviews("NEAR", overviewlist=[2])
     ds = None
 
-    ds = gdal.Warp("", tmp_vsimem / "sstgeo.vrt", options="-of MEM -geoloc")
-    expected_cs_main = ds.GetRasterBand(1).Checksum()
-    ds = None
-
-    vrtwarp_ds = gdal.Warp(
-        tmp_vsimem / "vrtwarp_9.vrt",
-        tmp_vsimem / "sstgeo.vrt",
-        options="-overwrite -of VRT -geoloc",
-    )
-    assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
-    assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
-    assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == 62489, (
-        vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize,
-        vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize,
-    )
-    vrtwarp_ds = None
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        ds = gdal.Warp("", tmp_vsimem / "sstgeo.vrt", options="-of MEM -geoloc")
+        expected_cs_main = ds.GetRasterBand(1).Checksum()
+        ds = None
+        vrtwarp_ds = gdal.Warp(
+            tmp_vsimem / "vrtwarp_9.vrt",
+            tmp_vsimem / "sstgeo.vrt",
+            options="-overwrite -of VRT -geoloc",
+        )
+        assert vrtwarp_ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert vrtwarp_ds.GetRasterBand(1).Checksum() == expected_cs_main
+        assert vrtwarp_ds.GetRasterBand(1).GetOverview(0).Checksum() == 62489, (
+            vrtwarp_ds.GetRasterBand(1).GetOverview(0).XSize,
+            vrtwarp_ds.GetRasterBand(1).GetOverview(0).YSize,
+        )
+        vrtwarp_ds = None
 
 
 ###############################################################################
@@ -442,10 +437,8 @@ def test_vrtwarp_read_vrt_of_warped_vrt():
 
 
 @pytest.mark.slow()
+@pytest.mark.require_64bit()
 def test_vrtwarp_read_blocks_larger_than_2_gigapixels():
-
-    if sys.maxsize < 2**32:
-        pytest.skip("Test not available on 32 bit")
 
     import psutil
 
@@ -551,75 +544,63 @@ def test_vrtwarp_sourcedataset_all_relatives(tmp_vsimem):
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_relative_dest_absolute():
+def test_vrtwarp_sourcedataset_source_relative_dest_absolute(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
-    try:
-        src_ds = gdal.Open(os.path.join("tmp", "byte.tif"))
-        ds = gdal.AutoCreateWarpedVRT(src_ds)
-        path = os.path.join(os.getcwd(), "tmp", "byte.vrt")
-        if sys.platform == "win32":
-            path = path.replace("/", "\\")
-        ds.SetDescription(path)
-        src_ds = None
-        ds = None
-        assert (
-            '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    src_ds = gdal.Open(tmp_path / "byte.tif")
+    ds = gdal.AutoCreateWarpedVRT(src_ds)
+    path = tmp_path / "byte.vrt"
+    if sys.platform == "win32":
+        path = str(path).replace("/", "\\")
+    ds.SetDescription(str(path))
+    src_ds = None
+    ds = None
+    assert (
+        '<SourceDataset relativeToVRT="1">byte.tif<'
+        in open(tmp_path / "byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_absolute_dest_absolute():
+def test_vrtwarp_sourcedataset_source_absolute_dest_absolute(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
-    try:
-        src_ds = gdal.Open(os.path.join(os.getcwd(), "tmp", "byte.tif"))
-        ds = gdal.AutoCreateWarpedVRT(src_ds)
-        ds.SetDescription(os.path.join(os.getcwd(), "tmp", "byte.vrt"))
-        src_ds = None
-        ds = None
-        assert (
-            '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    src_ds = gdal.Open(tmp_path / "byte.tif")
+    ds = gdal.AutoCreateWarpedVRT(src_ds)
+    ds.SetDescription(str(tmp_path / "byte.vrt"))
+    src_ds = None
+    ds = None
+    assert (
+        '<SourceDataset relativeToVRT="1">byte.tif<'
+        in open(tmp_path / "byte.vrt", "rt").read()
+    )
 
 
 ###############################################################################
 # Test the relativeToVRT attribute of SourceDataset
 
 
-def test_vrtwarp_sourcedataset_source_absolute_dest_relative():
+def test_vrtwarp_sourcedataset_source_absolute_dest_relative(tmp_path):
 
-    shutil.copy("data/byte.tif", "tmp")
+    shutil.copy("data/byte.tif", tmp_path)
 
-    try:
-        path = os.path.join(os.getcwd(), "tmp", "byte.tif")
-        if sys.platform == "win32":
-            path = path.replace("/", "\\")
-        src_ds = gdal.Open(path)
-        ds = gdal.AutoCreateWarpedVRT(src_ds)
-        ds.SetDescription(os.path.join("tmp", "byte.vrt"))
-        src_ds = None
-        ds = None
-        assert (
-            '<SourceDataset relativeToVRT="1">byte.tif<'
-            in open("tmp/byte.vrt", "rt").read()
-        )
-    finally:
-        gdal.Unlink("tmp/byte.tif")
-        gdal.Unlink("tmp/byte.vrt")
+    path = tmp_path / "byte.tif"
+    if sys.platform == "win32":
+        path = str(path).replace("/", "\\")
+    src_ds = gdal.Open(path)
+    ds = gdal.AutoCreateWarpedVRT(src_ds)
+    ds.SetDescription(str(tmp_path / "byte.vrt"))
+    src_ds = None
+    ds = None
+    assert (
+        '<SourceDataset relativeToVRT="1">byte.tif<'
+        in open(str(tmp_path / "byte.vrt"), "rt").read()
+    )
 
 
 ###############################################################################
@@ -725,6 +706,28 @@ def test_vrtwarp_irasterio_optim_three_band():
 
 
 ###############################################################################
+# Test that VRTWarpedDataset::IRasterIO() honours the requested resampling
+# when reading the whole image at a reduced resolution
+
+
+def test_vrtwarp_irasterio_optim_rescaled_resampling():
+
+    src_ds = gdal.Translate("", "data/byte.tif", format="MEM", width=1000)
+    warped_vrt_ds = gdal.Warp("", src_ds, format="VRT")
+
+    with gdaltest.config_option("GDAL_VRT_WARP_USE_DATASET_RASTERIO", "NO"):
+        expected_data = warped_vrt_ds.ReadRaster(
+            buf_xsize=100, buf_ysize=10, resample_alg=gdal.GRIORA_Average
+        )
+    assert (
+        warped_vrt_ds.ReadRaster(
+            buf_xsize=100, buf_ysize=10, resample_alg=gdal.GRIORA_Average
+        )
+        == expected_data
+    )
+
+
+###############################################################################
 # Test VRTWarpedDataset::IRasterIO() code path
 
 
@@ -766,6 +769,31 @@ def test_vrtwarp_autocreatewarpedvrt_invalid_nodata():
     ds.GetRasterBand(1).SetNoDataValue(-9999)
     vrt_ds = gdal.AutoCreateWarpedVRT(ds)
     assert vrt_ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
+
+
+###############################################################################
+# Test that gdal.AutoCreateWarpedVRT() errors out when the computed dimensions
+# are degenerate, instead of returning a dataset with zero lines. Here this is
+# triggered by a source crossing the antimeridian, whose extent in EPSG:3857
+# becomes globe-wide in X while staying small in Y.
+# Cf https://github.com/OSGeo/gdal/issues/15266
+
+
+@gdaltest.enable_exceptions()
+def test_vrtwarp_autocreatewarpedvrt_degenerate_output(tmp_vsimem):
+
+    filename = tmp_vsimem / "dateline.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 16, 16, 1, gdal.GDT_UInt8)
+    ds.SetGeoTransform([179.9, 0.02, 0, 1, 0, -0.02])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetSpatialRef(srs)
+    ds = None
+
+    with pytest.raises(
+        Exception, match="The extent of the source in the target CRS is degenerate"
+    ):
+        gdal.AutoCreateWarpedVRT(gdal.Open(filename), None, "EPSG:3857")
 
 
 ###############################################################################

@@ -72,12 +72,12 @@ bool GDALRasterSlopeAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (!std::isnan(m_xscale))
     {
         aosOptions.AddString("-xscale");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_xscale));
+        aosOptions.AddString(m_xscale);
     }
     if (!std::isnan(m_yscale))
     {
         aosOptions.AddString("-yscale");
-        aosOptions.AddString(CPLSPrintf("%.17g", m_yscale));
+        aosOptions.AddString(m_yscale);
     }
     if (m_unit == "percent")
         aosOptions.AddString("-p");

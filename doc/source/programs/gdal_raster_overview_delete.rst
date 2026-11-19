@@ -1,5 +1,7 @@
 .. _gdal_raster_overview_delete:
 
+.. program:: gdal_raster_overview_delete
+
 ================================================================================
 ``gdal raster overview delete``
 ================================================================================
@@ -47,6 +49,11 @@ Standard Options
 .. collapse:: Details
 
     .. include:: gdal_options/oo.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

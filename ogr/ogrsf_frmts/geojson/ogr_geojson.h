@@ -67,7 +67,7 @@ class OGRGeoJSONLayer final : public OGRMemLayer
     // OGRLayer Interface
     //
     const char *GetFIDColumn() const override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     OGRErr SyncToDisk() override;
 
@@ -197,7 +197,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(const OGRFieldDefn *poField, int bApproxOK) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -253,7 +253,7 @@ class OGRGeoJSONDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     void AddLayer(OGRGeoJSONLayer *poLayer);
 

@@ -325,23 +325,23 @@ GDALDataset *NSIDCbinDataset::Open(GDALOpenInfo *poOpenInfo)
     int epsg = -1;
     if (south)
     {
-        poDS->m_gt[0] = -3950000.0;
-        poDS->m_gt[1] = 25000;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = 4350000.0;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -25000;
+        poDS->m_gt.xorig = -3950000.0;
+        poDS->m_gt.xscale = 25000;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = 4350000.0;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -25000;
 
         epsg = 3976;
     }
     else
     {
-        poDS->m_gt[0] = -3837500;
-        poDS->m_gt[1] = 25000;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = 5837500;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -25000;
+        poDS->m_gt.xorig = -3837500;
+        poDS->m_gt.xscale = 25000;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = 5837500;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -25000;
 
         epsg = 3413;
     }

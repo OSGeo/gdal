@@ -23,6 +23,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("CSV")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

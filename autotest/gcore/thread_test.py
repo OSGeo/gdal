@@ -79,7 +79,7 @@ def launch_threads(get_band, expected_cs, on_mask_band=False):
 
 def test_thread_safe_open():
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE)
+    ds = gdal.Open("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE)
     assert ds.IsThreadSafe(gdal.OF_RASTER)
     assert not ds.IsThreadSafe(gdal.OF_RASTER | gdal.OF_UPDATE)
 
@@ -100,7 +100,7 @@ def test_thread_safe_open():
 
 def test_thread_safe_create():
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_RASTER)
+    ds = gdal.Open("data/byte.tif", gdal.OF_RASTER)
     assert not ds.IsThreadSafe(gdal.OF_RASTER)
     assert ds.GetRefCount() == 1
     thread_safe_ds = ds.GetThreadSafeDataset(gdal.OF_RASTER)
@@ -116,7 +116,7 @@ def test_thread_safe_create():
 
 def test_thread_safe_create_close_src_ds():
 
-    ds = gdal.OpenEx("data/byte.tif", gdal.OF_RASTER)
+    ds = gdal.Open("data/byte.tif", gdal.OF_RASTER)
     thread_safe_ds = ds.GetThreadSafeDataset(gdal.OF_RASTER)
     ds.Close()
     with pytest.raises(Exception):
@@ -128,7 +128,7 @@ def test_thread_safe_src_cannot_be_reopened(tmp_vsimem):
     tmpfilename = str(tmp_vsimem / "byte.tif")
     gdal.Translate(tmpfilename, "data/byte.tif")
 
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.Unlink(tmpfilename)
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -139,7 +139,7 @@ def test_thread_safe_src_cannot_be_reopened(tmp_vsimem):
 )
 def test_thread_safe_incompatible_open_flags(flag):
     with pytest.raises(Exception, match="mutually exclusive"):
-        gdal.OpenEx("data/byte.tif", gdal.OF_THREAD_SAFE | flag)
+        gdal.Open("data/byte.tif", gdal.OF_THREAD_SAFE | flag)
 
 
 def test_thread_safe_src_alter_after_opening(tmp_vsimem):
@@ -147,7 +147,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
     tmpfilename = str(tmp_vsimem / "byte.tif")
 
     gdal.Translate(tmpfilename, "data/byte.tif")
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename, ds.RasterXSize + 1, ds.RasterYSize, ds.RasterCount
         )
@@ -155,7 +155,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
             ds.GetRasterBand(1).Checksum()
 
     gdal.Translate(tmpfilename, "data/byte.tif")
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename, ds.RasterXSize, ds.RasterYSize + 1, ds.RasterCount
         )
@@ -163,7 +163,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
             ds.GetRasterBand(1).Checksum()
 
     gdal.Translate(tmpfilename, "data/byte.tif")
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename, ds.RasterXSize, ds.RasterYSize, ds.RasterCount + 1
         )
@@ -171,7 +171,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
             ds.GetRasterBand(1).Checksum()
 
     gdal.Translate(tmpfilename, "data/byte.tif")
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename, ds.RasterXSize, ds.RasterYSize, ds.RasterCount, gdal.GDT_Int16
         )
@@ -179,7 +179,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
             ds.GetRasterBand(1).Checksum()
 
     gdal.Translate(tmpfilename, "data/byte.tif")
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename,
             ds.RasterXSize,
@@ -192,7 +192,7 @@ def test_thread_safe_src_alter_after_opening(tmp_vsimem):
 
     with gdal.Translate(tmpfilename, "data/byte.tif") as ds:
         ds.BuildOverviews("NEAR", [2])
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         ds.GetRasterBand(1).GetOverviewCount()
         gdal.GetDriverByName("GTiff").Create(
             tmpfilename, ds.RasterXSize, ds.RasterYSize, ds.RasterCount
@@ -206,7 +206,7 @@ def test_thread_safe_mask_band():
     with gdal.Open("data/stefan_full_rgba.tif") as src_ds:
         expected_cs = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/stefan_full_rgba.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE
     ) as ds:
 
@@ -215,7 +215,7 @@ def test_thread_safe_mask_band():
 
         launch_threads(get_band, expected_cs)
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/stefan_full_rgba.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE
     ) as ds:
         band = ds.GetRasterBand(1).GetMaskBand()
@@ -231,7 +231,7 @@ def test_thread_safe_mask_of_mask_band():
     with gdal.Open("data/stefan_full_rgba.tif") as src_ds:
         expected_cs = src_ds.GetRasterBand(1).GetMaskBand().GetMaskBand().Checksum()
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/stefan_full_rgba.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE
     ) as ds:
 
@@ -290,7 +290,7 @@ def test_thread_safe_overview(tmp_path):
         ds.BuildOverviews("NEAR", [2])
         expected_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         assert ds.GetRasterBand(1).GetOverviewCount() == 1
         assert ds.GetRasterBand(1).GetOverview(-1) is None
         assert ds.GetRasterBand(1).GetOverview(1) is None
@@ -300,7 +300,7 @@ def test_thread_safe_overview(tmp_path):
 
         launch_threads(get_band, expected_cs)
 
-    with gdal.OpenEx(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(tmpfilename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         band = ds.GetRasterBand(1).GetOverview(0)
 
         def get_band():
@@ -346,7 +346,7 @@ def test_thread_safe_open_options(tmp_path):
         ds.BuildOverviews("NEAR", [2])
         expected_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
 
-    with gdal.OpenEx(
+    with gdal.Open(
         tmpfilename,
         gdal.OF_RASTER | gdal.OF_THREAD_SAFE,
         open_options=["OVERVIEW_LEVEL=0"],
@@ -363,7 +363,7 @@ def test_thread_safe_open_options(tmp_path):
 def test_thread_safe_reuse_same_driver_as_prototype():
     """Checks that thread-safe mode honours the opening driver"""
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "../gdrivers/data/netcdf/byte_hdf5_starting_at_offset_1024.nc",
         gdal.OF_RASTER | gdal.OF_THREAD_SAFE,
         allowed_drivers=["HDF5"],
@@ -399,7 +399,7 @@ def test_thread_safe_rat():
 @pytest.mark.require_driver("HFA")
 def test_thread_safe_unsupported_rat():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "../gdrivers/data/hfa/87test.img", gdal.OF_RASTER | gdal.OF_THREAD_SAFE
     ) as ds:
         with pytest.raises(
@@ -412,7 +412,7 @@ def test_thread_safe_unsupported_rat():
 def test_thread_safe_many_datasets():
 
     tab_ds = [
-        gdal.OpenEx(
+        gdal.Open(
             "data/byte.tif" if (i % 3) < 2 else "data/utmsmall.tif",
             gdal.OF_RASTER | gdal.OF_THREAD_SAFE,
         )
@@ -437,7 +437,7 @@ def test_thread_safe_many_datasets():
 
 def test_thread_safe_BeginAsyncReader():
 
-    with gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         with pytest.raises(Exception, match="not supported"):
             ds.BeginAsyncReader(0, 0, ds.RasterXSize, ds.RasterYSize)
 
@@ -447,7 +447,7 @@ def test_thread_safe_GetVirtualMem():
     pytest.importorskip("numpy")
     gdaltest.importorskip_gdal_array()
 
-    with gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         with pytest.raises(Exception, match="not supported"):
             ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Read)
 
@@ -459,7 +459,7 @@ def test_thread_safe_GetMetadadata(tmp_vsimem):
         ds.SetMetadataItem("foo", "bar")
         ds.GetRasterBand(1).SetMetadataItem("bar", "baz")
 
-    with gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         assert ds.GetMetadataItem("foo") == "bar"
         assert ds.GetMetadataItem("not existing") is None
         assert ds.GetMetadata() == {"foo": "bar"}
@@ -476,7 +476,7 @@ def test_thread_safe_GetUnitType(tmp_vsimem):
     with gdal.GetDriverByName("GTiff").Create(filename, 1, 1) as ds:
         ds.GetRasterBand(1).SetUnitType("foo")
 
-    with gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         assert ds.GetRasterBand(1).GetUnitType() == "foo"
 
 
@@ -488,7 +488,7 @@ def test_thread_safe_GetColorTable(tmp_vsimem):
         ct.SetColorEntry(0, (1, 2, 3, 255))
         ds.GetRasterBand(1).SetColorTable(ct)
 
-    with gdal.OpenEx(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open(filename, gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
         res = [None]
 
         def thread_job():
@@ -505,7 +505,7 @@ def test_thread_safe_GetColorTable(tmp_vsimem):
 
 def test_thread_safe_GetSpatialRef():
 
-    with gdal.OpenEx("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
+    with gdal.Open("data/byte.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE) as ds:
 
         res = [True]
 
@@ -549,7 +549,7 @@ def test_thread_safe_GetSpatialRef():
 
 def test_thread_safe_GetGCPs():
 
-    with gdal.OpenEx(
+    with gdal.Open(
         "data/byte_gcp_pixelispoint.tif", gdal.OF_RASTER | gdal.OF_THREAD_SAFE
     ) as ds:
 

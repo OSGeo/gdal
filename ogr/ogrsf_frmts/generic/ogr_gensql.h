@@ -50,6 +50,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     std::string m_osInitialWHERE{};
     bool m_bForwardWhereToSourceLayer = true;
     bool m_bEOF = false;
+    bool m_bSpatialFilterSetOnSourceLayer = false;
 
     // Array of source layers (owned by m_poSrcDS or m_apoExtraDS)
     std::vector<OGRLayer *> m_apoTableLayers{};
@@ -120,7 +121,7 @@ class OGRGenSQLResultsLayer final : public OGRLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     virtual OGRErr ISetSpatialFilter(int iGeomField,
                                      const OGRGeometry *) override;

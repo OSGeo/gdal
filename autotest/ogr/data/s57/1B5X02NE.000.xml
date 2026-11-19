@@ -1,0 +1,2154 @@
+<DDFModule _interchangeLevel="3" _leaderIden="L" _inlineCodeExtensionIndicator="E" _versionNumber="1" _appIndicator=" " _extendedCharSet=" ! " _fieldControlLength="9" _sizeFieldLength="3" _sizeFieldPos="4" _sizeFieldTag="4">
+<DDFFieldDefn tag="0000" fieldName="" dataStructCode="elementary" dataTypeCode="char_string" arrayDescr="0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRIDVRPTVRIDSGCCVRIDSG2DVRIDSG3D0001FRIDFRIDFOIDFRIDATTFFRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT" formatControls="" escapeSequence="   ">
+</DDFFieldDefn>
+<DDFFieldDefn tag="0001" fieldName="ISO/IEC 8211 Record Identifier" dataStructCode="elementary" dataTypeCode="bit_string" arrayDescr="" formatControls="(b12)" escapeSequence="   ">
+</DDFFieldDefn>
+<DDFFieldDefn tag="DSID" fieldName="Data set identification field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!EXPP!INTU!DSNM!EDTN!UPDN!UADT!ISDT!STED!PRSP!PSDN!PRED!PROF!AGEN!COMT" formatControls="(b11,b14,2b11,3A,2A(8),R(4),b11,2A,b11,b12,A)" escapeSequence="   ">
+  <DDFSubfieldDefn name="RCNM" format="b11"/>
+  <DDFSubfieldDefn name="RCID" format="b14"/>
+  <DDFSubfieldDefn name="EXPP" format="b11"/>
+  <DDFSubfieldDefn name="INTU" format="b11"/>
+  <DDFSubfieldDefn name="DSNM" format="A"/>
+  <DDFSubfieldDefn name="EDTN" format="A"/>
+  <DDFSubfieldDefn name="UPDN" format="A"/>
+  <DDFSubfieldDefn name="UADT" format="A(8)"/>
+  <DDFSubfieldDefn name="ISDT" format="A(8)"/>
+  <DDFSubfieldDefn name="STED" format="R(4)"/>
+  <DDFSubfieldDefn name="PRSP" format="b11"/>
+  <DDFSubfieldDefn name="PSDN" format="A"/>
+  <DDFSubfieldDefn name="PRED" format="A"/>
+  <DDFSubfieldDefn name="PROF" format="b11"/>
+  <DDFSubfieldDefn name="AGEN" format="b12"/>
+  <DDFSubfieldDefn name="COMT" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="DSSI" fieldName="Data set structure information field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="DSTR!AALL!NALL!NOMR!NOCR!NOGR!NOLR!NOIN!NOCN!NOED!NOFA" formatControls="(3b11,8b14)" escapeSequence="   ">
+  <DDFSubfieldDefn name="DSTR" format="b11"/>
+  <DDFSubfieldDefn name="AALL" format="b11"/>
+  <DDFSubfieldDefn name="NALL" format="b11"/>
+  <DDFSubfieldDefn name="NOMR" format="b14"/>
+  <DDFSubfieldDefn name="NOCR" format="b14"/>
+  <DDFSubfieldDefn name="NOGR" format="b14"/>
+  <DDFSubfieldDefn name="NOLR" format="b14"/>
+  <DDFSubfieldDefn name="NOIN" format="b14"/>
+  <DDFSubfieldDefn name="NOCN" format="b14"/>
+  <DDFSubfieldDefn name="NOED" format="b14"/>
+  <DDFSubfieldDefn name="NOFA" format="b14"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="DSPM" fieldName="Data set parameter field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!HDAT!VDAT!SDAT!CSCL!DUNI!HUNI!PUNI!COUN!COMF!SOMF!COMT" formatControls="(b11,b14,3b11,b14,4b11,2b14,A)" escapeSequence="   ">
+  <DDFSubfieldDefn name="RCNM" format="b11"/>
+  <DDFSubfieldDefn name="RCID" format="b14"/>
+  <DDFSubfieldDefn name="HDAT" format="b11"/>
+  <DDFSubfieldDefn name="VDAT" format="b11"/>
+  <DDFSubfieldDefn name="SDAT" format="b11"/>
+  <DDFSubfieldDefn name="CSCL" format="b14"/>
+  <DDFSubfieldDefn name="DUNI" format="b11"/>
+  <DDFSubfieldDefn name="HUNI" format="b11"/>
+  <DDFSubfieldDefn name="PUNI" format="b11"/>
+  <DDFSubfieldDefn name="COUN" format="b11"/>
+  <DDFSubfieldDefn name="COMF" format="b14"/>
+  <DDFSubfieldDefn name="SOMF" format="b14"/>
+  <DDFSubfieldDefn name="COMT" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="VRID" fieldName="Vector record identifier field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!RVER!RUIN" formatControls="(b11,b14,b12,b11)" escapeSequence="   ">
+  <DDFSubfieldDefn name="RCNM" format="b11"/>
+  <DDFSubfieldDefn name="RCID" format="b14"/>
+  <DDFSubfieldDefn name="RVER" format="b12"/>
+  <DDFSubfieldDefn name="RUIN" format="b11"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="ATTV" fieldName="Vector record attribute field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ATTL!ATVL" formatControls="(b12,A)" escapeSequence="   ">
+  <DDFSubfieldDefn name="ATTL" format="b12"/>
+  <DDFSubfieldDefn name="ATVL" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="VRPC" fieldName="Vector record pointer control field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="*VPUI!VPIX!NVPT" formatControls="(b11,2b12)" escapeSequence="   ">
+  <DDFSubfieldDefn name="VPUI" format="b11"/>
+  <DDFSubfieldDefn name="VPIX" format="b12"/>
+  <DDFSubfieldDefn name="NVPT" format="b12"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="VRPT" fieldName="Vector record pointer field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*NAME!ORNT!USAG!TOPI!MASK" formatControls="(B(40),4b11)" escapeSequence="   ">
+  <DDFSubfieldDefn name="NAME" format="B(40)"/>
+  <DDFSubfieldDefn name="ORNT" format="b11"/>
+  <DDFSubfieldDefn name="USAG" format="b11"/>
+  <DDFSubfieldDefn name="TOPI" format="b11"/>
+  <DDFSubfieldDefn name="MASK" format="b11"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="SGCC" fieldName="Coordinate control field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="CCUI!CCIX!CCNC" formatControls="(b11,2b12)" escapeSequence="   ">
+  <DDFSubfieldDefn name="CCUI" format="b11"/>
+  <DDFSubfieldDefn name="CCIX" format="b12"/>
+  <DDFSubfieldDefn name="CCNC" format="b12"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="SG2D" fieldName="2-D Coordinate field" dataStructCode="array" dataTypeCode="bit_string" arrayDescr="*YCOO!XCOO" formatControls="(2b24)" escapeSequence="   ">
+  <DDFSubfieldDefn name="YCOO" format="b24"/>
+  <DDFSubfieldDefn name="XCOO" format="b24"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="SG3D" fieldName="3-D Coordinate (sounding array) field" dataStructCode="array" dataTypeCode="bit_string" arrayDescr="*YCOO!XCOO!VE3D" formatControls="(3b24)" escapeSequence="   ">
+  <DDFSubfieldDefn name="YCOO" format="b24"/>
+  <DDFSubfieldDefn name="XCOO" format="b24"/>
+  <DDFSubfieldDefn name="VE3D" format="b24"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FRID" fieldName="Feature record identifier field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!PRIM!GRUP!OBJL!RVER!RUIN" formatControls="(b11,b14,2b11,2b12,b11)" escapeSequence="   ">
+  <DDFSubfieldDefn name="RCNM" format="b11"/>
+  <DDFSubfieldDefn name="RCID" format="b14"/>
+  <DDFSubfieldDefn name="PRIM" format="b11"/>
+  <DDFSubfieldDefn name="GRUP" format="b11"/>
+  <DDFSubfieldDefn name="OBJL" format="b12"/>
+  <DDFSubfieldDefn name="RVER" format="b12"/>
+  <DDFSubfieldDefn name="RUIN" format="b11"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FOID" fieldName="Feature object identifier field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="AGEN!FIDN!FIDS" formatControls="(b12,b14,b12)" escapeSequence="   ">
+  <DDFSubfieldDefn name="AGEN" format="b12"/>
+  <DDFSubfieldDefn name="FIDN" format="b14"/>
+  <DDFSubfieldDefn name="FIDS" format="b12"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="ATTF" fieldName="Feature record attribute field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ATTL!ATVL" formatControls="(b12,A)" escapeSequence="-A ">
+  <DDFSubfieldDefn name="ATTL" format="b12"/>
+  <DDFSubfieldDefn name="ATVL" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="NATF" fieldName="Feature record national attribute field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ATTL!ATVL" formatControls="(b12,A)" escapeSequence="-A ">
+  <DDFSubfieldDefn name="ATTL" format="b12"/>
+  <DDFSubfieldDefn name="ATVL" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FFPC" fieldName="Feature record to feature object pointer control field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="FFUI!FFIX!NFPT" formatControls="(b11,2b12)" escapeSequence="   ">
+  <DDFSubfieldDefn name="FFUI" format="b11"/>
+  <DDFSubfieldDefn name="FFIX" format="b12"/>
+  <DDFSubfieldDefn name="NFPT" format="b12"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FFPT" fieldName="Feature record to feature object pointer field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*LNAM!RIND!COMT" formatControls="(B(64),b11,A)" escapeSequence="   ">
+  <DDFSubfieldDefn name="LNAM" format="B(64)"/>
+  <DDFSubfieldDefn name="RIND" format="b11"/>
+  <DDFSubfieldDefn name="COMT" format="A"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FSPC" fieldName="Feature record to spatial record pointer control field" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="FSUI!FSIX!NSPT" formatControls="(b11,2b12)" escapeSequence="   ">
+  <DDFSubfieldDefn name="FSUI" format="b11"/>
+  <DDFSubfieldDefn name="FSIX" format="b12"/>
+  <DDFSubfieldDefn name="NSPT" format="b12"/>
+</DDFFieldDefn>
+<DDFFieldDefn tag="FSPT" fieldName="Feature record to spatial record pointer field" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*NAME!ORNT!USAG!MASK" formatControls="(B(40),3b11)" escapeSequence="   ">
+  <DDFSubfieldDefn name="NAME" format="B(40)"/>
+  <DDFSubfieldDefn name="ORNT" format="b11"/>
+  <DDFSubfieldDefn name="USAG" format="b11"/>
+  <DDFSubfieldDefn name="MASK" format="b11"/>
+</DDFFieldDefn>
+<DDFRecord dataSize="119" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x0100">
+  </DDFField>
+  <DDFField name="DSID">
+    <DDFSubfield name="RCNM" type="integer">10</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="EXPP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="INTU" type="integer">5</DDFSubfield>
+    <DDFSubfield name="DSNM" type="string">1B5X02NE.000</DDFSubfield>
+    <DDFSubfield name="EDTN" type="string">1</DDFSubfield>
+    <DDFSubfield name="UPDN" type="string">0</DDFSubfield>
+    <DDFSubfield name="UADT" type="string">19980223</DDFSubfield>
+    <DDFSubfield name="ISDT" type="string">19980223</DDFSubfield>
+    <DDFSubfield name="STED" type="float">3.000000</DDFSubfield>
+    <DDFSubfield name="PRSP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="PSDN" type="string"></DDFSubfield>
+    <DDFSubfield name="PRED" type="string">1.0</DDFSubfield>
+    <DDFSubfield name="PROF" type="integer">1</DDFSubfield>
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="COMT" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="DSSI">
+    <DDFSubfield name="DSTR" type="integer">2</DDFSubfield>
+    <DDFSubfield name="AALL" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NALL" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NOMR" type="integer">3</DDFSubfield>
+    <DDFSubfield name="NOCR" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOGR" type="integer">18</DDFSubfield>
+    <DDFSubfield name="NOLR" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOIN" type="integer">3</DDFSubfield>
+    <DDFSubfield name="NOCN" type="integer">19</DDFSubfield>
+    <DDFSubfield name="NOED" type="integer">25</DDFSubfield>
+    <DDFSubfield name="NOFA" type="integer">0</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="44" _sizeFieldTag="4" _sizeFieldPos="1" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x0200">
+  </DDFField>
+  <DDFField name="DSPM">
+    <DDFSubfield name="RCNM" type="integer">20</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="HDAT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="VDAT" type="integer">17</DDFSubfield>
+    <DDFSubfield name="SDAT" type="integer">23</DDFSubfield>
+    <DDFSubfield name="CSCL" type="integer">20000</DDFSubfield>
+    <DDFSubfield name="DUNI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="HUNI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="PUNI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="COUN" type="integer">1</DDFSubfield>
+    <DDFSubfield name="COMF" type="integer">500000</DDFSubfield>
+    <DDFSubfield name="SOMF" type="integer">10</DDFSubfield>
+    <DDFSubfield name="COMT" type="string"></DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="86" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x0300">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">110</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG3D" repeatCount="4">
+    <DDFSubfield name="YCOO" type="integer">-16247245</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490822</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">34</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248212</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490672</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">14</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247437</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489071</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-32</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247598</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490356</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">12</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="122" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x0400">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">110</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG3D" repeatCount="7">
+    <DDFSubfield name="YCOO" type="integer">-16248237</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489386</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-23</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248604</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491133</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">14</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248648</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490435</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-2</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16246891</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488663</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-42</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247084</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490149</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">6</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248776</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489696</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-21</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248237</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489386</DDFSubfield>
+    <DDFSubfield name="VE3D" type="integer">-23</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0500">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">110</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247747</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491172</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0600">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247213</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0700">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">6</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489508</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0800">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">5</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249333</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491076</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0900">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249333</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489713</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0A00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247387</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488712</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0B00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">17</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249250</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489152</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0C00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">18</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16248199</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488728</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0D00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">19</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247090</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488987</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0E00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">7</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249010</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491061</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x0F00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">4</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249140</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491137</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1000">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">8</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489737</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1100">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">9</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490149</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1200">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">10</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490734</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1300">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">11</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247385</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491583</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="55" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1400">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">12</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16248779</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491583</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1500">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">13</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16248810</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1600">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">14</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247670</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1700">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">15</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247349</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="43" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="1">
+  <DDFField name="0001" value="0x1800">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">120</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">16</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249333</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489345</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="105" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1900">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">25</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7810000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="5">
+    <DDFSubfield name="YCOO" type="integer">-16249038</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489031</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248835</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488831</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248276</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488761</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247820</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488870</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247378</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488511</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="267" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="3">
+  <DDFField name="0001" value="0x1A00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">23</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7804000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7806000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="23">
+    <DDFSubfield name="YCOO" type="integer">-16249064</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491012</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16249163</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490846</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16249145</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490706</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16249064</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490557</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16249001</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490327</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248843</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490268</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248487</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489998</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248361</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489998</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248158</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489838</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248122</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489599</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247978</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489480</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247838</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489479</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247820</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489670</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247738</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489650</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247684</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489498</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247490</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489450</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247378</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489530</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247346</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489744</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247269</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489724</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247220</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489538</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247116</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489628</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16246999</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489418</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16246832</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489438</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="69" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1B00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7805000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7804000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="166" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1C00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7801000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7803000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="11">
+    <DDFSubfield name="YCOO" type="integer">-16247520</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488874</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247736</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488958</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247909</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488965</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248089</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488972</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248238</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489022</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248519</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489001</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248633</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489001</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248747</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489029</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248866</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489064</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248974</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489135</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16249243</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489551</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="86" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1D00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7802000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7801000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16247269</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488591</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="86" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1E00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">4</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7806000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7802000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="73" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x1F00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">21</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7811000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249022</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488661</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="81" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2000">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">22</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7812000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="2">
+    <DDFSubfield name="YCOO" type="integer">-16248018</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488672</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247825</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488557</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="73" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2100">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">14</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7805000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249333</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491583</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2200">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">24</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7801000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7813000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2300">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">5</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7804000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7807000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="118" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2400">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">6</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7807000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7808000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="5">
+    <DDFSubfield name="YCOO" type="integer">-16248807</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490893</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16248220</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490293</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247801</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490060</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247090</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489975</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16246892</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30489862</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="118" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2500">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">11</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7809000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="5">
+    <DDFSubfield name="YCOO" type="integer">-16248609</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491359</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247813</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490850</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247251</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490547</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247042</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490441</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16246910</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490328</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="102" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2600">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">12</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D" repeatCount="3">
+    <DDFSubfield name="YCOO" type="integer">-16246861</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30490813</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247108</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491113</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-16247334</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491470</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="73" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2700">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">13</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16246750</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30491583</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2800">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">16</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2900">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">17</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2A00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">18</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7802000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2B00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">7</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7808000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7806000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2C00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">15</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7809000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7808000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2D00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">9</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7809000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2E00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">10</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x780B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="69" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x2F00">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">8</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTV">
+    <DDFSubfield name="ATTL" type="integer">402</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7803000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7805000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="56" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3000">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">19</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x7810000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7803000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="73" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3100">
+  </DDFField>
+  <DDFField name="VRID">
+    <DDFSubfield name="RCNM" type="integer">130</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">20</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="VRPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x780D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x7810000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="TOPI" type="integer">2</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+  <DDFField name="SG2D">
+    <DDFSubfield name="YCOO" type="integer">-16249333</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30488417</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="181" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="3">
+  <DDFField name="0001" value="0x3200">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">13</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">302</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888865</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">18</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="13">
+    <DDFSubfield name="NAME" type="binary">0x8210000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8211000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8212000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8204000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8207000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8209000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8208000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8213000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8214000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="183" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="3">
+  <DDFField name="0001" value="0x3300">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">14</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">306</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135889056</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">109</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string"></DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">117</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="13">
+    <DDFSubfield name="NAME" type="binary">0x8210000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8211000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8212000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8204000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8207000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8209000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8208000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8213000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8214000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="180" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="3">
+  <DDFField name="0001" value="0x3400">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">15</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">308</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135889254</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">72</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="13">
+    <DDFSubfield name="NAME" type="binary">0x8210000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8211000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8212000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8204000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8207000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8209000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8208000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8213000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8214000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3500">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">20</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">1</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">129</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2134681620</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">368</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">125</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x6E02000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="88" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3600">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">21</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">1</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">129</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2134681605</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">368</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">125</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">1</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">133</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">40000</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x6E03000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="75" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3700">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">30</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887792</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x8201000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8202000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="141" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3800">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">42</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887941</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">87</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">-5</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">88</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">0</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="8">
+    <DDFSubfield name="NAME" type="binary">0x8208000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8202000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8201000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8204000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8207000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8206000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8205000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8203000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="108" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3900">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">42</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887744</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">87</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">2</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">88</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">5</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="4">
+    <DDFSubfield name="NAME" type="binary">0x820A000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8209000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="93" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3A00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">4</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">42</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887662</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">87</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">5</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">88</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">10</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="2">
+    <DDFSubfield name="NAME" type="binary">0x820D000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="124" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3B00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">5</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">42</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887595</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">87</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">0</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">88</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">2</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="6">
+    <DDFSubfield name="NAME" type="binary">0x820E000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8203000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8205000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8206000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820F000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x820B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3C00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">6</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">43</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888102</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">174</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">0</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8206000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3D00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">7</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">43</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888059</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">174</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">0</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8203000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3E00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">8</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">43</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888025</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">174</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">2</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x820B000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x3F00">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">9</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">43</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135887981</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">174</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">5</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x820C000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="115" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4000">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">10</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">1</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">71</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888213</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="7">
+    <DDFSubfield name="NAME" type="binary">0x8201000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8202000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8213000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8214000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8210000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8211000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8212000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="81" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4100">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">11</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">72</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888277</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">90</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">30</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8215000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="81" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4200">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">12</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">72</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888244</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">90</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">20</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8216000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4300">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">16</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">1</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">121</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888456</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">113</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">9</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x6E01000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">255</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="124" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4400">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">17</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">3</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">121</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888439</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">113</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">9</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">187</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">4</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT" repeatCount="6">
+    <DDFSubfield name="NAME" type="binary">0x8208000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8202000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8201000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8204000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">3</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8217000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+    <DDFSubfield name="NAME" type="binary">0x8203000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">2</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">1</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="84" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4500">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">18</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">122</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888485</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF" repeatCount="2">
+    <DDFSubfield name="ATTL" type="integer">60</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">4</DDFSubfield>
+    <DDFSubfield name="ATTL" type="integer">187</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">2</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8218000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+<DDFRecord dataSize="80" _sizeFieldTag="4" _sizeFieldPos="2" _sizeFieldLength="2">
+  <DDFField name="0001" value="0x4600">
+  </DDFField>
+  <DDFField name="FRID">
+    <DDFSubfield name="RCNM" type="integer">100</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">19</DDFSubfield>
+    <DDFSubfield name="PRIM" type="integer">2</DDFSubfield>
+    <DDFSubfield name="GRUP" type="integer">2</DDFSubfield>
+    <DDFSubfield name="OBJL" type="integer">126</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="FOID">
+    <DDFSubfield name="AGEN" type="integer">65535</DDFSubfield>
+    <DDFSubfield name="FIDN" type="integer">2135888529</DDFSubfield>
+    <DDFSubfield name="FIDS" type="integer">723</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTF">
+    <DDFSubfield name="ATTL" type="integer">64</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">6</DDFSubfield>
+  </DDFField>
+  <DDFField name="FSPT">
+    <DDFSubfield name="NAME" type="binary">0x8219000000</DDFSubfield>
+    <DDFSubfield name="ORNT" type="integer">1</DDFSubfield>
+    <DDFSubfield name="USAG" type="integer">255</DDFSubfield>
+    <DDFSubfield name="MASK" type="integer">255</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+</DDFModule>

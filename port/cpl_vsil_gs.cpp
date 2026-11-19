@@ -130,6 +130,23 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
     {
         return true;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)))
+        {
+            for (const char *pszPrefix : {"gs://", "gcs://"})
+            {
+                if (cpl::starts_with(osPath, pszPrefix))
+                {
+                    return GetFSPrefix() + osPath.substr(strlen(pszPrefix));
+                }
+            }
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/

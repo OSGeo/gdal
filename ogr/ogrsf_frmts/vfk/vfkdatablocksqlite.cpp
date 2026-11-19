@@ -221,7 +221,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
         cpl::down_cast<VFKDataBlockSQLite *>(m_poReader->GetDataBlock("SOBR"));
     if (nullptr == poDataBlockPoints)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.\n",
+        CPLError(CE_Failure, CPLE_FileIO, "Data block %s not found.",
                  m_pszName);
         return nInvalid;
     }
@@ -592,9 +592,7 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
         /* polygonize using GEOSBuildArea() */
         auto poPolygonGeom =
             std::unique_ptr<OGRGeometry>(oMultiLine.BuildArea());
-        /* only Polygons are allowed in VFK, in particular, no MultiPolygons */
-        if (!poPolygonGeom || poPolygonGeom->IsEmpty() ||
-            wkbFlatten(poPolygonGeom->getGeometryType()) != wkbPolygon)
+        if (!poPolygonGeom || poPolygonGeom->IsEmpty())
         {
             CPLDebug("OGR-VFK", "%s: unable to polygonize (fid = %ld)",
                      m_pszName, iFID);
@@ -602,7 +600,23 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             continue;
         }
 
-        /* set polygon */
+        /* coerce to MultiPolygon if needed and check the geometry type */
+        const auto eGeomType = wkbFlatten(poPolygonGeom->getGeometryType());
+        if ((eGeomType == wkbPolygon) && (m_nGeometryType == wkbMultiPolygon))
+        {
+            auto poMP = std::make_unique<OGRMultiPolygon>();
+            poMP->addGeometryDirectly(poPolygonGeom.release());
+            poPolygonGeom = std::move(poMP);
+        }
+        else if (eGeomType != m_nGeometryType)
+        {
+            CPLDebug("OGR-VFK", "%s: invalid geometry type %d (fid = %ld)",
+                     m_pszName, (int)eGeomType, iFID);
+            nInvalidNoRings++;
+            continue;
+        }
+
+        /* set geometry */
         poPolygonGeom->setCoordinateDimension(2); /* force 2D */
         if (!poFeature->SetGeometry(poPolygonGeom.get()))
         {
@@ -1068,7 +1082,9 @@ const char *VFKDataBlockSQLite::GetKey() const
 */
 int VFKDataBlockSQLite::GetGeometrySQLType() const
 {
-    if (m_nGeometryType == wkbPolygon)
+    if (m_nGeometryType == wkbMultiPolygon)
+        return 6;
+    else if (m_nGeometryType == wkbPolygon)
         return 3;
     else if (m_nGeometryType == wkbLineString)
         return 2;

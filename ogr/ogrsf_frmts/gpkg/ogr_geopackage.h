@@ -95,9 +95,7 @@ struct OGRGPKGTableLayerFillArrowArray
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
 
-    struct tm brokenDown
-    {
-    };
+    struct tm brokenDown{};
 
     sqlite3 *hDB = nullptr;
     std::mutex oMutex{};
@@ -256,7 +254,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     std::map<CPLString, GPKGContentsDesc> m_oMapTableToContents{};
     const std::map<CPLString, GPKGContentsDesc> &GetContents();
 
-    std::map<int, OGRSpatialReference *> m_oMapSrsIdToSrs{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oMapSrsIdToSrs{};
 
     OGRErr DeleteLayerCommon(const char *pszLayerName);
     OGRErr DeleteRasterLayer(const char *pszLayerName);
@@ -331,7 +329,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     std::vector<std::string>
     GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
@@ -378,9 +376,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     int GetSrsId(const OGRSpatialReference *poSRS);
     static const char *GetSrsName(const OGRSpatialReference &oSRS);
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+
+    OGRSpatialReferenceRefCountedPtr
     GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
                   bool bEmitErrorIfNotFound = true);
+
     OGRErr CreateExtensionsTableIfNecessary();
     bool HasExtensionsTable();
 
@@ -636,7 +636,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
     OGRFeature *GetNextFeature() override;
     const char *GetFIDColumn() const override;
     void ResetReading() override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
@@ -848,6 +848,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     /************************************************************************/
     /* OGR API methods */
 
+    void FinishRollbackTransaction(const std::string &osSavepointName) override;
+
     const char *GetName() const override
     {
         return GetDescription();
@@ -857,7 +859,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     OGRwkbGeometryType GetGeomType() const override;
     const char *GetGeometryColumn() const override;
     const OGRFeatureDefn *GetLayerDefn() const override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     OGRErr CreateField(const OGRFieldDefn *poField,
                        int bApproxOK = TRUE) override;
     OGRErr CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
@@ -1073,7 +1075,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
     OGRErr ISetSpatialFilter(int iGeomField, const OGRGeometry *) override;
     OGRErr SetAttributeFilter(const char *) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -1138,7 +1140,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
         return OGRGeoPackageLayer::GetFeatureCount(bForce);
     }
 
-    int BaseTestCapability(const char *pszCap) const override
+    bool BaseTestCapability(const char *pszCap) const override
     {
         return OGRGeoPackageLayer::TestCapability(pszCap);
     }

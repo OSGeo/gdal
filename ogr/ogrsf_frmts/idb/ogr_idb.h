@@ -70,7 +70,7 @@ class OGRIDBLayer CPL_NON_FINAL : public OGRLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -112,7 +112,7 @@ class OGRIDBTableLayer final : public OGRIDBLayer
 
     const OGRSpatialReference *GetSpatialRef() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -140,7 +140,7 @@ class OGRIDBSelectLayer final : public OGRIDBLayer
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -170,7 +170,7 @@ class OGRIDBDataSource final : public GDALDataset
 
     const OGRLayer *GetLayer(int) const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

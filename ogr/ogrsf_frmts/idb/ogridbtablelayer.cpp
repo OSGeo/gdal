@@ -397,7 +397,7 @@ OGRErr OGRIDBTableLayer::SetAttributeFilter(const char *pszQueryIn)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBTableLayer::TestCapability(const char *pszCap) const
+bool OGRIDBTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCRandomWrite))

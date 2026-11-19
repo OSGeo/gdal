@@ -22,6 +22,7 @@
 #include "ogr_api.h"
 
 static bool bInGDALGlobalDestructor = false;
+
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
 int GDALIsInGlobalDestructor()

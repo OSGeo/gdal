@@ -78,7 +78,7 @@
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");
@@ -265,6 +265,21 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
         return nullptr;
     }
 
+    if (nDstPixels <= 0 || nDstLines <= 0)
+    {
+        // Can happen when the extent of the source in the target CRS is
+        // degenerate, for example when the source crosses the antimeridian
+        // and the suggested longitude span covers the whole globe, so that
+        // the suggested latitude span rounds down to zero line.
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Computed output size is %d x %d. The extent of the source "
+                 "in the target CRS is degenerate.",
+                 nDstPixels, nDstLines);
+        GDALDestroyTransformer(psWO->pTransformerArg);
+        GDALDestroyWarpOptions(psWO);
+        return nullptr;
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Update the transformer to include an output geotransform        */
     /*      back to pixel/line coordinates.                                 */
@@ -339,7 +354,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");
@@ -377,6 +392,15 @@ GDALDatasetH CPL_STDCALL GDALCreateWarpedVRT(GDALDatasetH hSrcDS, int nPixels,
 {
     VALIDATE_POINTER1(hSrcDS, "GDALCreateWarpedVRT", nullptr);
     VALIDATE_POINTER1(psOptions, "GDALCreateWarpedVRT", nullptr);
+
+    if (nPixels <= 0 || nLines <= 0)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Attempt to create %dx%d warped VRT is illegal, sizes must "
+                 "be larger than zero.",
+                 nPixels, nLines);
+        return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Create the VRTDataset and populate it with bands.               */
@@ -619,7 +643,8 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     return eErr;
@@ -1395,7 +1420,8 @@ CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                                     GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1933,7 +1959,10 @@ CPLErr VRTWarpedDataset::IRasterIO(
 
     if (nBufXSize != nXSize || nBufYSize != nYSize)
     {
-        if (!bWholeImage || !GDALTransformHasFastClone(psWO->pTransformerArg))
+        // The rescaled warp below ignores the requested resampling
+        if (!bWholeImage ||
+            psExtraArg->eResampleAlg != GRIORA_NearestNeighbour ||
+            !GDALTransformHasFastClone(psWO->pTransformerArg))
         {
             return GDALDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                           pData, nBufXSize, nBufYSize, eBufType,

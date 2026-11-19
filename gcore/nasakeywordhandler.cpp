@@ -159,7 +159,8 @@ bool NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
             CPLJSONObject oName = oNewGroup["Name"];
             if (oName.GetType() == CPLJSONObject::Type::String)
             {
-                oCur.Add(osValue + "_" + oName.ToString(), oNewGroup);
+                oCur.AddNoSplitName(osValue + "_" + oName.ToString(),
+                                    oNewGroup);
                 oNewGroup.Add("_container_name", osValue);
             }
             else if (oCur[osValue].IsValid())
@@ -169,12 +170,13 @@ bool NASAKeywordHandler::ReadGroup(const std::string &osPathPrefix,
                 {
                     nIter++;
                 }
-                oCur.Add(osValue + CPLSPrintf("_%d", nIter), oNewGroup);
+                oCur.AddNoSplitName(osValue + CPLSPrintf("_%d", nIter),
+                                    oNewGroup);
                 oNewGroup.Add("_container_name", osValue);
             }
             else
             {
-                oCur.Add(osValue, oNewGroup);
+                oCur.AddNoSplitName(osValue, oNewGroup);
             }
         }
         else if (EQUAL(osName, "END") || EQUAL(osName, "END_GROUP") ||
@@ -388,7 +390,7 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
 
     const auto AddToCur = [&oCur, &osName](const CPLJSONObject &o)
     {
-        auto oExistingObjForName = oCur[osName];
+        auto oExistingObjForName = oCur.GetObjNoSplitName(osName);
         if (oExistingObjForName.IsValid())
         {
             if (oExistingObjForName["values"].GetType() ==
@@ -403,13 +405,13 @@ bool NASAKeywordHandler::ReadPair(CPLString &osName, CPLString &osValue,
                 ar.Add(o);
                 CPLJSONObject oObj;
                 oObj.Add("values", ar);
-                oCur.Delete(osName);
-                oCur[osName] = std::move(oObj);
+                oCur.DeleteNoSplitName(osName);
+                oCur.AddNoSplitName(osName, std::move(oObj));
             }
         }
         else
         {
-            oCur.Add(osName, o);
+            oCur.AddNoSplitName(osName, o);
         }
     };
 

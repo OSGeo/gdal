@@ -1,3 +1,4 @@
+import array
 import ast
 import doctest
 import functools
@@ -16,6 +17,7 @@ from osgeo import gdal, ogr, osr
 ###
 @pytest.fixture(scope="session", autouse=True)
 def global_setup(doctest_namespace):
+    doctest_namespace["array"] = array
     doctest_namespace["gdal"] = gdal
     doctest_namespace["ogr"] = ogr
     doctest_namespace["osr"] = osr
@@ -74,6 +76,9 @@ class GDALOutputChecker(doctest.OutputChecker):
         if "# no-check" in want:
             return True
 
+        if want.startswith("<memory at") and got.startswith("<memory at"):
+            return True
+
         want = self._strip_comments(want)
 
         return base_checker.check_output(want, got, flags)
@@ -129,7 +134,6 @@ def expand_dsn(f):
 def gdal_find_files(monkeypatch):
 
     monkeypatch.setattr(gdal, "Open", expand_dsn(gdal.Open))
-    monkeypatch.setattr(gdal, "OpenEx", expand_dsn(gdal.OpenEx))
     monkeypatch.setattr(gdal, "Run", expand_dsn(gdal.Run))
     monkeypatch.setattr(
         gdal.Algorithm,

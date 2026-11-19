@@ -22,7 +22,9 @@ add_gdal_driver(TARGET gdal_HDF5
                 SOURCES ${SOURCE}
                 CORE_SOURCES hdf5drivercore.cpp
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+                NO_SHARED_SYMBOL_WITH_CORE
+                SKIP_GDAL_PRIV_HEADER  # Avoid issues with -D_POSIX_C_SOURCE redef with HDF5
+)
 
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
     set(GDAL_DATA_FILES
@@ -92,6 +94,14 @@ elseif(NOT DEFINED GDAL_ENABLE_HDF5_GLOBAL_LOCK)
   message(WARNING "HDF5 library status regarding thread-safety is unknown (set GDAL_ENABLE_HDF5_GLOBAL_LOCK=NO if it is known to be thread-safe). Adding a global lock on GDAL side")
   target_compile_definitions(gdal_HDF5 PRIVATE -DENABLE_HDF5_GLOBAL_LOCK)
 endif()
+
+if (HDF5_ENABLE_PARALLEL)
+    find_package(MPI)
+    if (MPI_FOUND)
+        target_include_directories(gdal_HDF5 PRIVATE ${MPI_C_INCLUDE_DIRS})
+        target_link_libraries(gdal_HDF5 PRIVATE ${MPI_C_LIBRARIES})
+    endif ()
+endif ()
 
 # When build as plugin, initialize all drivers from Register_HDF5
 if (GDAL_ENABLE_DRIVER_HDF5_PLUGIN)

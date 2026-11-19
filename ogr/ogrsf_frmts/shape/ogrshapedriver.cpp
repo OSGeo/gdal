@@ -318,6 +318,8 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem(GDAL_DMD_GEOMETRY_FLAGS,
                               "EquatesMultiAndSingleLineStringDuringWrite "
                               "EquatesMultiAndSinglePolygonDuringWrite");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ESRI Shapefile");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "shp");
@@ -343,12 +345,15 @@ void RegisterOGRShape()
         "read whole .dbf to adjust Real->Integer/Integer64 or "
         "Integer64->Integer field types if possible' default='NO'/>"
         "  <Option name='ADJUST_GEOM_TYPE' type='string-select' "
-        "description='Whether and how to adjust layer geometry type from "
-        "actual shapes' default='FIRST_SHAPE'>"
+        "description='Whether and how to adjust layer geometry type, regarding "
+        "measured geometries, from actual shapes' default='FIRST_SHAPE'>"
         "    <Value>NO</Value>"
         "    <Value>FIRST_SHAPE</Value>"
         "    <Value>ALL_SHAPES</Value>"
         "  </Option>"
+        "  <Option name='PROMOTE_TO_MULTI' type='boolean' "
+        "description='Whether lines/polygons should be promoted to "
+        "multilines/multipolygons' default='YES'/>"
         "  <Option name='AUTO_REPACK' type='boolean' description='Whether the "
         "shapefile should be automatically repacked when needed' "
         "default='YES'/>"

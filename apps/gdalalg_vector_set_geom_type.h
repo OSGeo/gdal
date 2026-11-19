@@ -53,6 +53,7 @@ class GDALVectorSetGeomTypeAlgorithm /* non final */
         bool m_curve = false;
         std::string m_dim{};
         bool m_skip = false;
+        bool m_auto = false;
 
         // Computed value from m_type
         OGRwkbGeometryType m_eType = wkbUnknown;

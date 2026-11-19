@@ -243,8 +243,7 @@ CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
         poGeomFieldDefn->SetType(poSrcGeomFieldDefn->GetType());
         poGeomFieldDefn->SetSpatialRef(poSrcGeomFieldDefn->GetSpatialRef());
         poGeomFieldDefn->m_nSRSId = poSrcGeomFieldDefn->m_nSRSId;
-        if (m_eGeomFormat != OSGF_None)
-            poGeomFieldDefn->m_eGeomFormat = m_eGeomFormat;
+        poGeomFieldDefn->m_eGeomFormat = m_eGeomFormat;
     }
 
     return CE_None;
@@ -507,7 +506,7 @@ void OGRSQLiteViewLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteViewLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteViewLayer::TestCapability(const char *pszCap) const
 
 {
     if (HasLayerDefnError())

@@ -48,6 +48,7 @@
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_set_type.h"
+#include "gdalalg_raster_shift_longitude.h"
 #include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_stack.h"
@@ -82,7 +83,7 @@ GDALRasterAlgorithm::GDALRasterAlgorithm()
     RegisterSubAlgorithm<GDALRasterAspectAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterBlendAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterCalcAlgorithmStandalone>();
-    RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithm>();
+    RegisterSubAlgorithm<GDALRasterCleanCollarAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterClipAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterColorMapAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterCompareAlgorithmStandalone>();
@@ -96,7 +97,7 @@ GDALRasterAlgorithm::GDALRasterAlgorithm()
     RegisterSubAlgorithm<GDALRasterNeighborsAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterOverviewAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
-    RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();
+    RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterProximityAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterReclassifyAlgorithmStandalone>();
@@ -111,6 +112,7 @@ GDALRasterAlgorithm::GDALRasterAlgorithm()
     RegisterSubAlgorithm<GDALRasterScaleAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterSelectAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterSetTypeAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALRasterShiftLongitudeAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterSieveAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterSlopeAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterStackAlgorithmStandalone>();

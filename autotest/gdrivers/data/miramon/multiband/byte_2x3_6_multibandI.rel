@@ -7,10 +7,10 @@ SubVers=3
 [METADADES]
 language=cat
 MDIdiom=cat
-dateStamp=20250408 12220922+0200
+dateStamp=20251222 18095129
 characterSet=006
 nOrganismes=2
-FileIdentifier=byte_2x3_6_categsI_13160
+FileIdentifier=byte_2x3_6_categsI_26137
 
 [METADADES:ORGANISME_1]
 role=009
@@ -21,8 +21,8 @@ codeSpace=
 DatasetTitle=byte_2x3_6_categs
 
 [OVERVIEW:ASPECTES_TECNICS]
-columns=200
-rows=300
+columns=2
+rows=3
 
 [SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
 HorizontalSystemIdentifier=UTM-31N-ETRS89
@@ -36,167 +36,25 @@ MaxY=4638260
 toler_env=0
 
 [OVERVIEW]
-CreationDate=20250408 12220921+0200
+CreationDate=20251212 10335078,20260202 14325689+0100
 CoverageContentType=001
 
 [ATTRIBUTE_DATA]
-TipusCompressio=byte
+TipusCompressio=byte-RLE
 TipusRelacio=RELACIO_1_1_DICC
 TractamentVariable=Categoric
-NODATA=255
+NODATA=0
 NODATADef=NoData at all
-IndexsNomsCamps=1,2,3
+IndexsNomsCamps=1,2,3,4,5
 NomCamp_1=G1
 NomCamp_2=byte_2x3_0_to_4_categs_NoData_255
 NomCamp_3=byte_2x3_1_to_5_categs_NoData_0
+NomCamp_4=byte_2x3_6_categs_integer
+NomCamp_5=byte_2x3_1_to_5_categs_NoData_0_copy
 
 [METADADES:ORGANISME_2]
 role=009
 OrganisationName=Students and educational institutions
-
-[QUALITY:LINEAGE:PROCESS1]
-nOrganismes=1
-history=ASCIIIMG.exe 0 T:\byte_2x3_6_categs.txt T:\byte_2x3_6_categs.img 2 3 0 byte none none
-purpose=Opci贸 que interpreta la cap莽alera del format ESRI ASCII per fer la transformaci贸.
-date=20250407 17554803+0200
-NomFitxer=C:\MiraMon\ASCIIIMG.exe
-
-[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
-OrganisationName=Students and educational institutions
-
-[QUALITY:LINEAGE:PROCESS1:INOUT1]
-identifier=Param1
-TypeValues=C
-ResultValue=0
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT2]
-identifier=Param2
-TypeValues=C
-ResultValue=T:\byte_2x3_6_categs.txt
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT3]
-identifier=Param3
-TypeValues=C
-ResultValue=T:\byte_2x3_6_categs.img
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT4]
-identifier=Param4
-TypeValues=C
-ResultValue=2
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT5]
-identifier=Param5
-TypeValues=C
-ResultValue=3
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT6]
-identifier=Param6
-TypeValues=C
-ResultValue=0
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT7]
-identifier=Param7
-TypeValues=C
-ResultValue=byte
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT8]
-identifier=Param8
-TypeValues=C
-ResultValue=none
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT9]
-identifier=Param9
-TypeValues=C
-ResultValue=none
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT10]
-identifier=Param10
-TypeValues=C
-ResultValue=516792
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT11]
-identifier=Param11
-TypeValues=C
-ResultValue=516796
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT12]
-identifier=Param12
-TypeValues=C
-ResultValue=4638254
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT13]
-identifier=Param13
-TypeValues=C
-ResultValue=4638260
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT14]
-identifier=Param14
-TypeValues=C
-ResultValue=UTM-31N-ETRS89
-ResultUnits=
-
-[QUALITY:LINEAGE:PROCESS1:INOUT15]
-identifier=Param15
-TypeValues=C
-ResultValue=m
-ResultUnits=
-
-[QUALITY:LINEAGE]
-processes=1
-
-[ATTRIBUTE_DATA:G1]
-NomFitxer=byte_2x3_6_categs.img
-columns=2
-rows=3
-descriptor=Al路leluia 1
-NODATA=
-min=0
-max=5
-IndexsJoinTaula=G1_1_BYTE_2X3_6_CATEGS_DBF
-JoinTaula_G1_1_BYTE_2X3_6_CATEGS_DBF=G1_1_BYTE_2X3_6_CATEGS_DBF
-
-[TAULA_G1_1_BYTE_2X3_6_CATEGS_DBF]
-NomFitxer=byte_2x3_6_categs.rel
-
-[ATTRIBUTE_DATA:byte_2x3_0_to_4_categs_NoData_255]
-NomFitxer=byte_2x3_0_to_4_categs_NoData_255.img
-columns=2
-rows=3
-descriptor=Al路leluia 1
-min=0
-max=4
-IndexsJoinTaula=G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF
-JoinTaula_G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF=G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF
-
-[TAULA_G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF]
-NomFitxer=byte_2x3_0_to_4_categs_NoData_255.rel
-
-[ATTRIBUTE_DATA:byte_2x3_1_to_5_categs_NoData_0]
-NomFitxer=byte_2x3_1_to_5_categs_NoData_0.img
-columns=2
-rows=3
-descriptor=Al路leluia 1
-NODATA=0
-min=1
-max=5
-IndexsJoinTaula=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF
-JoinTaula_G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF
-
-[TAULA_G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF]
-NomFitxer=byte_2x3_1_to_5_categs_NoData_0.rel
 
 [COLOR_TEXT:byte_2x3_1_to_5_categs_NoData_0]
 Simb_Vers=5
@@ -225,8 +83,8 @@ Color_Paleta=Colors_byte_2x3_0_to_0_categs.dbf
 Tooltips_Const=1
 
 [COLOR_TEXT]
-Simb_Vers=5
-Simb_SubVers=1
+Simb_Vers=4
+Simb_SubVers=10
 UnificVisCons=1
 visualitzable=1
 consultable=1
@@ -251,3 +109,93 @@ Color_MostrarCatColorLleg=1
 Color_MostrarNODATA=0
 Color_MostrarEntradesBuides=0
 Color_NovaColumnaLlegImpresa=0
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=IMGIMG.exe RLE D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\multiband\byte_2x3_6_categs.img /RLE_INDEX
+date=20260202 14320699+0100
+NomFitxer=C:\MiraMon\IMGIMG.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+OrganisationName=Students and educational institutions
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+TypeValues=C
+ResultValue=RLE
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param2
+TypeValues=C
+ResultValue=D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\multiband\byte_2x3_6_categs.img
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT3]
+identifier=RLE_INDEX
+ResultUnits=
+
+[QUALITY:LINEAGE]
+processes=1
+
+[ATTRIBUTE_DATA:G1]
+NomFitxer=byte_2x3_6_categs.img
+descriptor=Al穕eluia 1
+NODATA=
+min=0
+max=5
+IndexsJoinTaula=G1_1_BYTE_2X3_6_CATEGS_DBF
+JoinTaula_G1_1_BYTE_2X3_6_CATEGS_DBF=G1_1_BYTE_2X3_6_CATEGS_DBF
+
+[TAULA_G1_1_BYTE_2X3_6_CATEGS_DBF]
+NomFitxer=byte_2x3_6_categs.rel
+
+[ATTRIBUTE_DATA:byte_2x3_0_to_4_categs_NoData_255]
+NomFitxer=byte_2x3_0_to_4_categs_NoData_255.img
+TipusCompressio=byte
+descriptor=Al穕eluia 1
+NODATA=255
+min=0
+max=4
+IndexsJoinTaula=G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF
+JoinTaula_G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF=G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF
+
+[TAULA_G1_BYTE_2X3_0_TO_4_CATEGS_NODATA_255_DBF]
+NomFitxer=byte_2x3_0_to_4_categs_NoData_255.rel
+
+[ATTRIBUTE_DATA:byte_2x3_1_to_5_categs_NoData_0]
+NomFitxer=byte_2x3_1_to_5_categs_NoData_0.img
+TipusCompressio=byte
+descriptor=Al穕eluia 1
+min=1
+max=5
+IndexsJoinTaula=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF
+JoinTaula_G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF
+
+[TAULA_G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF]
+NomFitxer=byte_2x3_1_to_5_categs_NoData_0.rel
+
+[ATTRIBUTE_DATA:byte_2x3_6_categs_integer]
+NomFitxer=byte_2x3_6_categs_integer.img
+TipusCompressio=integer-RLE
+descriptor=Al穕eluia 1
+NODATA=
+min=0
+max=5
+IndexsJoinTaula=G1_1_BYTE_2X3_6_CATEGS_DBF
+JoinTaula_G1_1_BYTE_2X3_6_CATEGS_DBF=G1_1_BYTE_2X3_6_CATEGS_DBF
+
+[ATTRIBUTE_DATA:byte_2x3_1_to_5_categs_NoData_0_copy]
+NomFitxer=byte_2x3_1_to_5_categs_NoData_0_copy.img
+descriptor=Al穕eluia 1
+min=1
+max=5
+IndexsJoinTaula=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF
+JoinTaula_G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF=G1_1_byte_2x3_1_to_5_categs_NoData_0_DBF

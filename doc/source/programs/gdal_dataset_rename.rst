@@ -1,5 +1,7 @@
 .. _gdal_dataset_rename:
 
+.. program:: gdal_dataset_rename
+
 ================================================================================
 ``gdal dataset rename``
 ================================================================================
@@ -36,6 +38,11 @@ Options
     Dataset format. Overrides the automatic format detection.
 
 .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

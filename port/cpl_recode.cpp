@@ -197,7 +197,7 @@ char CPL_DLL *CPLRecodeFromWChar(const wchar_t *pwszSource,
  *
  * Convert a 8bit, multi-byte per character input string into a wide
  * character (wchar_t) string.  The only guaranteed supported source encodings
- * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8869_1 (LATIN1).  The only
+ * are CPL_ENC_UTF8, CPL_ENC_ASCII and CPL_ENC_ISO8859_1 (LATIN1).  The only
  * guaranteed supported destination encoding is CPL_ENC_UCS2.  Other source
  * and destination encodings may be supported depending on the underlying
  * implementation.
@@ -289,6 +289,7 @@ bool CPLIsASCII(const char *pabyData, size_t nLen)
 
  * @param chReplacementChar character which will be used when the input stream
  *                          contains a non ASCII character. Must be valid ASCII!
+ *                          or NUL
  *
  * @return a new string that must be freed with CPLFree().
  *
@@ -305,9 +306,12 @@ char *CPLForceToASCII(const char *pabyData, int nLen, char chReplacementChar)
     {
         if (*reinterpret_cast<const unsigned char *>(pszPtr) > 127)
         {
-            pszOutputString[i] = chReplacementChar;
-            ++pszPtr;
-            ++i;
+            if (chReplacementChar)
+            {
+                pszOutputString[i] = chReplacementChar;
+                ++pszPtr;
+                ++i;
+            }
         }
         else
         {
@@ -338,7 +342,7 @@ char *CPLForceToASCII(const char *pabyData, int nLen, char chReplacementChar)
  * @param chReplacementChar character which will be used when the input stream
  *                          contains a non ASCII character that cannot be
  *                          substituted with an equivalent ASCII character.
- *                          Must be valid ASCII!
+ *                          Must be valid ASCII! or NUL.
  *
  * @return a new string that must be freed with CPLFree().
  *
@@ -1058,19 +1062,22 @@ char *CPLUTF8ForceToASCII(const char *pszStr, char chReplacementChar)
             auto pszNext = reinterpret_cast<const char *>(utf8codepoint(
                 reinterpret_cast<const utf8_int8_t *>(pszPtr), &codepoint));
             char ch = chReplacementChar;
-            for (const auto &latin1char : aLatinCharacters)
+            if (pszNext != pszPtr + 1)
             {
-                if (codepoint == latin1char.nCodePoint)
+                for (const auto &latin1char : aLatinCharacters)
                 {
-                    pszOutputString[i] = latin1char.chFirst;
-                    ++i;
-                    if (latin1char.chSecond)
+                    if (codepoint == latin1char.nCodePoint)
                     {
-                        pszOutputString[i] = latin1char.chSecond;
+                        pszOutputString[i] = latin1char.chFirst;
                         ++i;
+                        if (latin1char.chSecond)
+                        {
+                            pszOutputString[i] = latin1char.chSecond;
+                            ++i;
+                        }
+                        ch = 0;
+                        break;
                     }
-                    ch = 0;
-                    break;
                 }
             }
             if (ch)

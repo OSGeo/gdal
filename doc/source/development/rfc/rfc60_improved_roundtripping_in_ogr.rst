@@ -119,12 +119,12 @@ for a few examples.
            [
              -122.45671039447188,
              37.786870915442705,
-             0.4000000059604645, 
-             "2014-11-06T19:16:06.000Z", 
-             31.0, 
-             99, 
+             0.4000000059604645,
+             "2014-11-06T19:16:06.000Z",
+             31.0,
+             99,
              0
-           ], 
+           ],
 
 Changes
 -------
@@ -155,6 +155,10 @@ start from the nativeData if present (and if nativeMediaType =
 "application/vnd.geo+json", replace its properties member with the
 content of the OGR fields and patch its geometry to include additional
 JSON objects.
+
+.. note::
+
+    Updated to use "application/geo+json" since GDAL 3.14.0
 
 The OGRFeature::Clone() and ::SetFrom() methods will propagate
 nativeData and nativeMediaType.

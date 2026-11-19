@@ -222,8 +222,8 @@ def test_osr_ct_7():
 
     ct = osr.CoordinateTransformation(pm_srs, ll_srs)
 
-    (x, y, z) = ct.TransformPoint(7000000, 7000000, 0)
-    (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
+    x, y, z = ct.TransformPoint(7000000, 7000000, 0)
+    exp_x, exp_y, exp_z = (62.8820698884, 53.0918187696, 0.0)
     if (
         exp_x != pytest.approx(x, abs=0.00001)
         or exp_y != pytest.approx(y, abs=0.00001)
@@ -294,6 +294,60 @@ def test_osr_ct_8():
 
 
 ###############################################################################
+# Test WebMercator -> WGS84 optimized transform with infinite or huge
+# easting values (#15431)
+
+
+@pytest.mark.parametrize("x", [float("-inf"), -1e30, 1e30])
+def test_osr_ct_webmercator_to_wgs84_huge_easting(x):
+
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromEPSG(3857)
+
+    dst_srs = osr.SpatialReference()
+    dst_srs.SetWellKnownGeogCS("WGS84")
+    dst_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(src_srs, dst_srs)
+
+    res_x, res_y, _ = ct.TransformPoint(x, 0, 0)
+
+    if math.isinf(x):
+        # Infinite input reported as a failed point (positive infinity / HUGE_VAL)
+        assert math.isinf(res_x)
+        assert math.isinf(res_y)
+    else:
+        # Huge finite input is wrapped into the valid longitude range
+        assert math.isfinite(res_x)
+        assert -180 <= res_x <= 180
+        assert res_y == pytest.approx(0, abs=1e-10)
+
+
+###############################################################################
+# Test WebMercator -> WGS84 optimized transform with an invalid first point
+# followed by a valid point with the same northing
+
+
+@pytest.mark.parametrize("x", [float("-inf"), float("inf"), float("nan")])
+def test_osr_ct_webmercator_to_wgs84_invalid_first_point(x):
+
+    src_srs = osr.SpatialReference()
+    src_srs.ImportFromEPSG(3857)
+
+    dst_srs = osr.SpatialReference()
+    dst_srs.SetWellKnownGeogCS("WGS84")
+    dst_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    ct = osr.CoordinateTransformation(src_srs, dst_srs)
+
+    res = ct.TransformPoints([(x, 6274861.39400658), (0, 6274861.39400658)])
+
+    assert (res[0][0], res[0][1]) == (float("inf"), float("inf"))
+    assert res[1][0] == pytest.approx(0.0, abs=1e-10)
+    assert res[1][1] == pytest.approx(49.0, abs=1e-10)
+
+
+###############################################################################
 # Test coordinate transformation where only one CRS has a towgs84 clause (#1156)
 
 
@@ -306,13 +360,13 @@ def test_osr_ct_towgs84_only_one_side():
     srs_just_ellps.SetFromUserInput("+proj=longlat +ellps=GRS80")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_just_ellps)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    x, y, z = ct.TransformPoint(0, 0, 0)
     assert x == 0
     assert y == 0
     assert z == 0
 
     ct = osr.CoordinateTransformation(srs_just_ellps, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    x, y, z = ct.TransformPoint(0, 0, 0)
     assert x == 0
     assert y == 0
     assert z == 0
@@ -331,7 +385,7 @@ def test_osr_ct_towgs84_both_side():
     srs_other_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_other_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
@@ -340,13 +394,13 @@ def test_osr_ct_towgs84_both_side():
     srs_datum_wgs84.SetFromUserInput("+proj=longlat +datum=WGS84")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_datum_wgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
 
     ct = osr.CoordinateTransformation(srs_datum_wgs84, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
@@ -663,8 +717,7 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
 def test_osr_ct_only_axis_order_different():
 
     s_wrong_axis_order = osr.SpatialReference()
-    s_wrong_axis_order.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -674,8 +727,7 @@ def test_osr_ct_only_axis_order_different():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
     AXIS["Longitude",EAST],
-    AXIS["Latitude",NORTH]]"""
-    )
+    AXIS["Latitude",NORTH]]""")
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
@@ -696,8 +748,7 @@ def test_osr_ct_only_axis_order_different():
 def test_osr_ct_wkt_non_consistent_with_epsg_definition():
 
     s_wrong_axis_order = osr.SpatialReference()
-    s_wrong_axis_order.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -708,8 +759,7 @@ def test_osr_ct_wkt_non_consistent_with_epsg_definition():
         AUTHORITY["EPSG","9122"]],
     AXIS["Longitude",EAST],
     AXIS["Latitude",NORTH],
-    AUTHORITY["EPSG","4326"]]"""
-    )
+    AUTHORITY["EPSG","4326"]]""")
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
@@ -896,8 +946,7 @@ def test_osr_ct_fix_9732():
     assert not s.IsDerivedProjected()
 
     t = osr.SpatialReference()
-    t.SetFromUserInput(
-        """DERIVEDPROJCRS["Ground for NAD83(2011) / Idaho West (ftUS)",
+    t.SetFromUserInput("""DERIVEDPROJCRS["Ground for NAD83(2011) / Idaho West (ftUS)",
     BASEPROJCRS["NAD83(2011) / Idaho West (ftUS)",
         BASEGEOGCRS["NAD83(2011)",
             DATUM["NAD83 (National Spatial Reference System 2011)",ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1]]],
@@ -927,8 +976,7 @@ def test_osr_ct_fix_9732():
         LENGTHUNIT["US survey foot",0.304800609601219]],
     AXIS["northing (Y)",north,
         ORDER[2],
-        LENGTHUNIT["US survey foot",0.304800609601219]]]"""
-    )
+        LENGTHUNIT["US survey foot",0.304800609601219]]]""")
 
     assert t.IsDerivedProjected()
 

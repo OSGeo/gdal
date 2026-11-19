@@ -11,9 +11,11 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
+import ogrtest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_geos
 
@@ -48,39 +50,40 @@ def test_gdal_vector_layer_algebra_union():
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     method_lyr.CreateFeature(f)
 
-    with gdal.Run(
-        "vector",
-        "layer-algebra",
-        operation="union",
-        input=input_ds,
-        method=method_ds,
-        output_format="MEM",
-        geometry_type="MULTIPOINT",
-        input_field=["a", "non_existing"],
-        method_field=["b", "non_existing"],
-    ) as alg:
-        out_ds = alg.Output()
-        out_lyr = out_ds.GetLayer(0)
-        assert out_lyr.GetName() == "output"
-        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
-        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
-        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
-        assert out_lyr.GetFeatureCount() == 3
+    with gdaltest.error_raised(gdal.CE_Warning, match="non_existing"):
+        with gdal.Run(
+            "vector",
+            "layer-algebra",
+            operation="union",
+            input=input_ds,
+            method=method_ds,
+            output_format="MEM",
+            geometry_type="MULTIPOINT",
+            input_field=["a", "non_existing"],
+            method_field=["b", "non_existing"],
+        ) as alg:
+            out_ds = alg.Output()
+            out_lyr = out_ds.GetLayer(0)
+            assert out_lyr.GetName() == "output"
+            assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+            assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+            assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+            assert out_lyr.GetFeatureCount() == 3
 
-        f = out_lyr.GetNextFeature()
-        assert f["input_a"] == "foo"
-        assert not f.IsFieldSet("method_b")
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((1 2))"
+            f = out_lyr.GetNextFeature()
+            assert f["input_a"] == "foo"
+            assert not f.IsFieldSet("method_b")
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((1 2))"
 
-        f = out_lyr.GetNextFeature()
-        assert f["input_a"] == "foo2"
-        assert f["method_b"] == "bar2"
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((3 4))"
+            f = out_lyr.GetNextFeature()
+            assert f["input_a"] == "foo2"
+            assert f["method_b"] == "bar2"
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((3 4))"
 
-        f = out_lyr.GetNextFeature()
-        assert f["method_b"] == "bar"
-        assert not f.IsFieldSet("input_a")
-        assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((5 6))"
+            f = out_lyr.GetNextFeature()
+            assert f["method_b"] == "bar"
+            assert not f.IsFieldSet("input_a")
+            assert f.GetGeometryRef().ExportToIsoWkt() == "MULTIPOINT ((5 6))"
 
 
 def test_gdal_vector_layer_algebra_input_and_method_same():
@@ -260,7 +263,10 @@ def test_gdal_vector_layer_algebra_overwrite(tmp_vsimem):
         )
 
     # Test update
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(
+        Exception,
+        match="Layer 'out' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it",
+    ):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -404,7 +410,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         method="../ogr/data/poly.shp",
         output=tmp_vsimem / "out.gpkg",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg") as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg") as ds:
         assert ds.GetLayer(0).GetName() == "output"
 
     gdal.Run(
@@ -417,13 +423,13 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         update=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"
         assert ds.GetLayer(1).GetFeatureCount() == 10
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -434,7 +440,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
             update=True,
         )
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -445,7 +451,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
             append=True,
         )
 
-    with pytest.raises(Exception, match="--output-layer should be specified"):
+    with pytest.raises(Exception, match="--output-layer must be specified"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -466,7 +472,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         append=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"
@@ -482,14 +488,14 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         overwrite_layer=True,
         output_layer="output2",
     )
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_UPDATE) as ds:
         assert ds.GetLayer(0).GetName() == "output"
         assert ds.GetLayer(0).GetFeatureCount() == 10
         assert ds.GetLayer(1).GetName() == "output2"
         assert ds.GetLayer(1).GetFeatureCount() == 10
 
     # --append to non existing layer
-    with pytest.raises(Exception, match="Layer 'wrong' does not exist"):
+    with pytest.raises(Exception, match="Cannot find layer 'wrong'"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -502,7 +508,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         )
 
     # --overwrite-layer non existing layer
-    with pytest.raises(Exception, match="Layer 'wrong' does not exist"):
+    with pytest.raises(Exception, match="Cannot find layer 'wrong'"):
         gdal.Run(
             "vector",
             "layer-algebra",
@@ -517,7 +523,7 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
     # --update to existing layer
     with pytest.raises(
         Exception,
-        match=r"Output layer 'output2' already exists. Specify --overwrite, --overwrite-layer, --append or --update \+ --output-layer with a different name",
+        match=r"Layer 'output2' already exists. Specify the --overwrite-layer option to overwrite it, or --append to append to it",
     ):
         gdal.Run(
             "vector",
@@ -531,10 +537,10 @@ def test_gdal_vector_layer_algebra_overwrite_multilayer(tmp_vsimem):
         )
 
 
-def get_input_method_datasets():
+def get_input_method_datasets(input_crs=None, method_crs=None):
 
     input_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    input_lyr = input_ds.CreateLayer("input")
+    input_lyr = input_ds.CreateLayer("input", srs=input_crs)
     input_lyr.CreateField(ogr.FieldDefn("a"))
     f = ogr.Feature(input_lyr.GetLayerDefn())
     f["a"] = "foo"
@@ -547,7 +553,7 @@ def get_input_method_datasets():
     input_lyr.CreateFeature(f)
 
     method_ds = gdal.GetDriverByName("MEM").CreateVector("")
-    method_lyr = method_ds.CreateLayer("method")
+    method_lyr = method_ds.CreateLayer("method", srs=method_crs)
     method_lyr.CreateField(ogr.FieldDefn("b"))
     f = ogr.Feature(method_lyr.GetLayerDefn())
     f["b"] = "bar"
@@ -589,7 +595,9 @@ def test_gdal_vector_layer_algebra_intersection():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] == "bar"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo2"
@@ -619,14 +627,15 @@ def test_gdal_vector_layer_algebra_sym_difference():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] is None
         assert f["method_b"] == "bar"
-        assert (
-            f.GetGeometryRef().ExportToWkt()
-            == "POLYGON ((15 10,15 0,10 0,10 10,15 10))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((15 10,15 0,10 0,10 10,15 10))"
         )
 
         f = out_lyr.GetNextFeature()
@@ -657,12 +666,16 @@ def test_gdal_vector_layer_algebra_identity():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] == "bar"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo2"
@@ -690,11 +703,15 @@ def test_gdal_vector_layer_algebra_update():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,15 0,15 10,5 10,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,15 0,15 10,5 10,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] is None
@@ -725,7 +742,9 @@ def test_gdal_vector_layer_algebra_clip():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo2"
@@ -752,4 +771,131 @@ def test_gdal_vector_layer_algebra_erase():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdal_vector_layer_algebra_pipeline(tmp_vsimem):
+
+    input_ds, method_ds = get_input_method_datasets()
+
+    gdal.alg.vector.convert(input=input_ds, output=tmp_vsimem / "input.gpkg")
+    gdal.alg.vector.convert(input=method_ds, output=tmp_vsimem / "method.gpkg")
+
+    def check_out_ds(out_ds):
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetName() == "output"
+        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+        assert out_lyr.GetFeatureCount() == 2
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo"
+        assert f["method_b"] == "bar"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo2"
+        assert f["method_b"] == "bar2"
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (-3 4)"
+
+    with gdal.config_option("CPL_TMPDIR", tmp_vsimem):
+        with gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg"
+        ) as alg:
+            out_ds = alg.Output()
+            check_out_ds(out_ds)
+
+        # No next usable step
+        with gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! edit"
+        ) as alg:
+            out_ds = alg.Output()
+            check_out_ds(out_ds)
+
+        gdal.alg.pipeline(
+            pipeline=f"read {tmp_vsimem}/input.gpkg ! layer-algebra --operation intersection --method {tmp_vsimem}/method.gpkg ! write {tmp_vsimem}/out.gpkg"
+        )
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        check_out_ds(out_ds)
+
+
+@pytest.mark.parametrize(
+    "input_crs,method_crs,warning",
+    [
+        (
+            None,
+            "EPSG:4326",
+            "Method layer has a CRS, but input layer has none. Assuming geometries of input layer to be expressed in method layer CRS",
+        ),
+        (
+            "EPSG:4326",
+            None,
+            "Input layer has a CRS, but method layer has none. Assuming geometries of method layer to be expressed in input layer CRS",
+        ),
+        (
+            "EPSG:4326",
+            "EPSG:4258",
+            "Input and method layer have non-equivalent CRS. No on-the-fly reprojection is performed, and thus results may be incorrect",
+        ),
+    ],
+)
+def test_gdal_vector_layer_algebra_inconsistent_crs(
+    tmp_vsimem, input_crs, method_crs, warning
+):
+
+    if input_crs:
+        crs = osr.SpatialReference()
+        crs.SetFromUserInput(input_crs)
+        input_crs = crs
+
+    if method_crs:
+        crs = osr.SpatialReference()
+        crs.SetFromUserInput(method_crs)
+        method_crs = crs
+
+    input_ds, method_ds = get_input_method_datasets(
+        input_crs=input_crs, method_crs=method_crs
+    )
+
+    with gdaltest.error_raised(gdal.CE_Warning, match=warning):
+        gdal.alg.vector.layer_algebra(
+            input=input_ds,
+            method=method_ds,
+            output_format="MEM",
+            output="",
+            operation="intersection",
+        )
+
+
+def test_gdal_vector_layer_algebra_geometry_type():
+
+    input_ds, method_ds = get_input_method_datasets()
+    with gdal.Run(
+        "vector",
+        "layer-algebra",
+        operation="intersection",
+        input=input_ds,
+        method=method_ds,
+        output_format="MEM",
+        geometry_type="MULTIPOLYGON",
+    ) as alg:
+        out_ds = alg.Output()
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetName() == "output"
+        assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+        assert out_lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "input_a"
+        assert out_lyr.GetLayerDefn().GetFieldDefn(1).GetName() == "method_b"
+        assert out_lyr.GetFeatureCount() == 1
+
+        f = out_lyr.GetNextFeature()
+        assert f["input_a"] == "foo"
+        assert f["method_b"] == "bar"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "MULTIPOLYGON (((5 0,5 10,10 10,10 0,5 0)))"
+        )

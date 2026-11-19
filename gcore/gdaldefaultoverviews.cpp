@@ -25,6 +25,11 @@
 #include <string>
 #include <vector>
 
+#ifdef HAVE_TIFF
+#include "tiffio.h"
+#include "gt_overview.h"
+#endif
+
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_progress.h"
@@ -1117,7 +1122,11 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
     CPLErr eErr = CE_None;
 
     void *pScaledOverviewWithoutMask = GDALCreateScaledProgress(
-        0, (HaveMaskFile() && poMaskDS) ? double(nBands) / (nBands + 1) : 1,
+        0,
+        (HaveMaskFile() ||
+         poDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET)
+            ? double(nBands) / (nBands + 1)
+            : 1,
         pfnProgress, pProgressData);
 
     const auto AvoidZero = [](double x)
@@ -1296,6 +1305,8 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
     CPLFree(pahBands);
     GDALDestroyScaledProgress(pScaledOverviewWithoutMask);
 
+    const int nOverviewCount = GetOverviewCount(1);
+
     /* -------------------------------------------------------------------- */
     /*      If we have a mask file, we need to build its overviews too.     */
     /* -------------------------------------------------------------------- */
@@ -1308,6 +1319,95 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
                                   papszOptions);
         GDALDestroyScaledProgress(pScaledProgress);
     }
+#ifdef HAVE_TIFF
+    // Deal with external overviews of a non-external mask
+    else if (eErr == CE_None && poODS &&
+             poDS->GetRasterBand(1)->GetMaskFlags() == GMF_PER_DATASET)
+    {
+        bool bNeedsReopeningBefore = true;
+        bool bNeedsReopeningAfter = false;
+        for (int iOver = 0; eErr == CE_None && iOver < nOverviewCount; ++iOver)
+        {
+            GDALRasterBand *poOverBand = GetOverview(1, iOver);
+            if (poOverBand && poOverBand->GetMaskFlags() != GMF_PER_DATASET)
+            {
+                if (bNeedsReopeningBefore)
+                {
+                    bNeedsReopeningBefore = false;
+                    // We need to re-open the dataset so the TIFF handle is in an
+                    // appropriate state for GTIFFWriteDirectory
+                    poODS = GDALDataset::Open(osOvrFilename,
+                                              GDAL_OF_RASTER | GDAL_OF_UPDATE);
+                    if (poODS == nullptr)
+                        eErr = CE_Failure;
+                }
+                if (eErr == CE_None)
+                {
+                    int nMaskOvrCompression;
+                    auto hDrv = GDALGetDriverByName("GTiff");
+                    if (hDrv &&
+                        strstr(GDALGetMetadataItem(
+                                   hDrv, GDAL_DMD_CREATIONOPTIONLIST, nullptr),
+                               "<Value>DEFLATE</Value>") != nullptr)
+                        nMaskOvrCompression = COMPRESSION_ADOBE_DEFLATE;
+                    else
+                        nMaskOvrCompression = COMPRESSION_PACKBITS;
+
+                    TIFF *hOTIFF = static_cast<TIFF *>(
+                        poODS->GetInternalHandle("TIFF_HANDLE"));
+
+                    int nOvrBlockXSize, nOvrBlockYSize;
+                    poOverBand->GetBlockSize(&nOvrBlockXSize, &nOvrBlockYSize);
+                    if (GTIFFWriteDirectory(
+                            hOTIFF, FILETYPE_REDUCEDIMAGE | FILETYPE_MASK,
+                            poOverBand->GetXSize(), poOverBand->GetYSize(), 1,
+                            PLANARCONFIG_CONTIG, 1, nOvrBlockXSize,
+                            nOvrBlockYSize, TRUE, nMaskOvrCompression,
+                            PHOTOMETRIC_MASK, SAMPLEFORMAT_UINT, PREDICTOR_NONE,
+                            nullptr, nullptr, nullptr, 0, nullptr, "", nullptr,
+                            nullptr, nullptr, nullptr, false) == 0)
+                    {
+                        eErr = CE_Failure;
+                    }
+
+                    bNeedsReopeningAfter = true;
+                }
+            }
+        }
+        if (eErr == CE_None && bNeedsReopeningAfter)
+        {
+            // Re-open dataset so that masks are properly attached to bands
+            delete poODS;
+            poODS = GDALDataset::Open(osOvrFilename,
+                                      GDAL_OF_RASTER | GDAL_OF_UPDATE);
+            if (poODS == nullptr)
+                eErr = CE_Failure;
+        }
+        if (eErr == CE_None)
+        {
+            std::vector<GDALRasterBandH> ahOvrMaskBands;
+            for (int iOver = 0; iOver < nOverviewCount; ++iOver)
+            {
+                GDALRasterBand *poOverBand = GetOverview(1, iOver);
+                if (!poOverBand ||
+                    poOverBand->GetMaskFlags() != GMF_PER_DATASET)
+                    continue;
+                ahOvrMaskBands.push_back(
+                    GDALRasterBand::ToHandle(poOverBand->GetMaskBand()));
+            }
+
+            pScaledProgress = GDALCreateScaledProgress(
+                double(nBands) / (nBands + 1), 1.0, pfnProgress, pProgressData);
+
+            eErr = GDALRegenerateOverviewsEx(
+                poDS->GetRasterBand(1)->GetMaskBand(),
+                static_cast<int>(ahOvrMaskBands.size()), ahOvrMaskBands.data(),
+                pszResampling, GDALScaledProgress, pScaledProgress,
+                papszOptions);
+            GDALDestroyScaledProgress(pScaledProgress);
+        }
+    }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      If we have an overview dataset, then mark all the overviews     */
@@ -1316,13 +1416,11 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
     /* -------------------------------------------------------------------- */
     if (poODS)
     {
-        const int nOverviewCount = GetOverviewCount(1);
-
         for (int iOver = 0; iOver < nOverviewCount; iOver++)
         {
-            GDALRasterBand *poOtherBand = GetOverview(1, iOver);
+            GDALRasterBand *poOverBand = GetOverview(1, iOver);
             GDALDataset *poOverDS =
-                poOtherBand != nullptr ? poOtherBand->GetDataset() : nullptr;
+                poOverBand != nullptr ? poOverBand->GetDataset() : nullptr;
 
             if (poOverDS != nullptr)
             {
@@ -1425,7 +1523,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand(int nFlags, int nBand)
             (nFlags & GMF_PER_DATASET) ? 1 : poDS->GetRasterCount();
 
         char **papszOpt = CSLSetNameValue(nullptr, "COMPRESS", "DEFLATE");
-        papszOpt = CSLSetNameValue(papszOpt, "INTERLEAVE", "BAND");
+        papszOpt = CSLSetNameValue(papszOpt, GDALMD_INTERLEAVE, "BAND");
 
         int nBX = 0;
         int nBY = 0;
@@ -1539,6 +1637,31 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
                                        const char *pszBasename)
 
 {
+    if (m_bInHaveMaskFile)
+    {
+        CPLDebug("GDAL",
+                 "GDALDefaultOverviews::HaveMaskFile(): called recursively");
+        return false;
+    }
+
+    struct InHaveMaskFileSetter
+    {
+        bool &m_bVal;
+
+        explicit InHaveMaskFileSetter(bool &bVal) : m_bVal(bVal)
+        {
+            m_bVal = true;
+        }
+
+        ~InHaveMaskFileSetter()
+        {
+            m_bVal = false;
+        }
+    };
+
+    InHaveMaskFileSetter setter(m_bInHaveMaskFile);
+    CPL_IGNORE_RET_VAL(setter);
+
     /* -------------------------------------------------------------------- */
     /*      Have we already checked for masks?                              */
     /* -------------------------------------------------------------------- */

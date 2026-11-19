@@ -91,7 +91,7 @@ OGRFeature *OGRPGDumpLayer::GetNextFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-int OGRPGDumpLayer::TestCapability(const char *pszCap) const
+bool OGRPGDumpLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite) || EQUAL(pszCap, OLCCreateField) ||
         EQUAL(pszCap, OLCCreateGeomField) ||
@@ -979,7 +979,7 @@ OGRPGDumpEscapeStringList(char **papszItems, bool bForInsertOrUpdate,
 
                 while (*pszStr)
                 {
-                    if (*pszStr == '"')
+                    if (*pszStr == '"' || *pszStr == '\\')
                         osStr += "\\";
                     osStr += *pszStr;
                     pszStr++;
@@ -1871,11 +1871,11 @@ OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
         nSRSId = m_nForcedSRSId;
     else if (poSRS != nullptr)
     {
-        const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthorityName = poSRS->GetAuthorityName();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
             /* Assume the EPSG Id is the SRS ID. Might be a wrong guess ! */
-            nSRSId = atoi(poSRS->GetAuthorityCode(nullptr));
+            nSRSId = atoi(poSRS->GetAuthorityCode());
         }
         else
         {

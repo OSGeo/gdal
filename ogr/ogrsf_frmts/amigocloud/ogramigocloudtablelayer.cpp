@@ -420,17 +420,14 @@ OGRErr OGRAmigoCloudTableLayer::ICreateFeature(OGRFeature *poFeature)
     // Add geometry field
     for (int i = 0; i < poFeatureDefn->GetGeomFieldCount(); i++)
     {
-        if (poFeature->GetGeomFieldRef(i) == nullptr)
+        const OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
+        if (poGeom == nullptr)
             continue;
 
         record << "\""
                << OGRAMIGOCLOUDJsonEncode(
                       poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef())
                << "\":";
-
-        OGRGeometry *poGeom = poFeature->GetGeomFieldRef(i);
-        if (poGeom == nullptr)
-            continue;
 
         OGRAmigoCloudGeomFieldDefn *poGeomFieldDefn =
             cpl::down_cast<OGRAmigoCloudGeomFieldDefn *>(
@@ -976,7 +973,7 @@ OGRErr OGRAmigoCloudTableLayer::IGetExtent(int iGeomField,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAmigoCloudTableLayer::TestCapability(const char *pszCap) const
+bool OGRAmigoCloudTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))

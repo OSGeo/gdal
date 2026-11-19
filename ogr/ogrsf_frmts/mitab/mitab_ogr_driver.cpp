@@ -187,6 +187,8 @@ void RegisterOGRTAB()
     poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MapInfo File");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tab mif mid");

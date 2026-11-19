@@ -78,6 +78,16 @@ def test_gdalalg_raster_convert_append(tmp_vsimem):
         assert len(ds.GetSubDatasets()) == 2
 
 
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_convert_append_to_non_existing(tmp_vsimem):
+
+    out_filename = str(tmp_vsimem / "out.gpkg")
+
+    gdal.alg.raster.convert(input="data/utmsmall.tif", output=out_filename, append=True)
+
+    assert gdal.Open(out_filename)
+
+
 @pytest.mark.require_driver("HFA")
 def test_gdalalg_raster_convert_failed_append(tmp_vsimem):
 

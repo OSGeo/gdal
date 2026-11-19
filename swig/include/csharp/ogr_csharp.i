@@ -19,6 +19,7 @@
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;
 %rename (RegisterAll) OGRRegisterAll();
 
+/* C# string encoder is located inside OSR (See csharp_string_encoder.i) */
 %include typemaps_csharp.i
 
 DEFINE_EXTERNAL_CLASS(OSRSpatialReferenceShadow, OSGeo.OSR.SpatialReference)

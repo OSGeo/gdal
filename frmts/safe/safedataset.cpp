@@ -1346,7 +1346,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Warning- incomplete"
                                  " ellipsoid information.  Using wgs-84 "
-                                 "parameters.\n");
+                                 "parameters.");
                         oLL.SetWellKnownGeogCS("WGS84");
                         oPrj.SetWellKnownGeogCS("WGS84");
                     }
@@ -1939,7 +1939,7 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 char **SAFEDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALDataset::GetMetadataDomainList(), TRUE,
-                                   "SUBDATASETS", nullptr);
+                                   GDAL_MDD_SUBDATASETS, nullptr);
 }
 
 /************************************************************************/
@@ -1948,7 +1948,7 @@ char **SAFEDataset::GetMetadataDomainList()
 
 CSLConstList SAFEDataset::GetMetadata(const char *pszDomain)
 {
-    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, "SUBDATASETS"))
+    if (pszDomain != nullptr && STARTS_WITH_CI(pszDomain, GDAL_MDD_SUBDATASETS))
         return papszSubDatasets;
 
     return GDALDataset::GetMetadata(pszDomain);

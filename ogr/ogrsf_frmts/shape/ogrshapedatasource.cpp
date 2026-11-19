@@ -228,7 +228,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
 
     eAccess = poOpenInfo->eAccess;
 
-    m_bSingleFileDataSource = CPL_TO_BOOL(bForceSingleFileDataSource);
+    m_bSingleFileDataSource = bForceSingleFileDataSource;
 
     /* -------------------------------------------------------------------- */
     /*      If m_bSingleFileDataSource is TRUE we don't try to do anything  */
@@ -422,10 +422,11 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
                                        : DS_SHPOpen(pszNewName, "r");
     CPLPopErrorHandler();
 
+    const bool bTryOpenDBF =
+        EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf");
     const bool bRestoreSHX =
         CPLTestBool(CPLGetConfigOption("SHAPE_RESTORE_SHX", "FALSE"));
-    if (bRestoreSHX && EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") &&
-        CPLGetLastErrorMsg()[0] != '\0')
+    if (bRestoreSHX && bTryOpenDBF && CPLGetLastErrorMsg()[0] != '\0')
     {
         CPLString osMsg = CPLGetLastErrorMsg();
 
@@ -434,8 +435,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     else
     {
         if (hSHP == nullptr &&
-            (!EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf") ||
-             strstr(CPLGetLastErrorMsg(), ".shp") == nullptr))
+            (!bTryOpenDBF || strstr(CPLGetLastErrorMsg(), ".shp") == nullptr))
         {
             CPLString osMsg = CPLGetLastErrorMsg();
 
@@ -452,8 +452,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
     /*      file or has to refer to the actual .dbf file.                   */
     /* -------------------------------------------------------------------- */
     DBFHandle hDBF = nullptr;
-    if (hSHP != nullptr ||
-        EQUAL(CPLGetExtensionSafe(pszNewName).c_str(), "dbf"))
+    if (hSHP != nullptr || bTryOpenDBF)
     {
         if (bRealUpdateAccess)
         {
@@ -488,11 +487,32 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
         else
         {
             hDBF = DS_DBFOpen(pszNewName, "r");
+            if (!hDBF)
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    const std::string osDBFName = CPLResetExtensionSafe(
+                        pszNewName, (i == 0) ? "dbf" : "DBF");
+                    VSILFILE *fp = VSIFOpenL(osDBFName.c_str(), "r");
+                    if (fp)
+                    {
+                        VSIFCloseL(fp);
+                        CPLError(bTryOpenDBF ? CE_Failure : CE_Warning,
+                                 CPLE_OpenFailed,
+                                 "%s exists, "
+                                 "but cannot be opened. File likely corrupted",
+                                 osDBFName.c_str());
+                        if (bTryOpenDBF)
+                        {
+                            if (hSHP)
+                                SHPClose(hSHP);
+                            return false;
+                        }
+                        break;
+                    }
+                }
+            }
         }
-    }
-    else
-    {
-        hDBF = nullptr;
     }
 
     if (hDBF == nullptr && hSHP == nullptr)
@@ -505,7 +525,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
         this, pszNewName, hSHP, hDBF,
         /* poSRS = */ nullptr,
         /* bSRSSet = */ false,
-        /* osPrjFilename = */ std::string(), bUpdate, wkbNone);
+        /* osPrjFilename = */ std::string(), bUpdate, wkbNone, false);
     poLayer->SetModificationDate(
         CSLFetchNameValue(papszOpenOptions, "DBF_DATE_LAST_UPDATE"));
     poLayer->SetAutoRepack(CPLFetchBool(papszOpenOptions, "AUTO_REPACK", true));
@@ -874,12 +894,11 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /*      Create the .prj file, if required.                              */
     /* -------------------------------------------------------------------- */
     std::string osPrjFilename;
-    OGRSpatialReference *poSRSClone = nullptr;
-    if (poSRS != nullptr)
+    auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
+    if (poSRSClone)
     {
         osPrjFilename =
             CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "prj");
-        poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
@@ -904,13 +923,9 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "shp");
 
     auto poLayer = std::make_unique<OGRShapeLayer>(
-        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone,
+        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone.get(),
         /* bSRSSet = */ true, osPrjFilename,
-        /* bUpdate = */ true, eType);
-    if (poSRSClone != nullptr)
-    {
-        poSRSClone->Release();
-    }
+        /* bUpdate = */ true, eType, true);
 
     poLayer->SetResizeAtClose(CPLFetchBool(papszOptions, "RESIZE", false));
     poLayer->CreateSpatialIndexAtClose(
@@ -933,7 +948,7 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRShapeDataSource::TestCapability(const char *pszCap) const
+bool OGRShapeDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

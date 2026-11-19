@@ -244,35 +244,31 @@ domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
--------
+Examples
+--------
 
-The ogrinfo utility can be used to dump the content of a GeoRSS datafile
-:
+.. example::
+   :title: Dump the contents of a GeoRSS datafile
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro -al input.xml
 
-   ogrinfo -ro -al input.xml
 
-|
+.. example::
+   :title: Translating an Atom document into an RSS document
+   
+   Note: in this example we map equivalent fields, from the source name
+   to the expected name of the destination format.
 
-The ogr2ogr utility can be used to do GeoRSS to GeoRSS translation. For
-example, to translate a Atom document into a RSS document
+   .. code-block:: bash
 
-::
+      ogr2ogr -f GeoRSS output.xml input.xml "select link_href as link, title, content as description, author_name as author, id as guid from georss"
 
-   ogr2ogr -f GeoRSS output.xml input.xml "select link_href as link, title, content as description, author_name as author, id as guid from georss"
+.. example::
+   :title: Reading the contents of a online GeoRSS feed using Python
 
-|
-| Note : in this example we map equivalent fields, from the source name
-  to the expected name of the destination format.
-
-|
-
-The following Python script shows how to read the content of a online
-GeoRSS feed
-
-::
+   .. code-block:: python
 
        #!/usr/bin/python
        import gdal

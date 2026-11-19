@@ -22,6 +22,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_curl()
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -164,6 +165,7 @@ def test_vsigs_1(gs_test_config):
 # Test GS_NO_SIGN_REQUEST=YES
 
 
+@pytest.mark.network
 def test_vsigs_no_sign_request(gs_test_config):
 
     with gdaltest.config_options({"CPL_GS_ENDPOINT": ""}, thread_local=False):
@@ -216,6 +218,207 @@ def test_vsigs_no_sign_request_fake_server(webserver_port):
             assert len(data) == 1
 
 
+def test_vsigs_read_specific_generation(webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    # The generation must be forwarded as a real "generation=<n>" query
+    # parameter, not folded into the object key, for GCS to return the pinned
+    # version instead of the live object.
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/resource?generation=123456789",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {"GS_NO_SIGN_REQUEST": "YES"},
+            thread_local=False,
+        ):
+            f = open_for_read(
+                "/vsigs/?generation=123456789&path=gs_fake_bucket_generation/resource"
+            )
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+def test_vsigs_non_numeric_generation_rejected(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=not-a-number"
+            )
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("generation") >= 0
+
+
+def test_vsigs_unknown_key_warns(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+                "&unknown_key=unknown_key_value"
+            )
+        assert f is not None, "Unknown key should not impede file read"
+        assert gdal.GetLastErrorMsg().find("Unsupported") >= 0
+        gdal.VSIFCloseL(f)
+
+
+def test_vsigs_missing_path_param_raises_error(gs_test_config):
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {"GS_NO_SIGN_REQUEST": "YES"},
+        thread_local=False,
+    ):
+        with gdal.quiet_errors():
+            f = open_for_read("/vsigs/" "?generation=123456789")
+        assert f is None
+        assert gdal.GetLastErrorMsg().find("Missing") >= 0
+
+
+def test_vsigs_read_specific_generation_hmac_signature(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    # Per the XML API V2 signing process, the generation is a plain query
+    # parameter, not a subresource: it is forwarded on the request URL but
+    # does not participate in the GOOG1 string-to-sign. The expected
+    # signature is computed independently here to pin that down.
+    import base64
+    import hashlib
+    import hmac
+
+    string_to_sign = "GET\n\n\nmy_timestamp\n/gs_fake_bucket_generation/resource"
+    signature = base64.b64encode(
+        hmac.new(
+            b"GS_SECRET_ACCESS_KEY", string_to_sign.encode("utf-8"), hashlib.sha1
+        ).digest()
+    ).decode("ascii")
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/resource?generation=123456789",
+        206,
+        {"Content-type": "text/plain"},
+        "Y",
+        expected_headers={
+            "Range": "bytes=0-16383",
+            "Authorization": "GOOG1 GS_ACCESS_KEY_ID:" + signature,
+        },
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+                "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
+                "CPL_GS_TIMESTAMP": "my_timestamp",
+            },
+            thread_local=False,
+        ):
+            f = open_for_read(
+                "/vsigs/?path=gs_fake_bucket_generation/resource"
+                "&generation=123456789"
+            )
+            assert f is not None
+            data = gdal.VSIFReadL(1, 1, f)
+            gdal.VSIFCloseL(f)
+            assert len(data) == 1
+
+
+def test_vsigs_specific_generation_signed_url(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    options = {
+        "GS_SECRET_ACCESS_KEY": "GS_SECRET_ACCESS_KEY",
+        "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
+        "CPL_GS_TIMESTAMP": "my_timestamp",
+    }
+
+    with gdaltest.config_options(options, thread_local=False):
+        unpinned_url = gdal.GetSignedURL(
+            "/vsigs/gs_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
+        )
+
+    with gdaltest.config_options(options, thread_local=False):
+        pinned_url = gdal.GetSignedURL(
+            "/vsigs/?path=gs_fake_bucket/resource&generation=123456789",
+            ["START_DATE=20180212T123456Z"],
+        )
+
+    # The generation rides along as an unsigned query parameter: same
+    # signature, with generation=<n> added to the URL.
+    assert unpinned_url is not None
+    assert pinned_url is not None
+    assert "generation=123456789" in pinned_url
+    assert pinned_url.replace("&generation=123456789", "") == unpinned_url
+
+
+def test_vsigs_specific_generation_no_sidecar_probing(gs_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    with open("data/byte.tif", "rb") as f:
+        byte_tif = f.read()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/gs_fake_bucket_generation/byte.tif?generation=123456789",
+        206,
+        {
+            "Content-type": "image/tiff",
+            "Content-Range": "bytes 0-%d/%d" % (len(byte_tif) - 1, len(byte_tif)),
+        },
+        byte_tif,
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GS_NO_SIGN_REQUEST": "YES",
+                # so that side-car files are probed with a Stat() call,
+                # instead of being looked up in a sibling file list
+                "GDAL_DISABLE_READDIR_ON_OPEN": "YES",
+            },
+            thread_local=False,
+        ):
+            gdal.ErrorReset()
+            ds = gdal.Open(
+                "/vsigs/?path=gs_fake_bucket_generation/byte.tif"
+                "&generation=123456789"
+            )
+            assert ds is not None
+            # triggers the lazy PAM (.aux.xml) and overview (.ovr) lookups
+            ds.GetGeoTransform()
+            ds.GetMetadata()
+            assert gdal.GetLastErrorMsg() == ""
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+
 ###############################################################################
 # Test with a fake Google Cloud Storage server
 
@@ -259,9 +462,11 @@ def test_vsigs_2(gs_test_config, webserver_port, use_config_options):
         "GS_ACCESS_KEY_ID": "GS_ACCESS_KEY_ID",
         "CPL_GS_TIMESTAMP": "my_timestamp",
     }
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if use_config_options else gdaltest.credentials("/vsigs/", options):
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if use_config_options
+        else gdaltest.credentials("/vsigs/", options)
+    ):
 
         signed_url = gdal.GetSignedURL(
             "/vsigs/gs_fake_bucket/resource", ["START_DATE=20180212T123456Z"]
@@ -817,7 +1022,7 @@ def test_vsigs_GetFileMetadatabucket_root_oauth2(
     try:
         with gdaltest.config_options(
             {
-                "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+                "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
                 "GOA2_NOW": "123456",
             },
             thread_local=False,
@@ -854,10 +1059,10 @@ def test_vsigs_GetFileMetadatabucket_root_oauth2(
 
             except Exception:
                 if (
-                    gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented")
+                    gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented")
                     >= 0
                 ):
-                    pytest.skip("CPLRSASHA256Sign() not implemented")
+                    pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
             assert md == {"foo": "bar"}
     finally:
@@ -1125,7 +1330,7 @@ gwE6fxOLyJDxuWRf
 
     with gdaltest.config_options(
         {
-            "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+            "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
             "GS_OAUTH2_CLIENT_EMAIL": "CLIENT_EMAIL",
         },
@@ -1135,9 +1340,11 @@ gwE6fxOLyJDxuWRf
         for i in range(2):
 
             with gdaltest.config_options(
-                {"GS_OAUTH2_PRIVATE_KEY": key}
-                if i == 0
-                else {"GS_OAUTH2_PRIVATE_KEY_FILE": "/vsimem/pkey"},
+                (
+                    {"GS_OAUTH2_PRIVATE_KEY": key}
+                    if i == 0
+                    else {"GS_OAUTH2_PRIVATE_KEY_FILE": "/vsimem/pkey"}
+                ),
                 thread_local=False,
             ):
 
@@ -1200,7 +1407,7 @@ gwE6fxOLyJDxuWRf
                 except Exception:
                     if (
                         gdal.GetLastErrorMsg().find(
-                            "CPLRSASHA256Sign() not implemented"
+                            "CPL_RSA_SHA256_Sign() not implemented"
                         )
                         >= 0
                     ):
@@ -1231,7 +1438,7 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
     with gdaltest.config_options(
         {
             "GOOGLE_APPLICATION_CREDENTIALS": "/vsimem/service_account.json",
-            "GO2A_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
+            "GOA2_AUD": "http://localhost:%d/oauth2/v4/token" % webserver_port,
             "GOA2_NOW": "123456",
         },
         thread_local=False,
@@ -1300,8 +1507,11 @@ def test_vsigs_read_credentials_oauth2_service_account_json_file(
                 )
 
         except Exception:
-            if gdal.GetLastErrorMsg().find("CPLRSASHA256Sign() not implemented") >= 0:
-                pytest.skip("CPLRSASHA256Sign() not implemented")
+            if (
+                gdal.GetLastErrorMsg().find("CPL_RSA_SHA256_Sign() not implemented")
+                >= 0
+            ):
+                pytest.skip("CPL_RSA_SHA256_Sign() not implemented")
 
         assert (
             signed_url
@@ -1780,30 +1990,27 @@ def test_vsigs_read_credentials_gce_expiration(gs_test_config, webserver_port):
             request.wfile.write("""foo""".encode("ascii"))
 
         handler = webserver.SequentialHandler()
+
+        def add_get_token():
+            handler.add(
+                "GET",
+                "/computeMetadata/v1/instance/service-accounts/default/token",
+                200,
+                {},
+                """{
+                        "access_token" : "ACCESS_TOKEN",
+                        "token_type" : "Bearer",
+                        "expires_in" : 0,
+                        }""",
+            )
+
         # First time is used when trying to establish if GCE authentication is available
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 0,
-                    }""",
-        )
-        # Second time is needed because f the access to th file
-        handler.add(
-            "GET",
-            "/computeMetadata/v1/instance/service-accounts/default/token",
-            200,
-            {},
-            """{
-                    "access_token" : "ACCESS_TOKEN",
-                    "token_type" : "Bearer",
-                    "expires_in" : 0,
-                    }""",
-        )
+        add_get_token()
+        # Second time is needed because of the access to the file
+        add_get_token()
+        # A couple more because VSICurlFilesystemHandlerBase::Open() use GetURLFromFilename()
+        add_get_token()
+        add_get_token()
         handler.add("GET", "/gs_fake_bucket/resource", custom_method=method)
         with webserver.install_http_handler(handler):
             f = open_for_read("/vsigs/gs_fake_bucket/resource")

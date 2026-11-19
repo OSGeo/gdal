@@ -93,7 +93,7 @@ bool GDALInterpExtractValuesWindow(GDALRasterBand *pBand,
                                         : BLOCK_SIZE;
 
 #if 0
-            CPLDebug("RPC", "nY=%d nX=%d nBlockY=%d nBlockX=%d "
+            CPLDebug(GDAL_MDD_RPC, "nY=%d nX=%d nBlockY=%d nBlockX=%d "
                      "nFirstLineInCachedBlock=%d nFirstLineInOutput=%d nLinesToCopy=%d "
                      "nFirstColInCachedBlock=%d nFirstColInOutput=%d nColsToCopy=%d",
                      nY, nX, nBlockY, nBlockX, nFirstLineInCachedBlock, nFirstLineInOutput, nLinesToCopy,

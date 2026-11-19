@@ -1,5 +1,7 @@
 .. _gdal_vector_explode_collections:
 
+.. program:: gdal_vector_explode_collections
+
 ================================================================================
 ``gdal vector explode-collections``
 ================================================================================
@@ -91,6 +93,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

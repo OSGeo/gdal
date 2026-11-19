@@ -221,6 +221,12 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
         case LANDSAT:
             if (pszBandname && !EQUAL(pszBandname, ""))
             {
+                if (CPLHasPathTraversal(pszBandname))
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Path traversal detected in %s", pszBandname);
+                    return nullptr;
+                }
                 osChannelFilename =
                     CPLFormCIFilenameSafe(pszDirname, pszBandname, nullptr);
                 if (OpenChannel(osChannelFilename.c_str(), iBand))
@@ -684,7 +690,8 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
                                          BANDS_PRESENT_SIZE, TRUE);
                 if (pszTemp)
                 {
-                    for (int i = 0; pszTemp[i] != '\0'; i++)
+                    for (int i = 0; pszTemp[i] != '\0' && l_nBands < MAX_FILES;
+                         i++)
                     {
                         if (pszTemp[i] >= '2' && pszTemp[i] <= '5')
                         {

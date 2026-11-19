@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_SELECT_INCLUDED
 #define GDALALG_RASTER_SELECT_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -37,6 +37,7 @@ class GDALRasterSelectAlgorithm /* non final */
 
     std::vector<std::string> m_bands{};
     std::string m_mask{};
+    bool m_exclude = false;
 };
 
 /************************************************************************/

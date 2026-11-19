@@ -202,6 +202,9 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     int m_nRawThermalImageHeight = 0;
     std::vector<GByte> m_abyRawThermalImage{};
 
+    // FLIR embedded image (RGB next to raw thermal)
+    std::vector<GByte> m_abyEmbeddedImage{};
+
     virtual CPLErr LoadScanline(int, GByte *outBuffer = nullptr) = 0;
     virtual void StopDecompress() = 0;
     virtual CPLErr Restart() = 0;
@@ -225,6 +228,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     void ReadFLIRMetadata();
     void ReadDJIMetadata();
     GDALDataset *OpenRawThermalImage(const char *pszConnectionString);
+    GDALDataset *OpenEmbeddedImage(const char *pszConnectionString);
 
     bool bHasCheckedForMask{};
     JPGMaskBand *poMaskBand{};
@@ -248,6 +252,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     CPLErr IBuildOverviews(const char *, int, const int *, int, const int *,
                            GDALProgressFunc, void *,
                            CSLConstList papszOptions) override;
+
+    void ArtemisIIEasterEgg();
 
     CPL_DISALLOW_COPY_ASSIGN(JPGDatasetCommon)
 
@@ -306,17 +312,11 @@ class JPGDataset final : public JPGDatasetCommon
     static void EmitMessage(j_common_ptr cinfo, int msg_level);
     static void ProgressMonitor(j_common_ptr cinfo);
 
-    struct jpeg_decompress_struct sDInfo
-    {
-    };
+    struct jpeg_decompress_struct sDInfo{};
 
-    struct jpeg_error_mgr sJErr
-    {
-    };
+    struct jpeg_error_mgr sJErr{};
 
-    struct jpeg_progress_mgr sJProgress
-    {
-    };
+    struct jpeg_progress_mgr sJProgress{};
 
     CPLErr LoadScanline(int, GByte *outBuffer) override;
     CPLErr StartDecompress();

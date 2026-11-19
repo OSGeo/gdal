@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_CALC_INCLUDED
 #define GDALALG_RASTER_CALC_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -31,6 +31,11 @@ class GDALRasterCalcAlgorithm : public GDALRasterPipelineStepAlgorithm
     static constexpr const char *HELP_URL = "/programs/gdal_raster_calc.html";
 
     bool CanBeFirstStep() const override
+    {
+        return true;
+    }
+
+    bool CanBeMiddleStep() const override
     {
         return true;
     }

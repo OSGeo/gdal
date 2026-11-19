@@ -13,6 +13,7 @@
 #ifndef OGR_KMLUTILITY_H_INCLUDED
 #define OGR_KMLUTILITY_H_INCLUDED
 
+#include <map>
 #include <string>
 #include <vector>
 #include "ogr_geometry.h"
@@ -32,7 +33,11 @@ enum Nodetype
     MultiGeometry,
     MultiPoint,
     MultiLineString,
-    MultiPolygon
+    MultiPolygon,
+    Schema,
+    SimpleField,
+    SchemaData,
+    SimpleData,
 };
 
 struct Attribute
@@ -55,6 +60,7 @@ struct Feature
     std::string sName{};
     std::string sDescription{};
     std::unique_ptr<OGRGeometry> poGeom{};
+    std::map<std::string, std::string> oFields{};
 };
 
 }  // namespace OGRKML

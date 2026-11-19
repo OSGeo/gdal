@@ -680,15 +680,15 @@ void IMapInfoFile::SetStrictLaundering(bool bStrictLaundering)
     m_bStrictLaundering = bStrictLaundering;
 }
 
-int IMapInfoFile::TestUtf8Capability() const
+bool IMapInfoFile::TestUtf8Capability() const
 {
     const char *pszEncoding(GetEncoding());
     if (strlen(pszEncoding) == 0)
     {
-        return FALSE;
+        return false;
     }
 
-    return CPLCanRecode("test", GetEncoding(), CPL_ENC_UTF8);
+    return CPL_TO_BOOL(CPLCanRecode("test", GetEncoding(), CPL_ENC_UTF8));
 }
 
 CPLString IMapInfoFile::NormalizeFieldName(const char *pszName) const

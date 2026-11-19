@@ -319,7 +319,7 @@ bool GDALHEIFDataset::Init(GDALOpenInfo *poOpenInfo)
                 aosSubDS.SetNameValue(CPLSPrintf("SUBDATASET_%d_DESC", i + 1),
                                       CPLSPrintf("Subdataset %d", i + 1));
             }
-            GDALDataset::SetMetadata(aosSubDS.List(), "SUBDATASETS");
+            GDALDataset::SetMetadata(aosSubDS.List(), GDAL_MDD_SUBDATASETS);
         }
     }
     else if (iPart > nSubdatasets)
@@ -457,7 +457,7 @@ void GDALHEIFDataset::ReadMetadata()
 
             const bool bLittleEndianTIFF = data[nTIFFFileOffset] == 'I' &&
                                            data[nTIFFFileOffset + 1] == 'I';
-            constexpr bool bLSBPlatform = CPL_IS_LSB != 0;
+            constexpr bool bLSBPlatform = CPL_IS_LSB;
             const bool bSwabflag = bLittleEndianTIFF != bLSBPlatform;
 
             uint32_t nTIFFDirOff;
@@ -837,8 +837,8 @@ GDALHEIFRasterBand::GDALHEIFRasterBand(GDALHEIFDataset *poDSIn, int nBandIn)
     }
     if (nBits != 8 && nBits != 16)
     {
-        GDALRasterBand::SetMetadataItem("NBITS", CPLSPrintf("%d", nBits),
-                                        "IMAGE_STRUCTURE");
+        GDALRasterBand::SetMetadataItem(GDALMD_NBITS, CPLSPrintf("%d", nBits),
+                                        GDAL_MDD_IMAGE_STRUCTURE);
     }
 #endif
 
@@ -866,16 +866,28 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     struct heif_decoding_options *decode_options =
         heif_decoding_options_alloc();
 
+    const auto interleaveRRGGBB = []()
+    {
+        if constexpr (CPL_IS_LSB)
+            return heif_chroma_interleaved_RRGGBB_LE;
+        else
+            return heif_chroma_interleaved_RRGGBB_BE;
+    }();
+
+    const auto interleaveRRGGBBAA = []()
+    {
+        if constexpr (CPL_IS_LSB)
+            return heif_chroma_interleaved_RRGGBBAA_LE;
+        else
+            return heif_chroma_interleaved_RRGGBBAA_BE;
+    }();
+
     auto err = heif_image_handle_decode_image_tile(
         poGDS->m_hImageHandle, &hImage, heif_colorspace_RGB,
-        nBands == 3 ? (eDataType == GDT_UInt16
-                           ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBB_LE
-                                         : heif_chroma_interleaved_RRGGBB_BE)
-                           : heif_chroma_interleaved_RGB)
-                    : (eDataType == GDT_UInt16
-                           ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBBAA_LE
-                                         : heif_chroma_interleaved_RRGGBBAA_BE)
-                           : heif_chroma_interleaved_RGBA),
+        nBands == 3 ? (eDataType == GDT_UInt16 ? interleaveRRGGBB
+                                               : heif_chroma_interleaved_RGB)
+                    : (eDataType == GDT_UInt16 ? interleaveRRGGBBAA
+                                               : heif_chroma_interleaved_RGBA),
         decode_options, nBlockXOff, nBlockYOff);
 
     if (err.code != heif_error_Ok)
@@ -933,25 +945,37 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     const int nBands = poGDS->GetRasterCount();
     if (poGDS->m_hImage == nullptr)
     {
+#if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
+        const auto interleaveRRGGBB = []()
+        {
+            if constexpr (CPL_IS_LSB)
+                return heif_chroma_interleaved_RRGGBB_LE;
+            else
+                return heif_chroma_interleaved_RRGGBB_BE;
+        }();
+
+        const auto interleaveRRGGBBAA = []()
+        {
+            if constexpr (CPL_IS_LSB)
+                return heif_chroma_interleaved_RRGGBBAA_LE;
+            else
+                return heif_chroma_interleaved_RRGGBBAA_BE;
+        }();
+#endif
+
         auto err = heif_decode_image(
             poGDS->m_hImageHandle, &(poGDS->m_hImage), heif_colorspace_RGB,
             nBands == 3
                 ? (
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
-                      eDataType == GDT_UInt16
-                          ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBB_LE
-                                        : heif_chroma_interleaved_RRGGBB_BE)
-                          :
+                      eDataType == GDT_UInt16 ? interleaveRRGGBB :
 #endif
-                          heif_chroma_interleaved_RGB)
+                                              heif_chroma_interleaved_RGB)
                 : (
 #if LIBHEIF_NUMERIC_VERSION >= BUILD_LIBHEIF_VERSION(1, 4, 0)
-                      eDataType == GDT_UInt16
-                          ? (CPL_IS_LSB ? heif_chroma_interleaved_RRGGBBAA_LE
-                                        : heif_chroma_interleaved_RRGGBBAA_BE)
-                          :
+                      eDataType == GDT_UInt16 ? interleaveRRGGBBAA :
 #endif
-                          heif_chroma_interleaved_RGBA),
+                                              heif_chroma_interleaved_RGBA),
             nullptr);
         if (err.code != heif_error_Ok)
         {

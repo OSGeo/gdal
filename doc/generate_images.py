@@ -2,9 +2,15 @@ import os
 import pathlib
 
 import geopandas as gpd
+import matplotlib.pyplot as pyplot
+
+pyplot.rcParams["svg.fonttype"] = (
+    "none"  # out text as text (only withs without path_Effects)
+)
+pyplot.rcParams["svg.hashsalt"] = "gdal"  # stable element IDs across builds
+
 import matplotlib.colors
 import matplotlib.patheffects as pe
-import matplotlib.pyplot as pyplot
 import numpy as np
 import pytest
 
@@ -14,7 +20,7 @@ IMAGE_ROOT = os.path.join(os.path.dirname(__file__), "images")
 DATA_DIR = pathlib.Path(os.path.join(os.path.dirname(__file__), "data"))
 
 GDAL_GREEN_BLUE = matplotlib.colors.ListedColormap(["#71c9f1", "#359946"])
-
+SVG_METADATA = {"Date": None, "Creator": None, "Format": None, "Type": None}
 
 gdal.UseExceptions()
 matplotlib.use("Agg")  # use a non-GUI backend
@@ -28,7 +34,7 @@ def print_cell_values(ax, data):
             ax.text(
                 x + 0.5,
                 y + 0.5,
-                "NoData" if not has_data else f"{z}",
+                "NoData" if not has_data else f"{z:0.2f}".rstrip("0").rstrip("."),
                 va="center",
                 ha="center",
                 fontweight="bold",
@@ -503,6 +509,144 @@ def test_gdal_vector_layer_algebra(tmp_path, operation):
     )
 
 
+@pytest.mark.parametrize(
+    "operation",
+    ("identity", "sym-difference"),
+)
+def test_gdal_vector_layer_algebra_lines(tmp_path, operation):
+
+    line1_fname = DATA_DIR / "line1.geojson"
+    line2_fname = DATA_DIR / "line2.geojson"
+    result_fname = tmp_path / "out.geojson"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=line1_fname,
+        method=line2_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    line1 = gpd.read_file(line1_fname)
+    line2 = gpd.read_file(line2_fname)
+
+    line1.plot(ax=ax, color="blue", linewidth=3, alpha=0.6)
+    line2.plot(ax=ax, color="red", linewidth=3, alpha=0.6)
+
+    op = gpd.read_file(result_fname)
+    op.plot(ax=ax2, color="#e67e22", linewidth=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_lines_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "operation",
+    ("clip",),
+)
+def test_gdal_vector_layer_algebra_line_polygon(tmp_path, operation):
+
+    line_fname = DATA_DIR / "line3.geojson"
+    polygon_fname = DATA_DIR / "polygon.geojson"
+    result_fname = tmp_path / "out.geojson"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=line_fname,
+        method=polygon_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    line = gpd.read_file(line_fname)
+    polygon = gpd.read_file(polygon_fname)
+
+    polygon.plot(ax=ax, facecolor="blue", alpha=0.5, edgecolor="black")
+    line.plot(ax=ax, color="red", linewidth=3)
+
+    op = gpd.read_file(result_fname)
+    if op.empty:
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+    elif (op.geom_type.isin(["Polygon", "MultiPolygon"])).any():
+        op.plot(ax=ax2, facecolor="yellow", edgecolor="black", alpha=0.3)
+    else:
+        op.plot(ax=ax2, color="#e67e22", linewidth=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_line_polygon_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "operation",
+    ("erase",),
+)
+def test_gdal_vector_layer_algebra_points_polygon(tmp_path, operation):
+
+    points_fname = DATA_DIR / "points.geojson"
+    polygon_fname = DATA_DIR / "polygon.geojson"
+    result_fname = tmp_path / "out.gpkg"
+
+    alg = gdal.Run(
+        "vector layer-algebra",
+        operation=operation,
+        input=points_fname,
+        method=polygon_fname,
+        output=result_fname,
+    )
+    alg.Finalize()
+
+    scale = 0.6
+    plt, (ax, ax2) = pyplot.subplots(
+        1, 2, figsize=(12 * scale, 5 * scale), sharex=True, sharey=True
+    )
+    ax.set_axis_off()
+    ax2.set_axis_off()
+
+    points = gpd.read_file(points_fname)
+    polygon = gpd.read_file(polygon_fname)
+
+    polygon.plot(ax=ax, facecolor="blue", alpha=0.5, edgecolor="black")
+    points.plot(ax=ax, color="red", markersize=60, zorder=3)
+
+    op = gpd.read_file(result_fname)
+    if op.empty:
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+    elif (op.geom_type.isin(["Polygon", "MultiPolygon"])).any():
+        op.plot(ax=ax2, facecolor="yellow", edgecolor="black", alpha=0.3)
+    else:
+        op.plot(ax=ax2, color="#e67e22", markersize=60, zorder=3)
+
+    plt.savefig(
+        f'{IMAGE_ROOT}/programs/gdal_vector_layer_algebra_points_polygon_{operation.replace("-", "_")}.svg',
+        bbox_inches="tight",
+        transparent=True,
+    )
+
+
 def test_gdal_vector_simplify(tmp_path):
 
     src_fname = DATA_DIR / "wells.geojson"
@@ -608,4 +752,109 @@ def test_gdal_vector_simplify_coverage(tmp_path):
         f"{IMAGE_ROOT}/programs/gdal_vector_simplify_coverage.svg",
         bbox_inches="tight",
         transparent=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "operator",
+    (
+        "src-over",
+        "hsv-value",
+        "multiply",
+        "overlay",
+        "screen",
+        "color-dodge",
+        "color-burn",
+        "hard-light",
+    ),
+)
+def test_gdal_raster_blend_1band_overlay(operator):
+
+    input_fname = DATA_DIR / "hypsometric.jpg"
+    overlay_fname = DATA_DIR / "hillshade.jpg"
+
+    output_fname = f"{IMAGE_ROOT}/programs/gdal_raster_blend/{operator}.jpg"
+
+    alg = gdal.Run(
+        "raster",
+        "blend",
+        input=input_fname,
+        overlay=overlay_fname,
+        output=output_fname,
+        operator=operator,
+        overwrite=True,
+    )
+    alg.Finalize()
+
+
+@pytest.mark.parametrize(
+    "operator",
+    (
+        "lighten",
+        "darken",
+    ),
+)
+def test_gdal_raster_blend_3band_overlay(operator):
+
+    input_fname = DATA_DIR / "hypsometric.jpg"
+    overlay_fname = DATA_DIR / "hillshade_rgb.jpg"
+
+    output_fname = f"{IMAGE_ROOT}/programs/gdal_raster_blend/{operator}_3band.jpg"
+
+    alg = gdal.Run(
+        "raster",
+        "blend",
+        input=input_fname,
+        overlay=overlay_fname,
+        output=output_fname,
+        operator=operator,
+        overwrite=True,
+    )
+    alg.Finalize()
+
+
+def test_gdal_raster_proximity_1():
+
+    data = np.ma.masked_array(
+        np.array(
+            [
+                [1, 1, 1, 1, 1],
+                [1, 2, 0, 0, 0],
+                [3, 0, 0, 0, 0],
+                [-1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ]
+        ),
+        False,
+    )
+
+    plt, (ax, ax2) = pyplot.subplots(1, 2, figsize=(15, 6))
+
+    for x in (ax, ax2):
+        x.set_aspect("equal", adjustable="box")
+        x.set_xticks([], [])
+        x.set_yticks([], [])
+        x.grid(color="black", linewidth=2)
+        x.invert_yaxis()
+
+    ds = gdal_array.OpenArray(data)
+
+    with gdal.alg.raster.proximity(
+        input=ds,
+        output="",
+        output_format="MEM",
+        max_distance=3,
+    ) as alg:
+        data_out = alg.Output().ReadAsMaskedArray()
+
+    ax.pcolormesh(data, cmap=pyplot.get_cmap("Set3_r"))
+    print_cell_values(ax, data)
+    ax2.pcolormesh(data_out, cmap=pyplot.get_cmap("viridis"))
+    print_cell_values(ax2, data_out)
+
+    plt.savefig(
+        f"{IMAGE_ROOT}/programs/gdal_raster_proximity_1.svg",
+        bbox_inches="tight",
+        transparent=True,
+        metadata=SVG_METADATA,
     )

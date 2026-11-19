@@ -212,7 +212,7 @@ static void test_raw_auto(const char *pszFormat, int bFileMapping)
     }
 }
 
-TEST(testvitualmem, test)
+TEST(testvirtualmem, test)
 {
     if (getenv("SKIP_TESTVIRTUALMEM") != nullptr)
     {

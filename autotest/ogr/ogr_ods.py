@@ -189,7 +189,7 @@ def test_ogr_ods_2():
 
 def test_ogr_ods_headers_open_option():
 
-    ds = gdal.OpenEx("data/ods/test.ods", open_options=["HEADERS=DISABLE"])
+    ds = gdal.Open("data/ods/test.ods", open_options=["HEADERS=DISABLE"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -216,7 +216,7 @@ def test_ogr_ods_3():
 
 def test_ogr_ods_field_types_open_option():
 
-    ds = gdal.OpenEx("data/ods/test.ods", open_options=["FIELD_TYPES=STRING"])
+    ds = gdal.Open("data/ods/test.ods", open_options=["FIELD_TYPES=STRING"])
 
     lyr = ds.GetLayerByName("Feuille7")
 
@@ -267,7 +267,7 @@ def test_ogr_ods_test_ogrsf_update(tmp_path):
 # Test write support
 
 
-def test_ogr_ods_5():
+def test_ogr_ods_5(tmp_path):
 
     import test_cli_utilities
 
@@ -275,14 +275,17 @@ def test_ogr_ods_5():
         pytest.skip()
 
     gdaltest.runexternal(
-        test_cli_utilities.get_ogr2ogr_path() + " -f ODS tmp/test.ods data/ods/test.ods"
+        test_cli_utilities.get_ogr2ogr_path()
+        + " -f ODS "
+        + str(tmp_path / "test.ods")
+        + " data/ods/test.ods"
     )
 
-    ds = ogr.Open("tmp/test.ods")
+    ds = ogr.Open(str(tmp_path / "test.ods"))
     ogr_ods_check(ds)
     ds = None
 
-    os.unlink("tmp/test.ods")
+    os.unlink(str(tmp_path / "test.ods"))
 
 
 ###############################################################################
@@ -328,14 +331,14 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 # Test update support
 
 
-def test_ogr_ods_7():
+def test_ogr_ods_7(tmp_path):
 
-    filepath = "tmp/ogr_ods_7.ods"
+    filepath = str(tmp_path / "ogr_ods_7.ods")
     if os.path.exists(filepath):
         os.unlink(filepath)
     shutil.copy("data/ods/test.ods", filepath)
 
-    ds = gdal.OpenEx(filepath, gdal.OF_VECTOR | gdal.OF_UPDATE)
+    ds = gdal.Open(filepath, gdal.OF_VECTOR | gdal.OF_UPDATE)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:
@@ -347,7 +350,7 @@ def test_ogr_ods_7():
     assert ds.FlushCache() == gdal.CE_None
     ds = None
 
-    ds = ogr.Open("tmp/ogr_ods_7.ods")
+    ds = ogr.Open(filepath)
     lyr = ds.GetLayerByName("Feuille7")
     feat = lyr.GetNextFeature()
     if feat.GetFID() != 2:

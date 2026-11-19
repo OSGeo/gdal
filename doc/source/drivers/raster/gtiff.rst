@@ -14,7 +14,7 @@ and somewhat less varieties can be written.
 GDAL also supports reading and writing BigTIFF files (evolution of the TIFF format
 to support files larger than 4 GB).
 
-Currently band types of Byte, UInt16, Int16, UInt32, Int32, Float32,
+Currently band types of Byte, Int8, UInt16, Int16, UInt32, Int32, Float32,
 Float64, CInt16, CInt32, CFloat32 and CFloat64 are supported for reading
 and writing. Paletted images will return palette information associated
 with the band. The compression formats listed below should be supported
@@ -513,7 +513,7 @@ In the case where :co:`SPARSE_OK` is **not** defined
 value is not set, or set to 0, in Create() and CreateCopy() mode, the
 driver will delay the allocation of 0-blocks until file closing, so as
 to be able to write them at the very end of the file, and in a way
-compatible of the filesystem sparse file mechanisms (to be distinguished
+compatible with the filesystem sparse file mechanisms (to be distinguished
 from the TIFF sparse file extension discussed earlier). That is that all
 the empty blocks will be seen as properly allocated from the TIFF point
 of view (corresponding strips/tiles will have valid offsets and byte
@@ -651,7 +651,7 @@ This driver supports the following creation options:
 -  .. co:: INTERLEAVE
       :choices: BAND, PIXEL
 
-      Set the interleaving to use
+      Set the interleaving to use. See :ref:`raster_data_model_interleave_mode` for more details.
 
       * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
         all bands is used . This matches the ``contiguous`` planar configuration in
@@ -1058,7 +1058,7 @@ This driver supports the following creation options:
       information. The STANDARD way (default choice) will use the general
       accepted formulations of GeoTIFF keys, including extensions of the
       values accepted for ProjectedCSTypeGeoKey to new EPSG codes. The
-      ESRI_PE flavor will write formulations that are (more) compatible of
+      ESRI_PE flavor will write formulations that are (more) compatible with
       ArcGIS. At the time of writing, the ESRI_PE choice has mostly an
       effect when writing the EPSG:3857 (Web Mercator) SRS. For other SRS,
       the standard way will be used, with the addition of a ESRI_PE WKT
@@ -1137,15 +1137,18 @@ if all the following conditions are met:
 The generation of a tiled JPEG-in-TIFF from the original JPEG image is possible.
 Explicit assignment of target SRS and bounds are also possible.
 
+Exact preservation of pixel values is guaranteed only if a single strip image is
+generated, or said otherwise, if the block height is the image height.
+
 So, the following commands will use the lossless copy method :
 
 ::
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height>
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co TILED=YES       # some decompression differences possible
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -a_srs EPSG:4326 -a_ullr -180 90 180 -90
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height> -a_srs EPSG:4326 -a_ullr -180 90 180 -90
 
 
 whereas the following commands will *not* (and thus cause JPEG decompression and
@@ -1153,9 +1156,9 @@ compression):
 
 ::
 
-    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60
+    gdal_translate in.jpg out.tif -co COMPRESS=JPEG -co JPEG_QUALITY=60 -co BLOCKYSIZE=<image-height>
 
-    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG
+    gdal_translate in.jpg out.tif -srcwin 0 0 500 500 -co COMPRESS=JPEG -co BLOCKYSIZE=<image-height>
 
 
 Streaming operations
@@ -1366,7 +1369,7 @@ the default behavior of the GTiff driver.
       :default: TRUE
 
       Can be set to FALSE to avoid
-      all-in-one-strip files being presented as having.
+      all-in-one-strip files being presented as having a one-line block height.
 
 -  .. config:: GDAL_TIFF_OVR_BLOCKSIZE
 

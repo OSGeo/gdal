@@ -1,5 +1,7 @@
 .. _gdal_vsi_sozip:
 
+.. program:: gdal_vsi_sozip
+
 ================================================================================
 ``gdal vsi sozip``
 ================================================================================
@@ -235,7 +237,7 @@ Description
 Validates a SOZip file. Baseline ZIP validation is done in a light way,
 limited to being able to browse through ZIP records with the InfoZIP-based
 ZIP reader used by GDAL. But validation of the SOZip-specific aspects is
-done in a more thorougful way.
+done more thoroughly.
 
 Synopsis
 ++++++++
@@ -256,6 +258,11 @@ Options
 .. option:: -v, --verbose
 
     Turn on verbose mode.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 ++++++++

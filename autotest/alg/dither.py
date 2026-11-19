@@ -21,7 +21,7 @@ from osgeo import gdal
 # Test
 
 
-def test_dither_1():
+def test_dither_1(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
 
@@ -31,7 +31,11 @@ def test_dither_1():
     b_band = src_ds.GetRasterBand(3)
 
     dst_ds = drv.Create(
-        "tmp/rgbsmall.tif", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_UInt8
+        tmp_path / "rgbsmall.tif",
+        src_ds.RasterXSize,
+        src_ds.RasterYSize,
+        1,
+        gdal.GDT_UInt8,
     )
     dst_band = dst_ds.GetRasterBand(1)
 
@@ -75,9 +79,4 @@ def test_dither_1():
                     print(ref_ct[k])
                 pytest.fail("color table mismatch")
 
-    if cs == cs_expected or gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
-        drv.Delete("tmp/rgbsmall.tif")
-
-    if cs != cs_expected:
-        print("Got: ", cs)
-        pytest.fail("got wrong checksum")
+    assert cs == cs_expected

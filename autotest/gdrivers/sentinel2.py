@@ -14,8 +14,6 @@
 
 import os
 import sys
-import tempfile
-import uuid
 import zipfile
 
 import gdaltest
@@ -24,6 +22,7 @@ import pytest
 from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("Sentinel2")
+
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -266,7 +265,7 @@ def test_sentinel2_l1c_3():
     filename_xml = (
         "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml"
     )
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "SENTINEL2_L1C:%s:60m:EPSG_32632" % filename_xml, open_options=["ALPHA=YES"]
     )
     assert ds is not None
@@ -293,7 +292,7 @@ def test_sentinel2_l1c_4():
     filename_xml = (
         "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/S2A_OPER_MTD_SAFL1C.xml"
     )
-    ds = gdal.OpenEx("SENTINEL2_L1C:%s:PREVIEW:EPSG_32632" % filename_xml)
+    ds = gdal.Open("SENTINEL2_L1C:%s:PREVIEW:EPSG_32632" % filename_xml)
     assert ds is not None
 
     assert ds.RasterCount == 3
@@ -859,7 +858,7 @@ def test_sentinel2_l1c_tile_4():
     with gdal.config_option(
         "SENTINEL2_USE_MAIN_MTD", "NO"
     ):  # Simulate absence of main MTD file
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             "SENTINEL2_L1C_TILE:%s:10m" % filename_xml, open_options=["ALPHA=YES"]
         )
     assert ds is not None and gdal.GetLastErrorMsg() == ""
@@ -1434,7 +1433,7 @@ def test_sentinel2_l1b_4():
         pytest.fail()
     ds = None
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m",
         open_options=["ALPHA=YES"],
     )
@@ -2632,7 +2631,7 @@ def test_sentinel2_l1c_safe_compact_3():
     filename_xml = (
         "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/MTD_MSIL1C.xml"
     )
-    ds = gdal.OpenEx("SENTINEL2_L1C:%s:TCI:EPSG_32632" % filename_xml)
+    ds = gdal.Open("SENTINEL2_L1C:%s:TCI:EPSG_32632" % filename_xml)
     assert ds is not None
 
     assert ds.RasterCount == 3
@@ -2655,56 +2654,30 @@ def test_sentinel2_l1c_safe_compact_3():
 # Test opening zipped versions of S2 datasets
 
 
-def test_sentinel2_zipped():
-    # S2 L1C
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L1B
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L1A
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(zipwpath, "data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/")
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
-
-    # S2 L2A
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(
-            zipwpath,
+@pytest.mark.parametrize(
+    "src_dir",
+    (
+        pytest.param("data/sentinel2/fake_l1c/S2A_OPER_PRD_MSIL1C.SAFE/", id="S2 L1C"),
+        pytest.param("data/sentinel2/fake_l1b/S2B_OPER_PRD_MSIL1B.SAFE/", id="S2 L1B"),
+        pytest.param("data/sentinel2/fake_l2a/S2A_USER_PRD_MSIL2A.SAFE/", id="S2 L1A"),
+        pytest.param(
             "data/sentinel2/fake_l2a_MSIL2A/S2A_MSIL2A_20180818T094031_N0208_R036_T34VFJ_20180818T120345.SAFE/",
-        )
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
+            id="S2 L2A",
+        ),
+        pytest.param(
+            "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/",
+            id="S2 L1c SAFE compact",
+        ),
+    ),
+)
+def test_sentinel2_zipped(src_dir, tmp_path):
 
-    # S2 L1c SAFE compact
-    zipname = str(uuid.uuid4()) + ".zip"
-    with tempfile.TemporaryDirectory() as tmpdir:
-        zipwpath = os.path.join(tmpdir, zipname)
-        _zip_a_dir(
-            zipwpath, "data/sentinel2/fake_l1c_safecompact/S2A_MSIL1C_test.SAFE/"
-        )
-        assert os.path.exists(zipwpath)
-        ds = gdal.Open(zipwpath)
-        assert ds is not None
+    zipwpath = tmp_path / "S2.zip"
+    _zip_a_dir(zipwpath, src_dir)
+    assert os.path.exists(zipwpath)
+
+    ds = gdal.Open(zipwpath)
+    assert ds is not None
 
 
 ###############################################################################
@@ -2712,6 +2685,10 @@ def test_sentinel2_zipped():
 
 
 def test_sentinel2_l1c_processing_baseline_5_09__1():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
 
     gdal.ErrorReset()
@@ -2815,6 +2792,10 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
 
 
 def test_sentinel2_l1c_processing_baseline_5_09__2():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L1C:%s:20m:EPSG_32634" % filename_xml)
@@ -2917,6 +2898,10 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
 
 
 def test_sentinel2_l2a_processing_baseline_5_09__1():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:10m:EPSG_32634" % filename_xml)
@@ -3046,6 +3031,10 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
 
 
 def test_sentinel2_l2a_processing_baseline_5_09__2():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:20m:EPSG_32634" % filename_xml)

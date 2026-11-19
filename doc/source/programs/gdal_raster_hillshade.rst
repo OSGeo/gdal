@@ -1,5 +1,7 @@
 .. _gdal_raster_hillshade:
 
+.. program:: gdal_raster_hillshade
+
 ================================================================================
 ``gdal raster hillshade``
 ================================================================================
@@ -168,6 +170,10 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

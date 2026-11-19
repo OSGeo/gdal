@@ -61,6 +61,11 @@ constexpr GUInt32 EXT_SHAPE_SEGMENT_ELLIPSE = 5;
 namespace OpenFileGDB
 {
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4800) /* implicit conversion from "type" to bool */
+#endif
+
 FileGDBGeomField::~FileGDBGeomField() = default;
 
 FileGDBRasterField::~FileGDBRasterField() = default;
@@ -1115,76 +1120,71 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             OGRField sDefault;
             OGR_RawField_SetUnset(&sDefault);
-            if (flags & FileGDBField::MASK_EDITABLE)
+            // Default value
+            // Found on PreNIS.gdb/a0000000d.gdbtable
+            if (defaultValueLength > 0)
             {
-                /* Default value */
-                /* Found on PreNIS.gdb/a0000000d.gdbtable */
                 returnErrorIf(nRemaining < defaultValueLength);
-                if (defaultValueLength)
+                if (eType == FGFT_STRING)
                 {
-                    if (eType == FGFT_STRING)
+                    if (m_bStringsAreUTF8)
                     {
-                        if (m_bStringsAreUTF8)
-                        {
-                            sDefault.String = static_cast<char *>(
-                                CPLMalloc(defaultValueLength + 1));
-                            memcpy(sDefault.String, pabyIter,
-                                   defaultValueLength);
-                            sDefault.String[defaultValueLength] = 0;
-                        }
-                        else
-                        {
-                            m_osTempString = ReadUTF16String(
-                                pabyIter, defaultValueLength / 2);
-                            sDefault.String = CPLStrdup(m_osTempString.c_str());
-                        }
+                        sDefault.String = static_cast<char *>(
+                            CPLMalloc(defaultValueLength + 1));
+                        memcpy(sDefault.String, pabyIter, defaultValueLength);
+                        sDefault.String[defaultValueLength] = 0;
                     }
-                    else if (eType == FGFT_INT16 && defaultValueLength == 2)
+                    else
                     {
-                        sDefault.Integer = GetInt16(pabyIter, 0);
-                        sDefault.Set.nMarker2 = 0;
-                        sDefault.Set.nMarker3 = 0;
+                        m_osTempString =
+                            ReadUTF16String(pabyIter, defaultValueLength / 2);
+                        sDefault.String = CPLStrdup(m_osTempString.c_str());
                     }
-                    else if (eType == FGFT_INT32 && defaultValueLength == 4)
-                    {
-                        sDefault.Integer = GetInt32(pabyIter, 0);
-                        sDefault.Set.nMarker2 = 0;
-                        sDefault.Set.nMarker3 = 0;
-                    }
-                    else if (eType == FGFT_FLOAT32 && defaultValueLength == 4)
-                    {
-                        sDefault.Real = GetFloat32(pabyIter, 0);
-                    }
-                    else if (eType == FGFT_FLOAT64 && defaultValueLength == 8)
-                    {
-                        sDefault.Real = GetFloat64(pabyIter, 0);
-                    }
-                    else if ((eType == FGFT_DATETIME || eType == FGFT_DATE) &&
-                             defaultValueLength == 8)
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        FileGDBDoubleDateToOGRDate(dfVal, true, &sDefault);
-                    }
-                    else if (eType == FGFT_TIME && defaultValueLength == 8)
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        FileGDBDoubleTimeToOGRTime(dfVal, &sDefault);
-                    }
-                    else if (eType == FGFT_INT64 && defaultValueLength == 8)
-                    {
-                        sDefault.Integer64 = GetInt64(pabyIter, 0);
-                        sDefault.Set.nMarker3 = 0;
-                    }
-                    else if (eType == FGFT_DATETIME_WITH_OFFSET &&
-                             defaultValueLength ==
-                                 sizeof(double) + sizeof(int16_t))
-                    {
-                        const double dfVal = GetFloat64(pabyIter, 0);
-                        const int16_t nUTCOffset =
-                            GetInt16(pabyIter + sizeof(double), 0);
-                        FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
-                                                           &sDefault);
-                    }
+                }
+                else if (eType == FGFT_INT16 && defaultValueLength == 2)
+                {
+                    sDefault.Integer = GetInt16(pabyIter, 0);
+                    sDefault.Set.nMarker2 = 0;
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_INT32 && defaultValueLength == 4)
+                {
+                    sDefault.Integer = GetInt32(pabyIter, 0);
+                    sDefault.Set.nMarker2 = 0;
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_FLOAT32 && defaultValueLength == 4)
+                {
+                    sDefault.Real = GetFloat32(pabyIter, 0);
+                }
+                else if (eType == FGFT_FLOAT64 && defaultValueLength == 8)
+                {
+                    sDefault.Real = GetFloat64(pabyIter, 0);
+                }
+                else if ((eType == FGFT_DATETIME || eType == FGFT_DATE) &&
+                         defaultValueLength == 8)
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    FileGDBDoubleDateToOGRDate(dfVal, true, &sDefault);
+                }
+                else if (eType == FGFT_TIME && defaultValueLength == 8)
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    FileGDBDoubleTimeToOGRTime(dfVal, &sDefault);
+                }
+                else if (eType == FGFT_INT64 && defaultValueLength == 8)
+                {
+                    sDefault.Integer64 = GetInt64(pabyIter, 0);
+                    sDefault.Set.nMarker3 = 0;
+                }
+                else if (eType == FGFT_DATETIME_WITH_OFFSET &&
+                         defaultValueLength == sizeof(double) + sizeof(int16_t))
+                {
+                    const double dfVal = GetFloat64(pabyIter, 0);
+                    const int16_t nUTCOffset =
+                        GetInt16(pabyIter + sizeof(double), 0);
+                    FileGDBDateTimeWithOffsetToOGRDate(dfVal, nUTCOffset,
+                                                       &sDefault);
                 }
 
                 pabyIter += defaultValueLength;
@@ -1235,7 +1235,9 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 
             returnErrorIf(nRemaining < 2);
             GByte flags = pabyIter[1];
-            poField->m_bNullable = (flags & 1) != 0;
+            poField->m_bNullable = (flags & FileGDBField::MASK_NULLABLE) != 0;
+            poField->m_bRequired = (flags & FileGDBField::MASK_REQUIRED) != 0;
+            poField->m_bEditable = (flags & FileGDBField::MASK_EDITABLE) != 0;
             pabyIter += 2;
             nRemaining -= 2;
 
@@ -1651,7 +1653,7 @@ int64_t FileGDBTable::GetAndSelectNextNonEmptyRow(int64_t iRow)
 /*                             SelectRow()                              */
 /************************************************************************/
 
-bool FileGDBTable::SelectRow(int64_t iRow)
+bool FileGDBTable::SelectRow(int64_t iRow, bool bWarnOnlyOnDeletedRows)
 {
     const int errorRetValue = FALSE;
     returnErrorAndCleanupIf(iRow < 0 || iRow >= m_nTotalRecordCount,
@@ -1680,8 +1682,22 @@ bool FileGDBTable::SelectRow(int64_t iRow)
 
         if (m_nRowBlobLength > 0)
         {
-            /* CPLDebug("OpenFileGDB", "nRowBlobLength = %u", nRowBlobLength);
-             */
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OpenFileGDB",
+                     "%s: iRow = %" PRId64 ", m_nRowBlobLength = %u",
+                     m_osFilename.c_str(), iRow, m_nRowBlobLength);
+#endif
+            if ((m_nRowBlobLength >> 31) != 0)
+            {
+                CPLError(
+                    bWarnOnlyOnDeletedRows ? CE_Warning : CE_Failure,
+                    CPLE_AppDefined,
+                    "Feature %" PRId64
+                    " of %s appears to be deleted, but index is out of sync",
+                    iRow + 1, m_osFilename.c_str());
+                m_nCurRow = -1;
+                return false;
+            }
             returnErrorAndCleanupIf(
                 m_nRowBlobLength <
                         static_cast<GUInt32>(m_nNullableFieldsSizeInBytes) ||
@@ -2762,6 +2778,7 @@ void FileGDBTable::GetMinMaxProjYForSpatialIndex(double &dfYMin,
         return;
     if (!oSRS.IsProjected())
         return;
+    oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     const char *pszProjection = oSRS.GetAttrValue("PROJECTION");
     if (pszProjection == nullptr)
         return;
@@ -3796,7 +3813,8 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     CPLAssert(nOffset <= nMaxSize);
 
     OGRGeometry *poRet = nullptr;
-    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset);
+    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset,
+                          /* pszOrganizePolygonsMethod = */ "DEFAULT");
     VSIFree(pabyExtShapeBuffer);
     return poRet;
 }
@@ -4421,5 +4439,9 @@ FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(const char *pszESRIType)
     CPLDebug("OpenFileGDB", "Unhandled geometry type : %s", pszESRIType);
     return wkbUnknown;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 } /* namespace OpenFileGDB */

@@ -1,5 +1,7 @@
 .. _gdal_raster_set_type:
 
+.. program:: gdal_raster_set_type
+
 ================================================================================
 ``gdal raster set-type``
 ================================================================================
@@ -48,6 +50,10 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

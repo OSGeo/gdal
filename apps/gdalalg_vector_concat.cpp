@@ -20,6 +20,7 @@
 #include "ogrsf_frmts.h"
 
 #include "ogrlayerdecorator.h"
+#include "ogrlayerpool.h"
 #include "ogrunionlayer.h"
 #include "ogrwarpedlayer.h"
 
@@ -40,6 +41,8 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       ConstructorOptions()
                                           .SetStandaloneStep(bStandalone)
+                                          .SetAddDefaultArguments(bStandalone)
+                                          .SetInputDatasetMetaVar("INPUTS")
                                           .SetInputDatasetMaxCount(INT_MAX)
                                           .SetAddOutputLayerNameArgument(false)
                                           .SetAutoOpenInputDatasets(false))
@@ -60,7 +63,7 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
              "name the output vector layers (stack mode)"),
            &m_layerNameTemplate);
     AddArg("source-layer-field-name", 0,
-           _("Name of the new field to add to contain identificoncation of the "
+           _("Name of the new field to add to contain identification of the "
              "source layer, with value determined from "
              "'source-layer-field-content'"),
            &m_sourceLayerFieldName);
@@ -73,12 +76,14 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
            &m_fieldStrategy)
         .SetChoices("union", "intersection")
         .SetDefault(m_fieldStrategy);
-    AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs)
+    AddArg("input-crs", 's', _("Input CRS"), &m_srsCrs)
         .SetIsCRSArg()
-        .AddHiddenAlias("s_srs");
-    AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
+        .AddHiddenAlias("s_srs")
+        .AddHiddenAlias("src-crs");
+    AddArg("output-crs", 'd', _("Output CRS"), &m_dstCrs)
         .SetIsCRSArg()
-        .AddHiddenAlias("t_srs");
+        .AddHiddenAlias("t_srs")
+        .AddHiddenAlias("dst-crs");
 }
 
 GDALVectorConcatAlgorithm::~GDALVectorConcatAlgorithm() = default;
@@ -89,10 +94,37 @@ GDALVectorConcatAlgorithm::~GDALVectorConcatAlgorithm() = default;
 
 class GDALVectorConcatOutputDataset final : public GDALDataset
 {
+    // The layers read lazily from the objects declared before them, and
+    // members are destroyed in reverse declaration order. Do not reorder.
+    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
+        m_srcDatasets{};
+    std::unique_ptr<OGRLayerPool> m_poLayerPool{};
+    std::vector<std::unique_ptr<OGRLayer>> m_tempLayers{};
     std::vector<std::unique_ptr<OGRLayer>> m_layers{};
 
   public:
     GDALVectorConcatOutputDataset() = default;
+
+    /** Add a dataset the layers read from, taking over a reference on it. */
+    void AddSrcDatasetRef(GDALDataset *poSrcDS)
+    {
+        m_srcDatasets.emplace_back(poSrcDS);
+    }
+
+    /** Create the pool used by proxied layers, and return a borrowed pointer. */
+    OGRLayerPool *CreateLayerPool(int nMaxSimultaneouslyOpened)
+    {
+        m_poLayerPool =
+            std::make_unique<OGRLayerPool>(nMaxSimultaneouslyOpened);
+        return m_poLayerPool.get();
+    }
+
+    /** Add an intermediate layer, and return a borrowed pointer to it. */
+    OGRLayer *AddTempLayer(std::unique_ptr<OGRLayer> layer)
+    {
+        m_tempLayers.push_back(std::move(layer));
+        return m_tempLayers.back().get();
+    }
 
     void AddLayer(std::unique_ptr<OGRLayer> layer)
     {
@@ -107,7 +139,7 @@ class GDALVectorConcatOutputDataset final : public GDALDataset
                                                  : nullptr;
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, ODsCCurveGeometries) ||
             EQUAL(pszCap, ODsCMeasuredGeometries) ||
@@ -195,8 +227,10 @@ struct PooledInitData
 {
     std::unique_ptr<GDALDataset> poDS{};
     std::string osDatasetName{};
-    std::vector<std::string> *pInputFormats = nullptr;
-    std::vector<std::string> *pOpenOptions = nullptr;
+    // Copies, and not pointers to the algorithm members, as a layer may be
+    // (re)opened after the algorithm has been destroyed.
+    CPLStringList aosInputFormats{};
+    CPLStringList aosOpenOptions{};
     int iLayer = 0;
 };
 
@@ -205,11 +239,7 @@ static OGRLayer *OpenProxiedLayer(void *pUserData)
     PooledInitData *pData = static_cast<PooledInitData *>(pUserData);
     pData->poDS.reset(GDALDataset::Open(
         pData->osDatasetName.c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-        pData->pInputFormats ? CPLStringList(*(pData->pInputFormats)).List()
-                             : nullptr,
-        pData->pOpenOptions ? CPLStringList(*(pData->pOpenOptions)).List()
-                            : nullptr,
-        nullptr));
+        pData->aosInputFormats.List(), pData->aosOpenOptions.List(), nullptr));
     if (!pData->poDS)
         return nullptr;
     return pData->poDS->GetLayer(pData->iLayer);
@@ -357,9 +387,9 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto poUnionDS = std::make_unique<GDALVectorConcatOutputDataset>();
 
+    OGRLayerPool *poLayerPool = nullptr;
     if (nonOpenedDSCount > nMaxSimultaneouslyOpened)
-        m_poLayerPool =
-            std::make_unique<OGRLayerPool>(nMaxSimultaneouslyOpened);
+        poLayerPool = poUnionDS->CreateLayerPool(nMaxSimultaneouslyOpened);
 
     bool ret = true;
     for (const auto &[outLayerName, listOfLayers] : allLayerNames)
@@ -386,19 +416,18 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
             }
             OGRLayer *poSrcLayer = poSrcDS->GetLayer(layer.iLayer);
 
-            if (m_poLayerPool)
+            if (poLayerPool)
             {
                 auto pData = std::make_unique<PooledInitData>();
                 pData->osDatasetName = layer.osDatasetName;
-                pData->pInputFormats = &m_inputFormats;
-                pData->pOpenOptions = &m_openOptions;
+                pData->aosInputFormats = CPLStringList(m_inputFormats);
+                pData->aosOpenOptions = CPLStringList(m_openOptions);
                 pData->iLayer = layer.iLayer;
                 auto proxiedLayer = std::make_unique<OGRProxiedLayer>(
-                    m_poLayerPool.get(), OpenProxiedLayer, ReleaseProxiedLayer,
+                    poLayerPool, OpenProxiedLayer, ReleaseProxiedLayer,
                     FreeProxiedLayerUserData, pData.release());
                 proxiedLayer->SetDescription(poSrcLayer->GetDescription());
-                m_tempLayersKeeper.push_back(std::move(proxiedLayer));
-                poSrcLayer = m_tempLayersKeeper.back().get();
+                poSrcLayer = poUnionDS->AddTempLayer(std::move(proxiedLayer));
             }
             else if (poTmpDS)
             {
@@ -416,11 +445,9 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                     listOfLayers[i].osDatasetName.c_str(),
                     listOfLayers[i].iLayer, poSrcLayer->GetName());
                 ret = !newSrcLayerName.empty() && ret;
-                auto poTmpLayer =
+                papoSrcLayers.get()[i] = poUnionDS->AddTempLayer(
                     std::make_unique<GDALVectorConcatRenamedLayer>(
-                        poSrcLayer, newSrcLayerName);
-                m_tempLayersKeeper.push_back(std::move(poTmpLayer));
-                papoSrcLayers.get()[i] = m_tempLayersKeeper.back().get();
+                        poSrcLayer, newSrcLayerName));
             }
         }
 
@@ -446,13 +473,11 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
                     ret = (poCT != nullptr) && (poReversedCT != nullptr);
                     if (ret)
                     {
-                        m_tempLayersKeeper.push_back(
+                        papoSrcLayers.get()[i] = poUnionDS->AddTempLayer(
                             std::make_unique<OGRWarpedLayer>(
                                 papoSrcLayers.get()[i], /* iGeomField = */ 0,
                                 /*bTakeOwnership = */ false, std::move(poCT),
                                 std::move(poReversedCT)));
-                        papoSrcLayers.get()[i] =
-                            m_tempLayersKeeper.back().get();
                     }
                 }
             }
@@ -478,6 +503,12 @@ bool GDALVectorConcatAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     if (ret)
     {
+        for (auto &srcDS : m_inputDataset)
+        {
+            if (GDALDataset *poSrcDS = srcDS.GetDatasetIncreaseRefCount())
+                poUnionDS->AddSrcDatasetRef(poSrcDS);
+        }
+
         m_outputDataset.Set(std::move(poUnionDS));
     }
     return ret;
@@ -495,7 +526,8 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         GDALVectorWriteAlgorithm writeAlg;
         for (auto &arg : writeAlg.GetArgs())
         {
-            if (arg->GetName() != GDAL_ARG_NAME_OUTPUT_LAYER)
+            if (!arg->IsHidden() &&
+                arg->GetName() != GDAL_ARG_NAME_OUTPUT_LAYER)
             {
                 auto stepArg = GetArg(arg->GetName());
                 if (stepArg && stepArg->IsExplicitlySet())
@@ -511,29 +543,30 @@ bool GDALVectorConcatAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                   EQUAL(m_format.c_str(), "stream"));
 
         m_standaloneStep = false;
-        bool ret = Run(pfnProgress, pProgressData);
+        m_alreadyRun = false;
+        const bool ok = Run(pfnProgress, pProgressData);
         m_standaloneStep = true;
-        if (ret)
+
+        if (!ok)
         {
-            if (m_format == "stream")
-            {
-                ret = true;
-            }
-            else
-            {
-                writeAlg.m_inputDataset.clear();
-                writeAlg.m_inputDataset.resize(1);
-                writeAlg.m_inputDataset[0].Set(m_outputDataset.GetDatasetRef());
-                if (writeAlg.Run(pfnProgress, pProgressData))
-                {
-                    m_outputDataset.Set(
-                        writeAlg.m_outputDataset.GetDatasetRef());
-                    ret = true;
-                }
-            }
+            return false;
         }
 
-        return ret;
+        if (m_format == "stream")
+        {
+            return true;
+        }
+
+        writeAlg.m_inputDataset.clear();
+        writeAlg.m_inputDataset.resize(1);
+        writeAlg.m_inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+        if (!writeAlg.Run(pfnProgress, pProgressData))
+        {
+            return false;
+        }
+
+        m_outputDataset.Set(writeAlg.m_outputDataset.GetDatasetRef());
+        return true;
     }
     else
     {

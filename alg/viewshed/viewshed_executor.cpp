@@ -170,7 +170,7 @@ ViewshedExecutor::ViewshedExecutor(GDALRasterBand &srcBand,
     m_srcBand.GetDataset()->GetGeoTransform(m_gt);
     int hasNoData = false;
     m_noDataValue = m_srcBand.GetNoDataValue(&hasNoData);
-    m_hasNoData = hasNoData;
+    m_hasNoData = CPL_TO_BOOL(hasNoData);
 }
 
 /// Constructor - the viewshed algorithm executor
@@ -805,7 +805,7 @@ void ViewshedExecutor::maskLineRight(std::vector<double> &vResult,
 /// Process the part of the first line to the right of the observer.
 ///
 /// @param ll  Line limits
-/// @param sdCalc  True when doing standard deviation calcuation.
+/// @param sdCalc  True when doing standard deviation calculation.
 /// @param lines  Raster lines to process.
 void ViewshedExecutor::processFirstLineRight(const LineLimits &ll, Lines &lines,
                                              bool sdCalc)

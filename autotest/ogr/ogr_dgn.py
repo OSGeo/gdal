@@ -33,12 +33,6 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("DGN")
 
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def startup_and_cleanup():
-    yield
-    gdaltest.clean_tmp()
-
 
 ###############################################################################
 # Check first feature, a text element.
@@ -287,7 +281,9 @@ def test_ogr_dgn_online_1():
         "http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn", "DGNSample_v7.dgn"
     )
 
-    ds = ogr.Open("tmp/cache/DGNSample_v7.dgn")
+    tmp_dir = gdaltest.get_cache_dir()
+
+    ds = ogr.Open(f"{tmp_dir}/DGNSample_v7.dgn")
     assert ds is not None
     lyr = ds.GetLayer(0)
     feat = lyr.GetFeature(35)
@@ -338,8 +334,16 @@ def test_ogr_dgn_encoding(tmp_path):
         f = lyr.GetNextFeature()
         assert f["Text"] == "\xe9ven"  # ISO-8859-1
 
-    with gdal.OpenEx(filename, open_options=["ENCODING=ISO-8859-1"]) as ds:
+    with gdal.Open(filename, open_options=["ENCODING=ISO-8859-1"]) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.TestCapability(ogr.OLCStringsAsUTF8) == 1
         f = lyr.GetNextFeature()
         assert f["Text"] == "\xc3\xa9ven"  # UTF-8
+
+
+def test_ogr_dgn_knot_oob():
+
+    ds = ogr.Open("data/dgn/knot_oob.dgn")
+    lyr = ds.GetLayer(0)
+    with pytest.raises(Exception, match="attr_bytes < 0"):
+        lyr.GetNextFeature()

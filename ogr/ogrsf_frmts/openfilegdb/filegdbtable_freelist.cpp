@@ -377,7 +377,7 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
             if (cpl::contains(aSetReadPages, nPrevPage))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cyclic page refererencing in %s", osFilename.c_str());
+                         "Cyclic page referencing in %s", osFilename.c_str());
                 VSIFCloseL(fp);
                 return OFFSET_MINUS_ONE;
             }
@@ -591,7 +591,7 @@ bool FileGDBTable::CheckFreeListConsistency()
         if (cpl::contains(setVisitedPages, nFreePage))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cyclic page refererencing in free pages");
+                     "Cyclic page referencing in free pages");
             VSIFCloseL(fp);
             return false;
         }
@@ -635,7 +635,7 @@ bool FileGDBTable::CheckFreeListConsistency()
             if (cpl::contains(setVisitedPages, nPageIdx))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cyclic page refererencing or page referenced more "
+                         "Cyclic page referencing or page referenced more "
                          "than once");
                 VSIFCloseL(fp);
                 return false;

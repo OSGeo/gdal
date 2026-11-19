@@ -276,6 +276,87 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+/vsicurl/ vs /vsicurl_streaming/ vs HTTP pseudo-driver
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+After 35 years of existence, one might reasonably hope that reliable access to
+remote files via the HTTP protocol would be a fully solved problem. While this is
+mostly true for browser-based experience, the way GDAL accesses data often pushes
+servers into less-tested territory, requiring users to understand specific
+low level details.
+
+Below are the options available for "standard" HTTP access (excluding the use
+of specific file systems such as ``/vsigs/`` to deal with the specifics of
+each cloud provider):
+
+* ``/vsicurl/``: This virtual file system relies heavily on the server's ability
+  to efficiently handle `HTTP range requests <https://en.wikipedia.org/wiki/Byte_serving>`__.
+  A range request includes a header from the client (GDAL) asking the server to
+  return only a specific portion of the resource, defined by start and end
+  offsets. This allows most GDAL drivers to consume datasets piece-wise without
+  downloading the entire file. This is most effective for static resources,
+  such as pre-computed files, rather than content generated on-the-fly for each
+  request. The primary differences compared to local file access are network
+  latency and bandwidth limits, which ``/vsicurl/`` attempts to mitigate through
+  in-memory caching and by requesting chunks large enough to justify the request
+  overhead.
+
+  .. example::
+     :title: Getting metadata from a very large remote Cloud Optimized GeoTIFF
+
+     .. code-block:: bash
+
+          $ gdal raster info /vsicurl/https://example.com/very_large_cog.tif
+
+
+* ``/vsicurl_streaming/``: This virtual file system initiates a background
+  request to download the entire file into memory. It is best suited for drivers
+  that read a dataset sequentially from start to finish with no random seeking.
+  Notably, ``/vsicurl_streaming/`` does not use HTTP range requests. Of the
+  three options listed here, this is generally the least used. It is
+  particularly ill-suited when reading remote ZIP'ed files, which require
+  reading the end of the file first to get the list of files within the ZIP.
+
+  .. example::
+     :title: Converting a very large remote CSV file to GeoPackage
+
+     .. code-block:: bash
+
+          $ gdal vector convert /vsicurl_streaming/https://example.com/very_large.csv out.gpkg
+
+  .. example::
+     :title: Copying a remote file to local current directory
+
+     .. code-block:: bash
+
+          $ gdal vsi copy /vsicurl_streaming/https://example.com/file.bin .
+
+  .. spelling:word-list::
+      ZIP'ed
+
+* the ``HTTP`` (pseudo-driver): This driver downloads the full content of a file
+  into memory before passing it to other GDAL drivers. For modest file sizes
+  that fit easily into RAM and require full processing, this is often the
+  fastest option. It involves a single standard HTTP GET request and does not
+  require range request support. This is frequently the only viable approach
+  for dynamically generated content (often identifiable by the presence of
+  query parameters in the URL).
+  The HTTP pseudo-driver is automatically selected when providing a URL without
+  any ``/vsi`` prefix.
+
+  .. example::
+     :title: Reprojecting a medium size (fitting into RAM) remote GeoTIFF file
+
+     .. code-block:: bash
+
+         $ gdal raster reproject --dst-crs EPSG:32631 -r cubic https://example.com/medium_size.tif out.tif
+
+
+While the HTTP protocol technically allows servers to advertise whether they
+support range requests (via the Accept-Ranges header), this is not consistently
+(or efficiently) implemented enough for GDAL to use it as a reliable, automated
+check for selecting the best access strategy.
+
 How to set credentials ?
 ++++++++++++++++++++++++
 
@@ -382,13 +463,14 @@ Options can be passed in the filename with the following syntax: ``/vsicurl?[opt
 - use_head=yes/no: whether the HTTP HEAD request can be emitted. Default to YES. Setting this option overrides the behavior of the :config:`CPL_VSIL_CURL_USE_HEAD` configuration option.
 - max_retry=number: default to 0. Setting this option overrides the behavior of the :config:`GDAL_HTTP_MAX_RETRY` configuration option.
 - retry_delay=number_in_seconds: default to 30. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_DELAY` configuration option.
-- retry_codes=``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
+- retry_codes=\ ``ALL`` or comma-separated list of HTTP error codes. Setting this option overrides the behavior of the :config:`GDAL_HTTP_RETRY_CODES` configuration option. (GDAL >= 3.10)
 - list_dir=yes/no: whether an attempt to read the file list of the directory where the file is located should be done. Default to YES.
 - empty_dir=yes/no: whether to disable directory listing and disable logic in drivers to probe for individual side-car files. Default to NO.
 - useragent=value: HTTP UserAgent header
 - referer=value: HTTP Referer header
 - cookie=value: HTTP Cookie header
-- header_file=value: Filename that contains one or several "Header: Value" lines
+- header_file=filename: Filename that contains one or several "Header: Value" lines.
+  Starting with GDAL 3.13.2, for security reasons, the filename is restricted by default to be located under ``/vsimem/``, ``/tmp`` or the value of the ``TEMP`` environment variable (or ``TMP`` if ``TEMP`` not defined). See the :config:`CPL_VSIL_CURL_HEADER_FILE_KVP_ENABLED` configuration option to define the policy.
 - header.<key>=<value>: HTTP request header of name <key> and value <value>. (GDAL >= 3.11). e.g. ``header.Accept=application%2Fjson``
 - unsafessl=yes/no
 - low_speed_time=value
@@ -439,7 +521,7 @@ Starting with GDAL 3.6, the following configuration options control the TCP keep
 
 Starting with GDAL 3.7, the following configuration options control support for SSL client certificates:
 
-- :config:`GDAL_HTTP_SSLCERT` = filename. Filename of the the SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
+- :config:`GDAL_HTTP_SSLCERT` = filename. Filename of the SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
 - :config:`GDAL_HTTP_SSLCERTTYPE` = string. Format of the SSL certificate: "PEM" or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
 - :config:`GDAL_HTTP_SSLKEY` = filename. Private key file for TLS and SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html
 - :config:`GDAL_HTTP_KEYPASSWD` = string. Passphrase to private key. Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html
@@ -698,6 +780,50 @@ The following configuration options can be set to access a
 - AWS_SECRET_ACCESS_KEY="your_secret_access_key"
 - AWS_ACCESS_KEY_ID="your_access_key"
 
+.. _vsis3_nasa_edl:
+
+/vsis3/ and NASA Earthdata login (EDL)
+++++++++++++++++++++++++++++++++++++++
+
+Starting with GDAL 3.14, it is possible to automatically retrieve S3 credentials
+for resources protected by
+`NASA Earthdata login (EDL) <https://urs.earthdata.nasa.gov/documentation>`__.
+
+.. warning::
+
+    This mechanism only works when running GDAL on EC2 instances in
+    the ``us-west-2`` region.
+
+To enable the automatic retrieval of those S3 credentials, the
+``VSIS3_EARTHDATA_CREDENTIALS_URL`` configuration option, or path-specific option,
+must be set to a URL of the form ``https://{hostname}/s3credentials``,
+as indicated in the documentation of the data product to access.
+
+The request to obtain those S3 credentials must itself include an authentication token.
+That token can be obtained through one of the following methods, in decreasing order of
+priority:
+
+- ``EARTHDATA_TOKEN`` configuration option with value of a token from
+  ``https://urs.earthdata.nasa.gov/users/{your_account}/user_tokens``
+
+- ``EARTHDATA_USERNAME`` and ``EARTHDATA_PASSWORD`` configuration options with
+  the username and password of the EDL account, which will cause a request to
+  be emitted to ``urs.earthdata.nasa.gov`` to get or create a token.
+
+- Username and password retrieved from the file whose path is given by the
+  ``NETRC`` configuration option.
+
+- Username and password retrieved from the file in ``$HOME/.netrc`` on Unix systems,
+  or ``$USERPROFILE/_netrc`` on Windows
+
+.. note::
+
+    This is similar to how the Python
+    `earthaccess <https://earthaccess.readthedocs.io/en/latest/user/authenticate/>`__ package works.
+
+.. spelling:word-list::
+    Earthdata
+
 .. _vsis3_streaming:
 
 /vsis3_streaming/ (AWS S3 files: streaming)
@@ -786,6 +912,26 @@ The following configuration options are specific to the /vsigs/ handler:
      Google Project id (see
      https://cloud.google.com/storage/docs/xml-api/reference-headers#xgooguserproject)
      to charge for requests against Requester Pays buckets.
+
+.. versionadded:: 3.14
+
+A specific (possibly non-current) object version can be read, for buckets with
+`Object Versioning <https://cloud.google.com/storage/docs/object-versioning>`__
+enabled, by using a query-string syntax for the file name::
+
+    /vsigs/?path=my_bucket/my_object&generation=123456789
+
+The ``path`` key gives the bucket and object, and the ``generation`` key gives
+the generation number (a positive integer) of the version to read. The values
+are URL-decoded, so any reserved characters (such as ``&`` or ``%``) within the
+bucket/object name must be percent-encoded. When ``generation`` is set, requests
+carry a ``generation=<n>`` query parameter so a specific version of the object is
+read instead of the live one. Without this syntax, the live object is read. This
+uses the same query-string file-name convention as the /vsicurl/ file system.
+
+As for /vsicurl/ query-string file names, side-car files (``.aux.xml``, ``.ovr``,
+``.msk``, etc.) are not looked up for this syntax, since their suffix would be
+appended to the query string rather than to the object name.
 
 
 
@@ -902,7 +1048,7 @@ Several authentication methods are possible, and are attempted in the following 
 
     Authentication using Azure Active Directory Workload Identity (using AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE and AZURE_AUTHORITY_HOST environment variables), typically for Azure Kubernetes, is available since GDAL 3.7.2
 
-3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>` of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
+3. Starting with GDAL 3.5, the `configuration file <https://github.com/MicrosoftDocs/azure-docs-cli/blob/main/docs-ref-conceptual/azure-cli-configuration.md>`__ of the "az" command line utility can be used. The following keys of the ``[storage]`` section will be used in the following priority: ``connection_string``, ``account`` + ``key`` or ``account`` + ``sas_token``
 
 Since GDAL 3.1, the :cpp:func:`VSIRename` operation is supported (first doing a copy of the original file and then deleting it)
 

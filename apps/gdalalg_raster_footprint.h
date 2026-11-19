@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_FOOTPRINT_INCLUDED
 #define GDALALG_RASTER_FOOTPRINT_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

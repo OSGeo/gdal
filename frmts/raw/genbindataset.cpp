@@ -91,8 +91,8 @@ class GenBinBitRasterBand final : public GDALPamRasterBand
 GenBinBitRasterBand::GenBinBitRasterBand(GenBinDataset *poDSIn, int nBitsIn)
     : nBits(nBitsIn)
 {
-    SetMetadataItem("NBITS", CPLString().Printf("%d", nBitsIn),
-                    "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_NBITS, CPLString().Printf("%d", nBitsIn),
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS = poDSIn;
     nBand = 1;
@@ -700,13 +700,13 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
         const double dfLRY =
             CPLAtofM(CSLFetchNameValue(papszHdr, "LR_Y_COORDINATE"));
 
-        poDS->m_gt[1] = (dfLRX - dfULX) / (poDS->nRasterXSize - 1);
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = (dfLRY - dfULY) / (poDS->nRasterYSize - 1);
+        poDS->m_gt.xscale = (dfLRX - dfULX) / (poDS->nRasterXSize - 1);
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = (dfLRY - dfULY) / (poDS->nRasterYSize - 1);
 
-        poDS->m_gt[0] = dfULX - poDS->m_gt[1] * 0.5;
-        poDS->m_gt[3] = dfULY - poDS->m_gt[5] * 0.5;
+        poDS->m_gt.xorig = dfULX - poDS->m_gt.xscale * 0.5;
+        poDS->m_gt.yorig = dfULY - poDS->m_gt.yscale * 0.5;
 
         poDS->bGotTransform = true;
     }

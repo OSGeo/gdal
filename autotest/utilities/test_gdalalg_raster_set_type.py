@@ -28,7 +28,7 @@ def test_gdalalg_raster_set_type(tmp_vsimem):
     alg["output"] = out_filename
     assert alg.Run() and alg.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
 
 
@@ -42,5 +42,5 @@ def test_gdalalg_raster_set_type_as_gdt(tmp_vsimem):
     alg["output"] = out_filename
     assert alg.Run() and alg.Finalize()
 
-    with gdal.OpenEx(out_filename) as ds:
+    with gdal.Open(out_filename) as ds:
         assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16

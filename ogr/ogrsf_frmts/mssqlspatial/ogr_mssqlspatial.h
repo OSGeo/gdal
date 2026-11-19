@@ -336,7 +336,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     const char *GetFIDColumn() const override;
     const char *GetGeometryColumn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
     static char *GByteArrayToHexString(const GByte *pabyData, int nLen);
 
     void SetLayerStatus(int nStatus)
@@ -476,7 +476,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     void SetLaunderFlag(int bFlag)
     {
@@ -546,7 +546,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 
     OGRFeature *GetFeature(GIntBig nFeatureId) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -583,9 +583,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
@@ -638,7 +636,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,
@@ -648,10 +646,8 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
     static char *LaunderName(const char *pszSrcName);
     OGRErr InitializeMetadataTables();
 
-    OGRSpatialReference *AddSRIDToCache(
-        int nId,
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            &&poSRS);
+    OGRSpatialReference *AddSRIDToCache(int nId,
+                                        OGRSpatialReferenceRefCountedPtr poSRS);
 
     OGRSpatialReference *FetchSRS(int nId);
     int FetchSRSId(const OGRSpatialReference *poSRS);

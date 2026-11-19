@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver.
+    Create an index of raster datasets compatible with the GDAL Tile Index (GTI) driver.
 
 .. Index:: gdal driver gti create
 
@@ -45,7 +45,7 @@ be set.
 
 In a GTI context, the extent of all tiles referenced in the tile index must
 be expressed in a single CRS. Consequently, if input tiles may have different
-CRS, :option:`--dst-crs` must be specified.
+CRS, :option:`--output-crs` must be specified.
 
 
 The following options are available:
@@ -98,14 +98,14 @@ Standard options
     Minimum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
 
 .. option:: --max-pixel-size <val>
 
     Maximum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
 
 .. option:: -location-name <LOCATION-NAME>
 
@@ -118,7 +118,7 @@ Standard options
     By default the raster filenames will be put in the file exactly as they
     are specified on the command line.
 
-.. option:: --dst-crs <DST-CRS>
+.. option:: --output-crs <OUTPUT-CRS>
 
     Geometries of input files will be transformed to the desired target
     coordinate reference system.
@@ -225,6 +225,11 @@ Standard options
 
     For example: ``--fetched-metadata TIFFTAG_DATETIME,creation_date,DateTime``
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -236,3 +241,35 @@ Examples
    .. code-block:: bash
 
        gdal driver gti create --ot Byte --resolution=60,60 --band-count=3 --color-interpretation=Red,Green,Blue *.tif tile_index.gti.gpkg
+
+.. example::
+   :title: Create a tile index from rasters in different coordinate reference systems
+   :id: gdal-driver-gti-create-reproject
+
+   Create a tile index from JPEG2000 files in different CRSs, using EPSG:4326 as
+   the target CRS for on-the-fly reprojection. The resampling method used by the
+   :ref:`GTI <raster.gti>` driver is stored as the ``RESAMPLING`` layer metadata
+   item using :option:`--metadata`.
+
+   .. code-block:: bash
+
+       gdal driver gti create --output-crs=EPSG:4326 --resolution=0.0001,0.0001 --metadata=RESAMPLING=cubic *.jp2 tile_index.gti.gpkg
+
+   The GTI dataset can then be processed with :ref:`gdal_raster_clip` or
+   :ref:`gdal_raster_convert`. Avoid subsequently using
+   :ref:`gdal_raster_reproject`, as this would resample the data a second time
+   and may reduce quality.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+         gdal pipeline read tile_index.gti.gpkg \
+             ! clip --bbox=2.36,49.00,2.37,49.01 --bbox-crs=EPSG:4326 \
+             ! write clipped.tif --output-format COG --creation-option COMPRESS=DEFLATE
+
+      .. code-tab:: powershell
+
+         gdal pipeline read tile_index.gti.gpkg `
+             ! clip --bbox=2.36,49.00,2.37,49.01 --bbox-crs=EPSG:4326 `
+             ! write clipped.tif --output-format COG --creation-option COMPRESS=DEFLATE

@@ -46,6 +46,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
 #include <limits>
 
 #define PQexec this_is_an_error
@@ -403,11 +404,14 @@ static void OGRPGTokenizeStringListUnescapeToken(char *pszToken)
     }
 
     int iSrc = 0, iDst = 0;
-    for (iSrc = 0; pszToken[iSrc] != '\0'; iSrc++)
+    while (pszToken[iSrc] != '\0')
     {
         pszToken[iDst] = pszToken[iSrc];
-        if (pszToken[iSrc] != '\\')
-            iDst++;
+        if (pszToken[iSrc] == '\\' && pszToken[iSrc + 1] != '\0')
+        {
+            iSrc++;
+        }
+        pszToken[iDst++] = pszToken[iSrc++];
     }
     pszToken[iDst] = '\0';
 }
@@ -1540,7 +1544,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
         OGRPGClearResult(hCursorResult);
 
-        iNextShapeId = MAX(1, iNextShapeId);
+        iNextShapeId = std::max<GIntBig>(1, iNextShapeId);
         return nullptr;
     }
 
@@ -1570,7 +1574,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         CloseCursor();
 
-        iNextShapeId = MAX(1, iNextShapeId);
+        iNextShapeId = std::max<GIntBig>(1, iNextShapeId);
 
         return nullptr;
     }
@@ -2358,10 +2362,8 @@ const OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
     if (poSRS == nullptr && nSRSId > 0)
     {
         poSRS = poLayer->GetDS()->FetchSRS(nSRSId);
-        if (poSRS != nullptr)
-            const_cast<OGRSpatialReference *>(poSRS)->Reference();
     }
-    return poSRS;
+    return poSRS.get();
 }
 
 /************************************************************************/

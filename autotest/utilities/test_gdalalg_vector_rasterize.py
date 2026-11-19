@@ -16,7 +16,7 @@ import contextlib
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_rasterize_alg():
@@ -806,3 +806,65 @@ def test_gdalalg_vector_rasterize_invalid_attribute_value():
             output_format="MEM",
             size=[100, 100],
         )
+
+
+def test_gdalalg_vector_rasterize_tap_depends_resolution():
+
+    with pytest.raises(
+        Exception,
+        match="Argument 'target-aligned-pixels' depends on argument 'resolution' that has not been specified",
+    ):
+        gdal.alg.vector.rasterize(
+            input="../ogr/data/poly.shp",
+            burn=1,
+            output="",
+            output_format="MEM",
+            tap=True,
+        )
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_vector_rasterize_like(tmp_vsimem):
+
+    input_csv = str(tmp_vsimem / "cutline.csv")
+    like_tif = str(tmp_vsimem / "like.tif")
+    output_tif = str(tmp_vsimem / "out.tif")
+
+    # Create a template dataset
+    with gdal.GetDriverByName("GTiff").Create(
+        like_tif, 12, 10, 1, gdal.GDT_UInt8
+    ) as like_ds:
+        like_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+        like_ds.SetSpatialRef(osr.SpatialReference(epsg=32630))
+
+    with temp_cutline(input_csv):
+
+        gdal.alg.vector.rasterize(input=input_csv, output=output_tif, like=like_tif)
+        with gdal.Open(output_tif) as target_ds:
+            assert target_ds.RasterXSize == 12
+            assert target_ds.RasterYSize == 10
+            assert target_ds.GetGeoTransform() == (0, 1, 0, 12, 0, -1)
+            assert target_ds.GetSpatialRef().GetAuthorityCode() == "32630"
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_vector_rasterize_like_error(tmp_vsimem):
+
+    input_csv = str(tmp_vsimem / "cutline.csv")
+    like_tif = str(tmp_vsimem / "like.tif")
+    output_tif = str(tmp_vsimem / "out.tif")
+
+    # Create a template dataset
+    with gdal.GetDriverByName("GTiff").Create(
+        like_tif, 12, 10, 1, gdal.GDT_UInt8
+    ) as like_ds:
+        like_ds.SetGeoTransform((0, 1, 0, 12, 0, -1))
+        like_ds.SetSpatialRef(osr.SpatialReference(epsg=32630))
+
+    with temp_cutline(input_csv):
+        with pytest.raises(
+            Exception, match="--like is mutually exclusive with --extent and --crs"
+        ):
+            gdal.alg.vector.rasterize(
+                input=input_csv, output=output_tif, like=like_tif, extent=[0, 1, 2, 3]
+            )

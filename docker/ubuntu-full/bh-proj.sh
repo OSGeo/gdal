@@ -13,7 +13,7 @@ fi
 set -eu
 
 mkdir proj
-curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
+curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     | tar xz -C proj --strip-components=1
 
 (
@@ -33,8 +33,10 @@ curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         ccache -M 100M
     fi
 
-    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
-    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
+    # -fzero-init-padding-bits=unions: restore GCC < 15 behavior with respect
+    # to union initialization.
+    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g -fzero-init-padding-bits=unions"
+    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g -fzero-init-padding-bits=unions"
 
     cmake . \
         -G Ninja \

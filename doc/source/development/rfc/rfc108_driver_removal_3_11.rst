@@ -8,6 +8,7 @@ RFC 108: Driver removals for GDAL 3.11
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2025-02-18
+Updated:       2026-03-21
 Status:        Adopted, implemented
 Target:        GDAL 3.11
 ============== =============================================
@@ -17,6 +18,11 @@ Summary
 
 This RFC communicates about the partial or total removal of obsolete drivers
 for GDAL 3.11.
+
+Update
+------
+
+TIGER and UK. NTF drivers removal has been reverted in GDAL 3.13.
 
 Motivation
 ----------

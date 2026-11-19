@@ -508,7 +508,7 @@ void MFFDataset::ScanForProjectionInfo()
     if (pszSpheroidName == nullptr)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Unspecified ellipsoid.  Using wgs-84 parameters.\n");
+                 "Unspecified ellipsoid.  Using wgs-84 parameters.");
 
         oProj.SetWellKnownGeogCS("WGS84");
         oLL.SetWellKnownGeogCS("WGS84");

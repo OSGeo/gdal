@@ -18,6 +18,8 @@ float
 
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GeodesicArea "
 Compute geometry area, considered as a surface on the underlying
 ellipsoid of the SRS attached to the geometry.
@@ -30,6 +32,8 @@ float
     the area in square meters, or a negative value for unsupported geometry types.
 
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Length "
 Compute geometry length.
@@ -48,6 +52,8 @@ float
 
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GeodesicLength "
 Compute geometry length, considered as a curve on the underlying
 ellipsoid of the SRS attached to the geometry.
@@ -61,11 +67,15 @@ float
 
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  DumpReadable "
 Dump geometry in well known text format to indicated output file.
 
 For more details: :cpp:func:`OGR_G_DumpReadable`
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  AssignSpatialReference "
 Assign spatial reference to this object.
@@ -77,6 +87,8 @@ Parameters
 reference : SpatialReference
     The new spatial reference system to apply.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Intersects "
 Determines whether two geometries intersect.
@@ -94,6 +106,8 @@ int
     True if the geometries intersect, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  TransformTo "
 Transform geometry to new spatial reference system.
 
@@ -109,6 +123,8 @@ Returns
 int
     :py:const:`osgeo.ogr.OGRERR_NONE` on success, or an error code.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Transform "
 Apply a coordinate transformation to the geometry.
@@ -158,6 +174,8 @@ Examples
 'MULTIPOLYGON (((150.198564480925 66.6449112280509,180.0 74.7428375082776,180.0 56.6419000989319,150.198564480925 66.6449112280509)),((-173.535923883218 54.4721983980102,-180 56.6419000989319,-180 74.7428375082776,-147.193543096797 83.6573164550226,-137.676958092793 61.8457340532701,-173.535923883218 54.4721983980102)))' # no-check
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Segmentize "
 Modify the geometry such it has no segment longer then the given
 distance.
@@ -170,6 +188,8 @@ dfMaxLength : float
     the maximum distance between 2 points after segmentization
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GetDimension "
 Get the dimension of this geometry.
 
@@ -180,6 +200,8 @@ Returns
 int
     0 for points, 1 for lines, and 2 for surfaces.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  GetCoordinateDimension "
 Get the dimension of the coordinates in this geometry.
@@ -195,6 +217,8 @@ int
     This will return 2 or 3.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  CoordinateDimension "
 Get the dimension of the coordinates in this geometry.
 
@@ -207,6 +231,8 @@ Returns
 int
     This will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Is3D "
 See whether this geometry has Z coordinates.
@@ -221,6 +247,8 @@ int
     True if the geometry has Z coordinates.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  IsMeasured "
 See whether this geometry is measured.
 
@@ -233,6 +261,8 @@ Returns
 int
     True if the geometry has M coordinates.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  SetCoordinateDimension "
 Set the coordinate dimension.
@@ -247,6 +277,8 @@ dimension : int
     New coordinate dimension value, either 2 or 3.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Set3D "
 Add or remove the Z coordinate dimension.
 
@@ -260,6 +292,8 @@ bIs3D : bool
     Should the geometry have a Z dimension, either True or False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  SetMeasured "
 Add or remove the M coordinate dimension.
 
@@ -272,6 +306,8 @@ Parameters
 bIsMeasured : bool
     Should the geometry have a M dimension, either True or False.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Equals "
 Returns True if two geometries are equivalent.
@@ -289,6 +325,8 @@ int
     True if equivalent or False otherwise.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  WkbSize "
 Returns size of related binary representation.
 
@@ -298,6 +336,8 @@ Returns
 -------
 int
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  WkbSizeEx "
 Returns size of related binary representation.
@@ -310,6 +350,8 @@ Returns
 -------
 int
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  GetEnvelope "
 Computes and returns the bounding envelope for this geometry in the
@@ -325,6 +367,8 @@ tuple of float
     (minx, maxx, miny, maxy)
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GetEnvelope3D "
 Computes and returns the bounding envelope (3D) for this geometry in
 the passed psEnvelope structure.
@@ -339,6 +383,7 @@ tuple of float
     (minx, maxx, miny, maxy, minz, maxz)
 ";
 
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  ExportToWkb "
 Convert a geometry well known binary format.
@@ -356,6 +401,8 @@ Returns
 -------
 bytes
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  ExportToIsoWkb "
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known
@@ -377,6 +424,7 @@ Returns
 bytes
 ";
 
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  ExportToWkt "
 Convert a geometry into well known text format.
@@ -387,6 +435,8 @@ Returns
 -------
 str
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  ExportToIsoWkt "
 Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text
@@ -401,6 +451,8 @@ Returns
 str
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GetGeometryType "
 Fetch geometry type.
 
@@ -412,6 +464,8 @@ int
     The geometry type code. The types can be found with
     'osgeo.ogr.wkb' prefix. For example :py:const:`osgeo.ogr.wkbPolygon`.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  GetGeometryName "
 Fetch WKT name for geometry type.
@@ -425,6 +479,8 @@ Returns
 str
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Clone "
 Make a copy of this object.
 
@@ -437,6 +493,8 @@ Geometry
     as the original.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GetSpatialReference "
 For more details: :cpp:func:`OGR_G_GetSpatialReference`
 
@@ -447,11 +505,15 @@ Returns
 SpatialReference
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Empty "
 Clear geometry information.
 
 For more details: :cpp:func:`OGR_G_Empty`
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  IsEmpty "
 Test if the geometry is empty.
@@ -464,6 +526,8 @@ int
     True if the geometry has no points, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  IsValid "
 Test if the geometry is valid.
 
@@ -472,8 +536,23 @@ For more details: :cpp:func:`OGR_G_IsValid`
 Returns
 -------
 int
-    True if the geometry has no points, otherwise False.
+    True if the geometry is invalid, otherwise False.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
+
+%feature("docstring")  GetInvalidityReason "
+Test if the geometry is valid and, if not, return the invalidity reason.
+
+For more details: :cpp:func:`OGR_G_GetInvalidityReason`
+
+Returns
+-------
+str
+    a string with the invalidity reason, or None if it is valid
+";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  IsSimple "
 Returns True if the geometry is simple.
@@ -485,6 +564,8 @@ Returns
 int
     True if object is simple, otherwise False.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  IsRing "
 Test if the geometry is a ring.
@@ -498,12 +579,15 @@ int
     and closure (self-intersection is not checked), otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  FlattenTo2D "
 Convert geometry to strictly 2D.
 
 For more details: :cpp:func:`OGR_G_FlattenTo2D`
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Distance "
 Compute distance between two geometries.
@@ -520,6 +604,8 @@ Returns
 float
     The distance between the geometries or -1 if an error occurs.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Distance3D "
 Returns the 3D distance between two geometries.
@@ -538,6 +624,8 @@ Returns
 float
     The distance between the geometries or -1 if an error occurs.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  MakeValid "
 Attempts to make an invalid geometry valid without losing vertices.
@@ -559,6 +647,7 @@ Geometry
     failure.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Normalize "
 Attempts to bring geometry into normalized/canonical form.
@@ -574,6 +663,8 @@ Geometry
     failure.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  ConvexHull "
 Compute convex hull.
 
@@ -586,6 +677,8 @@ Geometry
     None on failure.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Boundary "
 Compute boundary.
 
@@ -597,6 +690,8 @@ Geometry
     A new geometry or None on failure.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  GetBoundary "
 Compute boundary (deprecated)
 
@@ -606,6 +701,8 @@ For more details: :cpp:func:`OGR_G_GetBoundary`
 
 See: :cpp:func:`OGR_G_Boundary`
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Buffer "
 Compute buffer of geometry.
@@ -630,6 +727,8 @@ Geometry
     The newly created geometry or None if an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Intersection "
 Compute intersection.
 
@@ -647,6 +746,8 @@ Geometry
     intersection or an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Union "
 Compute union.
 
@@ -663,6 +764,8 @@ Geometry
     A new geometry representing the union or None if an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  UnionCascaded "
 Compute union using cascading.
 
@@ -673,6 +776,8 @@ Returns
 Geometry
     A new geometry representing the union or None if an error occurs.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Difference "
 Compute difference.
@@ -691,6 +796,8 @@ Geometry
     is empty or an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  SymDifference "
 Compute symmetric difference.
 
@@ -708,6 +815,8 @@ Geometry
     difference is empty or an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  SymmetricDifference "
 Compute symmetric difference (deprecated)
 
@@ -716,6 +825,8 @@ For more details: :cpp:func:`OGR_G_SymmetricDifference`
 .. warning:: Deprecated
 
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Disjoint "
 Test for disjointness.
@@ -733,6 +844,8 @@ int
     True if they are disjoint, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Touches "
 Test for touching.
 
@@ -748,6 +861,8 @@ Returns
 int
     True if they are touching, otherwise False.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Crosses "
 Test for crossing.
@@ -765,6 +880,8 @@ int
     True if they are crossing, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Within "
 Test for containment.
 
@@ -780,6 +897,8 @@ Returns
 int
     True if this is within other, otherwise False.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Contains "
 Test for containment.
@@ -797,6 +916,8 @@ int
     True if this contains the other geometry, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Overlaps "
 Test for overlap.
 
@@ -813,11 +934,15 @@ int
     True if they are overlapping, otherwise False.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  CloseRings "
 Force rings to be closed.
 
 For more details: :cpp:func:`OGR_G_CloseRings`
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Centroid "
 Compute the geometry centroid.
@@ -829,6 +954,8 @@ Returns
 Geometry
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  PointOnSurface "
 Returns a point guaranteed to lie on the surface.
 
@@ -839,6 +966,8 @@ Returns
 Geometry
     A point guaranteed to lie on the surface or None if an error occurred.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  Simplify "
 Compute a simplified geometry.
@@ -856,6 +985,8 @@ Geometry
     The simplified geometry or None if an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  SimplifyPreserveTopology "
 Simplify the geometry while preserving topology.
 
@@ -871,6 +1002,8 @@ Returns
 Geometry
     The simplified geometry or None if an error occurs.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  DelaunayTriangulation "
 Return a Delaunay triangulation of the vertices of the geometry.
@@ -894,6 +1027,8 @@ Geometry
     error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  ConstrainedDelaunayTriangulation "
 Return a constrained Delaunay triangulation of the vertices of the given
 polygon(s). For non-polygonal inputs, silently returns an empty geometry
@@ -910,6 +1045,8 @@ Geometry
     triangulation or None if an error occurs.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  Polygonize "
 Polygonizes a set of sparse edges.
 
@@ -920,6 +1057,8 @@ Returns
 Geometry
     A new geometry or None on failure.
 ";
+
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  BuildArea "
 Polygonize a linework assuming inner polygons are holes.
@@ -932,6 +1071,8 @@ Geometry
     A new geometry or None on failure.
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  SwapXY "
 Swap x and y coordinates.
 
@@ -941,6 +1082,7 @@ For more details: :cpp:func:`OGR_G_SwapXY`
 
 ";
 
+//////////////////////////////////////////////////////////////////////////////
 
 %feature("docstring")  AddPoint "
 Add a point to a geometry (line string or point).
@@ -974,6 +1116,8 @@ Examples
 '3D Point'
 ";
 
+//////////////////////////////////////////////////////////////////////////////
+
 %feature("docstring")  AddPoint_2D "
 Add a point to a geometry (line string or point).
 
@@ -1002,5 +1146,56 @@ Examples
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
 ";
+
+//////////////////////////////////////////////////////////////////////////////
+
+%feature("docstring")  ConcaveHull "
+Compute the concave hull of a geometry.
+
+For more details: :cpp:func:`OGR_G_ConcaveHull`
+
+See also :py:meth:`ConcaveHullOfPolygons`
+
+Parameters
+----------
+ratio : float
+    Ratio of the area of the convex hull and the concave hull.
+allowHoles : bool
+    Whether the concave hull is allowed to contain holes.
+
+Returns
+-------
+Geometry
+    The concave hull geometry or None if an error occurs.
+";
+
+//////////////////////////////////////////////////////////////////////////////
+
+%feature("docstring")  ConcaveHullOfPolygons "
+Compute the concave hull of a set of polygons, respecting the polygons as constraints.
+
+For more details: :cpp:func:`OGR_G_ConcaveHullOfPolygons`
+
+Parameters
+----------
+lengthRatio : float
+    Specifies the Maximum Edge Length as a fraction of the
+    difference between the longest and shortest edge lengths
+    between the polygons.
+    This normalizes the Maximum Edge Length to be scale-free.
+    A value of 1 produces the convex hull; a value of 0 produces
+    the original polygons.
+isTight : bool
+    Whether the hull must follow the outer boundaries of the input polygons.
+allowHoles : bool
+    Whether the concave hull is allowed to contain holes.
+
+Returns
+-------
+Geometry
+    The concave hull geometry or None if an error occurs.
+";
+
+//////////////////////////////////////////////////////////////////////////////
 
 }

@@ -13,6 +13,7 @@
 
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr
 
@@ -58,6 +59,25 @@ def src_ds(unique_constraint=False):
     lyr.CreateFeature(f)
 
     return ds
+
+
+@pytest.mark.require_driver("GML")
+def test_gdalalg_vector_partition_non_append_format(tmp_vsimem):
+
+    gdal.Run(
+        "vector",
+        "partition",
+        input=src_ds(),
+        output=tmp_vsimem / "out",
+        format="GML",
+        field=["int_field"],
+        scheme="hive",
+    )
+
+    assert sorted(gdal.ReadDir(tmp_vsimem / "out" / "test")) == [
+        "int_field=1",
+        "int_field=2",
+    ]
 
 
 @pytest.mark.require_driver("GPKG")
@@ -358,7 +378,7 @@ def test_gdalalg_vector_partition_errors(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Invalid value for argument 'output-format'. Driver 'SXF' does not expose the required 'DCAP_CREATE' capability",
+        match="Invalid value for argument 'output-format'. Driver 'SXF' does not have write support",
     ):
         gdal.Run(
             "vector",
@@ -1062,7 +1082,7 @@ def test_gdalalg_vector_partition_pattern_error(tmp_vsimem):
         alg["pattern"] = "%5"
     with pytest.raises(
         Exception,
-        match=r"Number of digits in part number specifiation should be in \[1,10\] range",
+        match=r"Number of digits in part number specification should be in \[1,10\] range",
     ):
         alg["pattern"] = "%11d"
 
@@ -1104,11 +1124,11 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         input=src_ds,
         output=tmp_vsimem / "out",
         output_format="GPKG",
-        field="OGR_GEOMETRY",
+        field="_ogr_geometry_",
     )
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POLYGON/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POLYGON/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -1119,7 +1139,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         )
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINT/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINT/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPoint
@@ -1128,7 +1148,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(2).GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZ/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTZ/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPoint25D
@@ -1136,7 +1156,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(3).GetGeometryRef().ExportToIsoWkt() == "POINT Z (1 2 3)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTM/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTM/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPointM
@@ -1144,7 +1164,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
         assert lyr.GetFeature(4).GetGeometryRef().ExportToIsoWkt() == "POINT M (1 2 4)"
 
     with ogr.Open(
-        tmp_vsimem / "out/test/OGR_GEOMETRY=POINTZM/part_0000000001.gpkg"
+        tmp_vsimem / "out/test/_ogr_geometry_=POINTZM/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbPointZM
@@ -1155,7 +1175,7 @@ def test_gdalalg_vector_partition_geometry(tmp_vsimem):
 
     with ogr.Open(
         tmp_vsimem
-        / "out/test/OGR_GEOMETRY=__HIVE_DEFAULT_PARTITION__/part_0000000001.gpkg"
+        / "out/test/_ogr_geometry_=__HIVE_DEFAULT_PARTITION__/part_0000000001.gpkg"
     ) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetGeomType() == ogr.wkbNone
@@ -1247,3 +1267,16 @@ def test_gdalalg_vector_partition_no_fields(tmp_vsimem):
         "test_0000000001.gpkg",
         "test_0000000002.gpkg",
     ]
+
+
+def test_gdalalg_vector_partition_completion(tmp_path):
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector partition ../ogr/data/poly.shp --field"
+    )
+    assert "EAS_ID" in out
+    assert "_ogr_geometry_" in out

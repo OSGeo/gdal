@@ -1,0 +1,18 @@
+--- external/blosc/src/shuffle.c
++++ external/blosc/src/shuffle.c
+@@ -24,14 +24,7 @@
+ #endif
+ #endif
+
+-/* Visual Studio < 2013 does not have stdbool.h so here it is a replacement: */
+-#if defined __STDC__ && defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+-/* have a C99 compiler */
+-typedef _Bool bool;
+-#else
+-/* do not have a C99 compiler */
+-typedef unsigned char bool;
+-#endif
++#include <stdbool.h>
+
+
+ #if !defined(__clang__) && defined(__GNUC__) && defined(__GNUC_MINOR__) && \

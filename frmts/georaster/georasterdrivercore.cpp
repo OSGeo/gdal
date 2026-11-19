@@ -55,7 +55,7 @@ void GEORDriverSetCommonMetadata(GDALDriver *poDriver)
                               "drivers/raster/georaster.html");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
-                              "Byte UInt16 Int16 UInt32 Int32 Float32 "
+                              "Byte Int8 UInt16 Int16 UInt32 Int32 Float32 "
                               "Float64 CFloat32 CFloat64");
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,

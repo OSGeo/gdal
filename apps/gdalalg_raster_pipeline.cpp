@@ -11,11 +11,13 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_pipeline.h"
+#include "gdalalg_external.h"
 #include "gdalalg_materialize.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_calc.h"
 #include "gdalalg_raster_aspect.h"
 #include "gdalalg_raster_blend.h"
+#include "gdalalg_raster_clean_collar.h"
 #include "gdalalg_raster_clip.h"
 #include "gdalalg_raster_color_map.h"
 #include "gdalalg_raster_compare.h"
@@ -38,6 +40,7 @@
 #include "gdalalg_raster_scale.h"
 #include "gdalalg_raster_select.h"
 #include "gdalalg_raster_set_type.h"
+#include "gdalalg_raster_shift_longitude.h"
 #include "gdalalg_raster_sieve.h"
 #include "gdalalg_raster_slope.h"
 #include "gdalalg_raster_stack.h"
@@ -133,6 +136,8 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     : GDALAbstractPipelineAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                     ConstructorOptions()
                                         .SetAddDefaultArguments(false)
+                                        .SetInputDatasetRequired(false)
+                                        .SetInputDatasetPositional(false)
                                         .SetInputDatasetMaxCount(INT_MAX))
 {
     m_supportsStreamedOutput = true;
@@ -184,6 +189,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterAspectAlgorithm>();
     registry.Register<GDALRasterBlendAlgorithm>();
 
+    registry.Register<GDALRasterCleanCollarAlgorithm>();
     registry.Register<GDALRasterClipAlgorithm>(
         addSuffixIfNeeded(GDALRasterClipAlgorithm::NAME));
 
@@ -218,6 +224,7 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALRasterSelectAlgorithm::NAME));
 
     registry.Register<GDALRasterSetTypeAlgorithm>();
+    registry.Register<GDALRasterShiftLongitudeAlgorithm>();
     registry.Register<GDALRasterSieveAlgorithm>();
     registry.Register<GDALRasterSlopeAlgorithm>();
     registry.Register<GDALRasterStackAlgorithm>();
@@ -230,6 +237,11 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterViewshedAlgorithm>();
     registry.Register<GDALTeeRasterAlgorithm>(
         addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));
+
+    if (!forMixedPipeline)
+    {
+        registry.Register<GDALExternalRasterAlgorithm>();
+    }
 }
 
 /************************************************************************/
@@ -278,7 +290,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
 
     ret += '\n';
     ret += "Example: 'gdal raster pipeline --progress ! read in.tif ! \\\n";
-    ret += "               reproject --dst-crs=EPSG:32632 ! ";
+    ret += "               reproject --output-crs=EPSG:32632 ! ";
     ret += "write out.tif --overwrite'\n";
     ret += '\n';
     ret += "Potential steps are:\n";
@@ -355,6 +367,14 @@ GDALRasterPipelineNonNativelyStreamingAlgorithm::
         const std::string &helpURL, bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(name, description, helpURL,
                                       standaloneStep)
+{
+}
+
+GDALRasterPipelineNonNativelyStreamingAlgorithm::
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, const ConstructorOptions &options)
+    : GDALRasterPipelineStepAlgorithm(name, description, helpURL, options)
 {
 }
 

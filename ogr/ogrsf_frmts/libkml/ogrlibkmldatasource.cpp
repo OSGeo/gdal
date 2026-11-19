@@ -1516,7 +1516,7 @@ static bool CheckIsKMZ(const char *pszFilename)
 
 int OGRLIBKMLDataSource::Open(const char *pszFilename, bool bUpdateIn)
 {
-    bUpdate = CPL_TO_BOOL(bUpdateIn);
+    bUpdate = bUpdateIn;
 
     /***** dir *****/
     VSIStatBufL sStatBuf;
@@ -2569,7 +2569,7 @@ void OGRLIBKMLDataSource::SetStyleTable(OGRStyleTable *poStyleTable)
 
 ******************************************************************************/
 
-int OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
+bool OGRLIBKMLDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer))
         return bUpdate;

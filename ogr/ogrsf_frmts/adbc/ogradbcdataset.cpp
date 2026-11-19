@@ -386,6 +386,8 @@ bool OGRADBCDataset::Open(const GDALOpenInfo *poOpenInfo)
     // Load the driver
     if (m_bIsDuckDBDriver)
     {
+        pszADBCDriverName =
+            CPLGetConfigOption("OGR_ADBC_LIBDUCKDB", pszADBCDriverName);
         if (OGRADBCLoadDriver(pszADBCDriverName, "duckdb_adbc_init", &m_driver,
                               error) != ADBC_STATUS_OK)
         {
@@ -958,7 +960,7 @@ OGRErr OGRADBCDataset::DeleteLayer(int iLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRADBCDataset::TestCapability(const char *pszCap) const
+bool OGRADBCDataset::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCCreateLayer) || EQUAL(pszCap, ODsCDeleteLayer))
         return m_bIsBigQuery && eAccess == GA_Update;

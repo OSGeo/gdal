@@ -12,7 +12,7 @@ echo 'Running CPP perftests'
 
 echo 'Running Python unit tests'
 # install test dependencies
-sudo -H pip3 install -r autotest/requirements.txt
+sudo -H python3 -m pip install -r autotest/requirements.txt
 
 NPROC=$(sysctl -n hw.ncpu)
 echo "NPROC=${NPROC}"

@@ -42,7 +42,7 @@ def test_ogr_gtfs_open():
     assert ds
     assert ds.GetLayerCount() == 9
 
-    ds = gdal.OpenEx("/vsizip/data/gtfs/gtfs_extract.zip", allowed_drivers=["GTFS"])
+    ds = gdal.Open("/vsizip/data/gtfs/gtfs_extract.zip", allowed_drivers=["GTFS"])
     assert ds
     assert ds.GetLayerCount() == 9
 

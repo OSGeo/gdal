@@ -17,6 +17,7 @@
 #include "../../ogr/ogrsf_frmts/osm/gpb.h"
 #include "ogr_recordbatch.h"
 #include "ogrlayerarrow.h"
+#include "ogr_geos.h"
 
 #include <string>
 #include <algorithm>
@@ -271,7 +272,7 @@ template <class T> void testCopyEquals()
 
     T value2(*poOrigin);
 
-    ASSERT_TRUE(CPL_TO_BOOL(poOrigin->Equals(&value2)))
+    ASSERT_TRUE(poOrigin->Equals(&value2))
         << poOrigin->getGeometryName() << ": copy constructor changed a value";
 
     T value3;
@@ -288,7 +289,7 @@ template <class T> void testCopyEquals()
     CPLFree(wkt1);
     CPLFree(wkt2);
 #endif
-    ASSERT_TRUE(CPL_TO_BOOL(poOrigin->Equals(&value3)))
+    ASSERT_TRUE(poOrigin->Equals(&value3))
         << poOrigin->getGeometryName()
         << ": assignment operator changed a value";
 
@@ -389,7 +390,7 @@ template <class T> void testMove()
         T fromMoved(std::move(*poOrigin));
         EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore);
 
-        ASSERT_TRUE(CPL_TO_BOOL(fromMoved.Equals(&valueCopy)))
+        ASSERT_TRUE(fromMoved.Equals(&valueCopy))
             << valueCopy.getGeometryName()
             << ": move constructor changed a value";
         EXPECT_EQ(fromMoved.getSpatialReference(), poSRS);
@@ -401,7 +402,7 @@ template <class T> void testMove()
         value3 = std::move(valueCopy);
         EXPECT_EQ(poSRS->GetReferenceCount(), refCountBefore2);
 
-        ASSERT_TRUE(CPL_TO_BOOL(value3.Equals(&valueCopy2)))
+        ASSERT_TRUE(value3.Equals(&valueCopy2))
             << valueCopy2.getGeometryName()
             << ": move assignment operator changed a value";
         EXPECT_EQ(value3.getSpatialReference(), poSRS);
@@ -2024,6 +2025,38 @@ TEST_F(test_ogr, OGRGeometry_exportToWkt)
     CPLFree(pszWKT);
 }
 
+// Test that rounding in OGRGeometry::exportToWkt() never turns a non-zero
+// coordinate that fits in the default 15 decimals into 0 (#15317)
+TEST_F(test_ogr, OGRGeometry_exportToWkt_small_values_not_zeroed)
+{
+    const struct
+    {
+        double dfX;
+        const char *pszExpected;
+    } asTests[] = {
+        {1e-15, "POINT (0.000000000000001 1.0)"},
+        {5e-15, "POINT (0.000000000000005 1.0)"},
+        {1e-14, "POINT (0.00000000000001 1.0)"},
+        {-1e-14, "POINT (-0.00000000000001 1.0)"},
+        {1.5e-14, "POINT (0.000000000000015 1.0)"},
+        {9.9e-14, "POINT (0.000000000000099 1.0)"},
+        // Unchanged behavior
+        {1e-13, "POINT (0.0000000000001 1.0)"},
+        {1e-16, "POINT (0.0 1.0)"},
+        {0.12345000000001, "POINT (0.12345 1.0)"},
+    };
+
+    for (const auto &sTest : asTests)
+    {
+        char *pszWKT = nullptr;
+        OGRPoint p(sTest.dfX, 1);
+        p.exportToWkt(&pszWKT);
+        ASSERT_TRUE(pszWKT != nullptr);
+        EXPECT_STREQ(pszWKT, sTest.pszExpected);
+        CPLFree(pszWKT);
+    }
+}
+
 // Test OGRGeometry::clone()
 TEST_F(test_ogr, OGRGeometry_clone)
 {
@@ -2731,8 +2764,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     ASSERT_EQ(OGRERR_NONE, err);
 
     auto insertEntry = std::find_if(
-        queryLog.cbegin(), queryLog.cend(),
-        [](const QueryLogEntry &e)
+        queryLog.cbegin(), queryLog.cend(), [](const QueryLogEntry &e)
         { return e.sql.find(R"sql(INSERT INTO "poly")sql", 0) == 0; });
 
     ASSERT_TRUE(insertEntry != queryLog.end());
@@ -4665,6 +4697,48 @@ TEST_F(test_ogr, GetArrowStream_DateTime_As_String)
     stream.release(&stream);
 }
 
+TEST_F(test_ogr, OGRLayer_AttributeFilterEvaluationNeedsGeometry)
+{
+    auto poDS = std::unique_ptr<GDALDataset>(
+        GetGDALDriverManager()->GetDriverByName("MEM")->Create(
+            "", 0, 0, 0, GDT_Unknown, nullptr));
+    auto poLayer = poDS->CreateLayer("test", nullptr, wkbNone);
+    {
+        OGRFieldDefn oFieldDefn("str", OFTString);
+        EXPECT_EQ(poLayer->CreateField(&oFieldDefn), OGRERR_NONE);
+    }
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("geom1", wkbPoint);
+        EXPECT_EQ(poLayer->CreateGeomField(&oGeomFieldDefn), OGRERR_NONE);
+    }
+    {
+        OGRGeomFieldDefn oGeomFieldDefn("geom2", wkbPoint);
+        EXPECT_EQ(poLayer->CreateGeomField(&oGeomFieldDefn), OGRERR_NONE);
+    }
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter(nullptr));
+    EXPECT_FALSE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE,
+              poLayer->SetAttributeFilter("OGR_GEOMETRY = 'POINT'"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("OGR_GEOM_WKT IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("OGR_GEOM_AREA > 0"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("geom1 IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("geom2 IS NULL"));
+    EXPECT_TRUE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+
+    EXPECT_EQ(OGRERR_NONE, poLayer->SetAttributeFilter("str IS NULL"));
+    EXPECT_FALSE(poLayer->AttributeFilterEvaluationNeedsGeometry());
+}
+
 // Test OGRFeatureDefn::GetFieldSubTypeByName()
 TEST_F(test_ogr, OGRFieldDefnGetFieldSubTypeByName)
 {
@@ -4732,6 +4806,109 @@ TEST_F(test_ogr, OGRPolygon_two_vertex_constructor)
     p.exportToWkt(&outWKT, wkbVariantIso);
     EXPECT_STREQ(outWKT, "POLYGON ((1 2,1 4,3 4,3 2,1 2))");
     CPLFree(outWKT);
+}
+
+// Test OGRGeometryCollection::addComponents()
+TEST_F(test_ogr, OGRGeometryCollection_addComponents)
+{
+    auto gc1 = std::make_unique<OGRGeometryCollection>();
+    auto gc2 = std::make_unique<OGRGeometryCollection>();
+
+    for (const auto &wkt : {"POINT (3 7)", "LINESTRING M (9 3 2, 4 1 9)"})
+    {
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt(wkt);
+        ASSERT_EQ(err, OGRERR_NONE);
+        gc1->addGeometry(std::move(poGeom));
+    }
+
+    for (const auto &wkt :
+         {"POINT Z (6 4 8)", "POLYGON ((0 0, 1 1, 0 1, 0 0))"})
+    {
+        auto [poGeom, err] = OGRGeometryFactory::createFromWkt(wkt);
+        ASSERT_EQ(err, OGRERR_NONE);
+        gc2->addGeometry(std::move(poGeom));
+    }
+
+    ASSERT_EQ(gc1->addGeometryComponents(std::move(gc2)), OGRERR_NONE);
+
+    OGRWktOptions wktOptions;
+    wktOptions.variant = wkbVariantIso;
+
+    EXPECT_EQ(gc1->getNumGeometries(), 4);
+    EXPECT_EQ(gc1->getGeometryType(), wkbGeometryCollectionZM);
+    EXPECT_EQ(gc1->getGeometryRef(0)->exportToWkt(wktOptions),
+              "POINT ZM (3 7 0 0)");
+    EXPECT_EQ(gc1->getGeometryRef(1)->exportToWkt(wktOptions),
+              "LINESTRING ZM (9 3 0 2,4 1 0 9)");
+    EXPECT_EQ(gc1->getGeometryRef(2)->exportToWkt(wktOptions),
+              "POINT ZM (6 4 8 0)");
+    EXPECT_EQ(gc1->getGeometryRef(3)->exportToWkt(wktOptions),
+              "POLYGON ZM ((0 0 0 0,1 1 0 0,0 1 0 0,0 0 0 0))");
+}
+
+struct ProgressData
+{
+    std::vector<double> adfRatios;
+    bool bInterrupt{false};
+};
+
+int CPL_STDCALL MyProgress(double dfComplete, const char *, void *userData)
+{
+    auto *progressData = static_cast<ProgressData *>(userData);
+    progressData->adfRatios.push_back(dfComplete);
+    return !progressData->bInterrupt;
+}
+
+TEST_F(test_ogr, GEOSProgress)
+{
+    auto coll = std::make_unique<OGRGeometryCollection>();
+
+    for (int i = 0; i < 10; i++)
+    {
+        for (int j = 0; j < 10; j++)
+        {
+            std::unique_ptr<OGRGeometry> g(OGRGeometry::FromHandle(
+                OGR_G_CreateFromEnvelope(i, j, i + 1, j + 1, nullptr)));
+            coll->addGeometry(std::move(g));
+        }
+    }
+
+#if GEOS_VERSION_MAJOR > 3 ||                                                  \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 15)
+    // Run to completion
+    {
+        ProgressData progressData;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(MyProgress, &progressData));
+
+        ASSERT_TRUE(progressData.adfRatios.size() > 3);
+        EXPECT_TRUE(std::is_sorted(progressData.adfRatios.begin(),
+                                   progressData.adfRatios.end()));
+        EXPECT_EQ(progressData.adfRatios.back(), 1);
+    }
+
+    // Interrupt GEOS
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
+        ProgressData progressData;
+        progressData.bInterrupt = true;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(MyProgress, &progressData));
+
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_TRUE(cpl::starts_with(CPLGetLastErrorMsg(), "Interrupted"));
+        EXPECT_EQ(result, nullptr);
+    }
+#else
+    // Run to completion
+    {
+        ProgressData progressData;
+        std::unique_ptr<OGRGeometry> result(
+            coll->UnaryUnion(&MyProgress, &progressData));
+        EXPECT_TRUE(progressData.adfRatios.empty());
+    }
+#endif
 }
 
 }  // namespace

@@ -104,6 +104,17 @@ void roundup(std::string &s)
         s = '-' + s;
 }
 
+// Whether s[0, nEnd) contains a non-zero digit.
+bool hasNonZeroDigit(const std::string &s, size_t nEnd)
+{
+    for (size_t i = 0; i < nEnd; ++i)
+    {
+        if (s[i] >= '1' && s[i] <= '9')
+            return true;
+    }
+    return false;
+}
+
 // This attempts to eliminate what is likely binary -> decimal representation
 // error or the result of low-order rounding with calculations.  The result
 // may be more visually pleasing and takes up fewer places.
@@ -145,8 +156,10 @@ void intelliround(std::string &s)
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
+    // Neither trim may remove the only non-zero digits: that would turn a
+    // value that fits in the requested precision, such as 1e-14, into 0.
     if (s[len - 2] == '0' && s[len - 3] == '0' && s[len - 4] == '0' &&
-        s[len - 5] == '0' && s[len - 6] == '0')
+        s[len - 5] == '0' && s[len - 6] == '0' && hasNonZeroDigit(s, len - 1))
     {
         s.pop_back();
     }
@@ -163,7 +176,7 @@ void intelliround(std::string &s)
              (nCountBeforeDot >= 6 || s[len - 5] == '0') &&
              (nCountBeforeDot >= 7 || s[len - 6] == '0') &&
              (nCountBeforeDot >= 8 || s[len - 7] == '0') && s[len - 8] == '0' &&
-             s[len - 9] == '0')
+             s[len - 9] == '0' && hasNonZeroDigit(s, len - 8))
     {
         s.resize(s.size() - 8);
     }
@@ -336,7 +349,7 @@ std::string OGRMakeWktCoordinate(double x, double y, double z, int nDimension,
 /************************************************************************/
 
 void OGRMakeWktCoordinateM(char *pszTarget, double x, double y, double z,
-                           double m, OGRBoolean hasZ, OGRBoolean hasM)
+                           double m, bool hasZ, bool hasM)
 
 {
     std::string wkt =
@@ -345,7 +358,7 @@ void OGRMakeWktCoordinateM(char *pszTarget, double x, double y, double z,
 }
 
 std::string OGRMakeWktCoordinateM(double x, double y, double z, double m,
-                                  OGRBoolean hasZ, OGRBoolean hasM,
+                                  bool hasZ, bool hasM,
                                   const OGRWktOptions &opts)
 {
     std::string wkt;
@@ -2364,4 +2377,18 @@ std::string OGRDuplicateCharacter(const std::string &osStr, char ch)
 {
     char aszReplacement[] = {ch, ch, 0};
     return CPLString(osStr).replaceAll(ch, aszReplacement);
+}
+
+/************************************************************************/
+/*                       OGRIsGeoJSONMediaType()                        */
+/************************************************************************/
+
+/** Returns whether pszMediaType is "application/geo+json" or
+ * "application/vnd.geo+json"
+ */
+bool OGRIsGeoJSONMediaType(const char *pszMediaType)
+{
+    return EQUAL(pszMediaType, "application/geo+json") ||
+           // Below is deprecated
+           EQUAL(pszMediaType, "application/vnd.geo+json");
 }

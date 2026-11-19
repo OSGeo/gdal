@@ -13,6 +13,7 @@
 ###############################################################################
 
 import json
+import os
 import sys
 
 from osgeo import gdal, ogr, osr
@@ -27,7 +28,7 @@ map_ogr_geom_type_to_geoparquet = {
     ogr.wkbMultiLineString: "MultiLineString",
     ogr.wkbMultiPolygon: "MultiPolygon",
     ogr.wkbGeometryCollection: "GeometryCollection",
-    ogr.wkbPoint25D: "Point",
+    ogr.wkbPoint25D: "Point Z",
     ogr.wkbLineString25D: "LineString Z",
     ogr.wkbPolygon25D: "Polygon Z",
     ogr.wkbMultiPoint25D: "MultiPoint Z",
@@ -37,6 +38,23 @@ map_ogr_geom_type_to_geoparquet = {
 }
 
 map_remote_resources = {}
+
+
+def _try_local_proj_schema(uri):
+    """Try to resolve a proj.org schema URI from local PROJ data directory."""
+    prefix = "https://proj.org/schemas/"
+    if not uri.startswith(prefix):
+        return None
+    relative = uri[len(prefix) :]
+    try:
+        for search_path in osr.GetPROJSearchPaths():
+            local_path = os.path.join(search_path, os.path.basename(relative))
+            if os.path.isfile(local_path):
+                with open(local_path, "rb") as f:
+                    return f.read()
+    except OSError:
+        pass
+    return None
 
 
 class GeoParquetValidator:
@@ -99,17 +117,20 @@ class GeoParquetValidator:
             def retrieve_remote_file(uri: str):
                 if not uri.startswith("http://") and not uri.startswith("https://"):
                     raise Exception(f"Cannot retrieve {uri}")
-                import urllib.request
 
-                global map_remote_resources
                 if uri not in map_remote_resources:
-                    response = urllib.request.urlopen(
-                        urllib.request.Request(uri, headers={"User-Agent": "GDAL"})
-                    ).read()
-                    map_remote_resources[uri] = response
-                else:
-                    response = map_remote_resources[uri]
-                return Resource.from_contents(json.loads(response))
+                    local_content = _try_local_proj_schema(uri)
+                    if local_content is not None:
+                        map_remote_resources[uri] = local_content
+                    else:
+                        import urllib.request
+
+                        response = urllib.request.urlopen(
+                            urllib.request.Request(uri, headers={"User-Agent": "GDAL"})
+                        ).read()
+                        map_remote_resources[uri] = response
+
+                return Resource.from_contents(json.loads(map_remote_resources[uri]))
 
             registry = Registry(retrieve=retrieve_remote_file)
             validator_cls = jsonschema.validators.validator_for(schema)
@@ -120,8 +141,6 @@ class GeoParquetValidator:
             jsonschema.validate(instance=instance, schema=schema)
 
     def _check(self):
-
-        global geoparquet_schemas
 
         if gdal.GetDriverByName("Parquet") is None:
             return self._error("Parquet driver not available")
@@ -170,7 +189,12 @@ class GeoParquetValidator:
         if self.local_schema:
             schema_j = json.loads(open(self.local_schema, "rb").read())
         else:
-            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
+            # TODO: remove this when v2.0.0 is published
+            if version == "2.0.0":
+                schema_url_version = "2.0.0-rc.1"
+            else:
+                schema_url_version = version
+            schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{schema_url_version}/schema.json"
 
             if schema_url not in geoparquet_schemas:
                 import urllib.request
@@ -226,15 +250,16 @@ class GeoParquetValidator:
                     f'geo["columns"] lists a {column_name} column which is not found in the Parquet fields'
                 )
 
-            self._check_column_metadata(column_name, column_def)
+            self._check_column_metadata(lyr, version, column_name, column_def)
 
         if self.check_data:
             self._check_data(lyr, columns)
 
-    def _check_column_metadata(self, column_name, column_def):
+    def _check_column_metadata(self, lyr, version, column_name, column_def):
         srs = None
         if "crs" in column_def:
             crs = column_def["crs"]
+
             if crs and (
                 osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() >= 602
             ):
@@ -246,7 +271,37 @@ class GeoParquetValidator:
                         srs.SetFromUserInput(crs)
                 except Exception as e:
                     self._error(f"crs {crs} cannot be parsed: %s" % str(e))
+
+            if version == "2.0.0":
+                parquet_crs = lyr.GetMetadataItem(column_name, "_PARQUET_GEO_CRS_")
+                if crs is None:
+                    if parquet_crs != "srid:0":
+                        self._error(
+                            f"For column {column_name}, GeoParquet CRS is null, but parquet_crs = '{parquet_crs}' (different from srid:0)"
+                        )
+                else:
+                    if parquet_crs.startswith("{") and parquet_crs.endswith("}"):
+                        # PROJJSON
+                        pass
+                    elif parquet_crs.count(":") == 1:
+                        # {auth_name}:{code}
+                        pass
+                    elif srs and srs.GetName() in ("WGS 84", "WGS 84 (CRS84)"):
+                        pass
+                    else:
+                        self._error(
+                            f"For column {column_name}, GeoParquet CRS is not null, but parquet_crs = '{parquet_crs}' and crs = {crs}"
+                        )
+
         else:
+
+            if version == "2.0.0":
+                parquet_crs = lyr.GetMetadataItem(column_name, "_PARQUET_GEO_CRS_")
+                if parquet_crs != "":
+                    self._error(
+                        f"For column {column_name}, GeoParquet CRS is null, but parquet_crs = '{parquet_crs}'"
+                    )
+
             srs = osr.SpatialReference()
             srs.ImportFromEPSG(4326)
 

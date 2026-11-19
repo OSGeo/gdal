@@ -57,7 +57,7 @@ int OGRCurve::getDimension() const
  * @return TRUE if closed, else FALSE.
  */
 
-int OGRCurve::get_IsClosed() const
+bool OGRCurve::get_IsClosed() const
 
 {
     OGRPoint oStartPoint;
@@ -69,31 +69,22 @@ int OGRCurve::get_IsClosed() const
     if (oStartPoint.Is3D() && oEndPoint.Is3D())
     {
         // XYZ type
-        if (oStartPoint.getX() == oEndPoint.getX() &&
-            oStartPoint.getY() == oEndPoint.getY() &&
-            oStartPoint.getZ() == oEndPoint.getZ())
-        {
-            return TRUE;
-        }
-        else
-            return FALSE;
+        return (oStartPoint.getX() == oEndPoint.getX() &&
+                oStartPoint.getY() == oEndPoint.getY() &&
+                oStartPoint.getZ() == oEndPoint.getZ());
     }
 
     // one of the points is 3D
-    else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
-             ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
+    else if (oStartPoint.Is3D() != oEndPoint.Is3D())
     {
-        return FALSE;
+        return false;
     }
 
     else
     {
         // XY type
-        if (oStartPoint.getX() == oEndPoint.getX() &&
-            oStartPoint.getY() == oEndPoint.getY())
-            return TRUE;
-        else
-            return FALSE;
+        return (oStartPoint.getX() == oEndPoint.getX() &&
+                oStartPoint.getY() == oEndPoint.getY());
     }
 }
 
@@ -302,7 +293,7 @@ int OGRCurve::get_IsClosed() const
  *
  */
 
-OGRBoolean OGRCurve::IsConvex() const
+bool OGRCurve::IsConvex() const
 {
     bool bRet = true;
     OGRPointIterator *poPointIter = getPointIterator();
@@ -448,7 +439,7 @@ int OGRCurve::IntersectsPoint(CPL_UNUSED const OGRPoint *p) const
 OGRPointIterator::~OGRPointIterator() = default;
 
 /**
- * \fn OGRBoolean OGRPointIterator::getNextPoint(OGRPoint* p);
+ * \fn bool OGRPointIterator::getNextPoint(OGRPoint* p);
  *
  * \brief Returns the next point followed by the iterator.
  *
@@ -720,7 +711,7 @@ OGRCurve::ConstIterator OGRCurve::end() const
  * @return TRUE if clockwise otherwise FALSE.
  */
 
-int OGRCurve::isClockwise() const
+bool OGRCurve::isClockwise() const
 
 {
     // WARNING: keep in sync OGRLineString::isClockwise(),
@@ -728,7 +719,7 @@ int OGRCurve::isClockwise() const
 
     const int nPointCount = getNumPoints();
     if (nPointCount < 3)
-        return TRUE;
+        return true;
 
     bool bUseFallback = false;
 
@@ -820,9 +811,9 @@ int OGRCurve::isClockwise() const
     if (!bUseFallback)
     {
         if (crossproduct > 0)  // CCW
-            return FALSE;
+            return false;
         else if (crossproduct < 0)  // CW
-            return TRUE;
+            return true;
     }
 
     // This is a degenerate case: the extent of the polygon is less than EPSILON

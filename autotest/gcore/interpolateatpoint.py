@@ -145,7 +145,7 @@ def test_interpolateatpoint_bilinear_several_points():
     )
     assert got_bilinear == pytest.approx((1.3 + 0.5 + 3.8 - 1) / 4, 1e-6)
 
-    # compute the linear intepolation manually
+    # compute the linear interpolation manually
     got_bilinear = mem_ds.GetRasterBand(1).InterpolateAtPoint(
         2.1, 1.2, gdal.GRIORA_Bilinear
     )
@@ -340,8 +340,7 @@ def test_interpolateatpoint_big_complex():
     # works for bigger values above the first block of 64x64 pixels.
     # To do that we are creating a virtual complex band from an existing RGB image.
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="512" rasterYSize="384">
+    ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="384">
   <VRTRasterBand dataType="CFloat64" band="1" subClass="VRTDerivedRasterBand">
     <Description>Complex</Description>
     <PixelFunctionType>complex</PixelFunctionType>
@@ -354,8 +353,7 @@ def test_interpolateatpoint_big_complex():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     res = ds.GetRasterBand(1).InterpolateAtPoint(256, 64, gdal.GRIORA_NearestNeighbour)
     assert res == (179.0 + 127.0j)
     res = ds.GetRasterBand(1).InterpolateAtPoint(256, 63, gdal.GRIORA_NearestNeighbour)

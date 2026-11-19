@@ -12,7 +12,7 @@
  *
   * SPDX-License-Identifier: MIT
  *******************************************************************************/
-#include "io.h"
+#include "dwg_io.h"
 
 #include <iostream>
 #include <cstdint>

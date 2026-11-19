@@ -383,7 +383,7 @@ OGRFeature *OGRIDBLayer::GetFeature(GIntBig nFeatureId)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDBLayer::TestCapability(const char * /*pszCap*/) const
+bool OGRIDBLayer::TestCapability(const char * /*pszCap*/) const
 
 {
     return FALSE;

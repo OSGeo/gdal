@@ -68,10 +68,16 @@ The :program:`gdalsrsinfo` utility reports information about a given SRS from on
     may be the filename of a dataset supported by GDAL/OGR from which to extract SRS information
     OR any of the usual GDAL/OGR forms (complete WKT, PROJ.4, EPSG:n or a file containing the SRS)
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Example
 -------
 
-.. example:: Default output
+.. example::
+   :title: Default output
 
    .. command-output:: gdalsrsinfo EPSG:4326
 

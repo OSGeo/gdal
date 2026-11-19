@@ -1,0 +1,16 @@
+<DDFModule _interchangeLevel="3" _leaderIden="L" _inlineCodeExtensionIndicator="E" _versionNumber="1" _appIndicator=" " _extendedCharSet=" ! " _fieldControlLength="9" _sizeFieldLength="3" _sizeFieldPos="4" _sizeFieldTag="4">
+<DDFFieldDefn tag="test" fieldName="test" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="FLLE!FLBE!DBLE!DBBE" formatControls="(b44,B44,b48,B48)">
+  <DDFSubfieldDefn name="FLLE" format="b44"/>  <!-- little endian float32 -->
+  <DDFSubfieldDefn name="FLBE" format="B44"/>  <!-- big    endian float32 -->
+  <DDFSubfieldDefn name="DBLE" format="b48"/>  <!-- little endian float64 -->
+  <DDFSubfieldDefn name="DBBE" format="B48"/>  <!-- big    endian float64 -->
+</DDFFieldDefn>
+<DDFRecord>
+  <DDFField name="test">
+    <DDFSubfield name="FLLE" type="float">1.5</DDFSubfield>
+    <DDFSubfield name="FLBE" type="float">2.5</DDFSubfield>
+    <DDFSubfield name="DBLE" type="float">3.5</DDFSubfield>
+    <DDFSubfield name="DBBE" type="float">4.5</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+</DDFModule>

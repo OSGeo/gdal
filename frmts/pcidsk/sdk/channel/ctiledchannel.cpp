@@ -91,8 +91,20 @@ void CTiledChannel::EstablishAccess() const
 
     const char * pszDataType = mpoTileLayer->GetDataType();
 
-    if (GetDataTypeFromName(pszDataType) == CHN_UNKNOWN)
+    eChanType nLayerType = GetDataTypeFromName(pszDataType);
+
+    if (nLayerType == CHN_UNKNOWN)
         return ThrowPCIDSKException("Unknown channel type: %s", pszDataType);
+
+    // The read buffer is sized by the caller from the image band header pixel
+    // type, while the amount copied per tile comes from the tile layer data
+    // type. If they disagree a wider tile can be written into a buffer sized
+    // for a narrower type, so reject the mismatch here.
+    if (pixel_type != CHN_UNKNOWN && pixel_type != nLayerType)
+        return ThrowPCIDSKException(
+            "Tiled channel %d data type (%s) does not match image header "
+            "pixel type (%s).",
+            image, pszDataType, DataTypeName(pixel_type));
 }
 
 /************************************************************************/

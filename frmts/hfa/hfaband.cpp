@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -315,11 +316,15 @@ CPLErr HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    if (sizeof(vsi_l_offset) + 2 * sizeof(int) >
-        (~(size_t)0) / static_cast<unsigned int>(nBlocks))
+    if constexpr (sizeof(size_t) < sizeof(uint64_t))
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
-        return CE_Failure;
+        if (sizeof(vsi_l_offset) + 2 * sizeof(int) >
+            std::numeric_limits<size_t>::max() /
+                static_cast<unsigned int>(nBlocks))
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
+            return CE_Failure;
+        }
     }
     const int MAX_INITIAL_BLOCKS = 1000 * 1000;
     const int nInitBlocks = std::min(nBlocks, MAX_INITIAL_BLOCKS);
@@ -588,8 +593,7 @@ static CPLErr UncompressBlock(GByte *pabyCData, int nSrcBytes, GByte *pabyDest,
         nValueBitOffset = 0;
 
         if (nNumBits > INT_MAX / nMaxPixels ||
-            nNumBits * nMaxPixels > INT_MAX - 7 ||
-            (nNumBits * nMaxPixels + 7) / 8 > INT_MAX - 13)
+            nNumBits * nMaxPixels > INT_MAX - 7)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Integer overflow : nNumBits * nMaxPixels + 7");

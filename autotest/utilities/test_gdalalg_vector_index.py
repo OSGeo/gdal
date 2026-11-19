@@ -42,7 +42,7 @@ def test_gdalalg_vector_index_new_file():
         lyr = ds.GetLayer(0)
         assert lyr.GetName() == "tileindex"
         assert lyr.GetFeatureCount() == 1
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "27700"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "27700"
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         f = lyr.GetNextFeature()
         assert f["location"] == "../ogr/data/poly.shp,0"
@@ -66,7 +66,7 @@ def test_gdalalg_vector_index_absolute_path():
         lyr = ds.GetLayer(0)
         assert lyr.GetName() == "tileindex"
         assert lyr.GetFeatureCount() == 1
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "27700"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "27700"
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         f = lyr.GetNextFeature()
         assert (
@@ -101,7 +101,7 @@ def test_gdalalg_vector_index_new_file_source_as_dataset(tmp_vsimem):
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
 
     with pytest.raises(
-        Exception, match="Input datasets must be provided by name, not as object"
+        Exception, match="Datasets 'input' must be provided by name, not as object"
     ):
         gdal.Run("vector", "index", input=src_ds, output_format="MEM")
 
@@ -132,12 +132,12 @@ def test_gdalalg_vector_index_new_file_dst_crs(tmp_vsimem):
         "index",
         input=tmp_vsimem / "dst_crs.shp",
         output_format="MEM",
-        dst_crs="EPSG:4326",
+        output_crs="EPSG:4326",
     ) as alg:
         ds = alg.Output()
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 1
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         assert lyr.GetLayerDefn().GetFieldCount() == 1
         f = lyr.GetNextFeature()
         ogrtest.check_feature_geometry(f, "POLYGON ((3 0,3 0,3 0,3 0,3 0))")
@@ -356,7 +356,7 @@ def test_gdalalg_vector_index_append(tmp_vsimem):
             accept_different_schemas=True,
             append=True,
         )
-    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 1
     assert gdal.Run(
         "vector",
@@ -366,7 +366,7 @@ def test_gdalalg_vector_index_append(tmp_vsimem):
         accept_different_schemas=True,
         append=True,
     )
-    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+    with gdal.Open(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 2
 
 

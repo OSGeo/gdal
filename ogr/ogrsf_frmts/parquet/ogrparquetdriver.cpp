@@ -777,6 +777,23 @@ void OGRParquetDriver::InitMetadata()
     CPLXMLTreeCloser oTree(
         CPLCreateXMLNode(nullptr, CXT_Element, "LayerCreationOptionList"));
 
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "GEOPARQUET_VERSION");
+        CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "GeoParquet specification version");
+        CPLAddXMLAttributeAndValue(psOption, "default", "1.1");
+        {
+            auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "1.1");
+        }
+        {
+            auto poValueNode = CPLCreateXMLNode(psOption, CXT_Element, "Value");
+            CPLCreateXMLNode(poValueNode, CXT_Text, "2.0");
+        }
+    }
+
     std::vector<const char *> apszCompressionMethods;
     bool bHasSnappy = false;
     int minComprLevel = INT_MAX;
@@ -826,7 +843,7 @@ void OGRParquetDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
-        CPLAddXMLAttributeAndValue(psOption, "name", "COMPRESSION");
+        CPLAddXMLAttributeAndValue(psOption, "name", GDALMD_COMPRESSION);
         CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Compression method");
@@ -974,12 +991,13 @@ void OGRParquetDriver::InitMetadata()
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psOption, "name", "USE_PARQUET_GEO_TYPES");
-        CPLAddXMLAttributeAndValue(psOption, "default", "NO");
+        CPLAddXMLAttributeAndValue(psOption, "default", "AUTO");
         CPLAddXMLAttributeAndValue(psOption, "type", "string-select");
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Whether to use Parquet Geometry/Geography "
                                    "logical types (introduced in libarrow 21), "
                                    "when using GEOMETRY_ENCODING=WKB encoding");
+        CPLCreateXMLElementAndValue(psOption, "Value", "AUTO");
         CPLCreateXMLElementAndValue(psOption, "Value", "YES");
         CPLCreateXMLElementAndValue(psOption, "Value", "NO");
         CPLCreateXMLElementAndValue(psOption, "Value", "ONLY");
@@ -1031,6 +1049,8 @@ class OGRParquetCreateMetadataFileAlgorithm final : public GDALAlgorithm
               "Create the _metadata file for a partitioned Parquet dataset",
               "/programs/gdal_driver_parquet_create_metadata_file.html")
     {
+        AddProgressArg(/* hidden = */ true);
+
         auto &inputArg =
             AddArg(GDAL_ARG_NAME_INPUT, 0, _("Input Parquet datasets"),
                    &m_input, GDAL_OF_VECTOR)

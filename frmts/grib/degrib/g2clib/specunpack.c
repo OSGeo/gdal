@@ -67,6 +67,13 @@ g2int specunpack(unsigned char *cpack,g2int *idrstmpl,g2int ndpts,g2int JJ,
 
       if (idrstmpl[9] == 1) {           // unpacked floats are 32-bit IEEE
 
+         if (Ts > ndpts)
+         {
+             fprintf(stderr, "specunpack: invalid Ts=%d vs ndpts=%d.\n", Ts, ndpts);
+             for (j=0;j<ndpts;j++) fld[j]=0.0;
+             return -1;
+         }
+
          unpk=(g2float *)malloc(ndpts*sizeof(g2float));
          ifld=(g2int *)malloc(ndpts*sizeof(g2int));
 

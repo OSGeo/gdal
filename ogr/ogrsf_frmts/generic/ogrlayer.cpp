@@ -33,11 +33,10 @@
 
 OGRLayer::OGRLayer()
     : m_poPrivate(new Private()), m_bFilterIsEnvelope(FALSE),
-      m_poFilterGeom(nullptr),
-      m_pPreparedFilterGeom(nullptr), m_sFilterEnvelope{},
-      m_iGeomFieldFilter(0), m_poStyleTable(nullptr), m_poAttrQuery(nullptr),
-      m_pszAttrQueryString(nullptr), m_poAttrIndex(nullptr), m_nRefCount(0),
-      m_nFeaturesRead(0)
+      m_poFilterGeom(nullptr), m_pPreparedFilterGeom(nullptr),
+      m_sFilterEnvelope{}, m_iGeomFieldFilter(0), m_poStyleTable(nullptr),
+      m_poAttrQuery(nullptr), m_pszAttrQueryString(nullptr),
+      m_poAttrIndex(nullptr), m_nRefCount(0), m_nFeaturesRead(0)
 {
 }
 
@@ -744,6 +743,8 @@ OGRErr OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
  @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
  current query.
 
+ @see GetAttrQueryString() to retrieve the currently installed query string.
+
  @return OGRERR_NONE if successfully installed, or an error code if the
  query expression is in error, or some other failure occurs.
  */
@@ -792,23 +793,31 @@ OGRErr OGRLayer::SetAttributeFilter(const char *pszQuery)
 /*                      ContainGeomSpecialField()                       */
 /************************************************************************/
 
-static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount)
+static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount,
+                                   int nLayerGeomFieldCount)
 {
     if (expr->eNodeType == SNT_COLUMN)
     {
         if (expr->table_index == 0 && expr->field_index != -1)
         {
             int nSpecialFieldIdx = expr->field_index - nLayerFieldCount;
-            return nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
-                   nSpecialFieldIdx == SPF_OGR_GEOM_AREA;
+            if (nSpecialFieldIdx == SPF_OGR_GEOMETRY ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_WKT ||
+                nSpecialFieldIdx == SPF_OGR_GEOM_AREA)
+                return TRUE;
+            int iFirstGeomField = nLayerFieldCount + SPECIAL_FIELD_COUNT;
+            if (expr->field_index >= iFirstGeomField &&
+                expr->field_index < iFirstGeomField + nLayerGeomFieldCount)
+                return TRUE;
+            return FALSE;
         }
     }
     else if (expr->eNodeType == SNT_OPERATION)
     {
         for (int i = 0; i < expr->nSubExprCount; i++)
         {
-            if (ContainGeomSpecialField(expr->papoSubExpr[i], nLayerFieldCount))
+            if (ContainGeomSpecialField(expr->papoSubExpr[i], nLayerFieldCount,
+                                        nLayerGeomFieldCount))
                 return TRUE;
         }
     }
@@ -827,9 +836,12 @@ int OGRLayer::AttributeFilterEvaluationNeedsGeometry()
 
     swq_expr_node *expr =
         static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
-    int nLayerFieldCount = GetLayerDefn()->GetFieldCount();
+    const auto poLayerDefn = GetLayerDefn();
+    int nLayerFieldCount = poLayerDefn->GetFieldCount();
+    int nLayerGeomFieldCount = poLayerDefn->GetGeomFieldCount();
 
-    return ContainGeomSpecialField(expr, nLayerFieldCount);
+    return ContainGeomSpecialField(expr, nLayerFieldCount,
+                                   nLayerGeomFieldCount);
 }
 
 //! @endcond
@@ -880,6 +892,29 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 #endif
 
     return OGRLayer::FromHandle(hLayer)->SetAttributeFilter(pszQuery);
+}
+
+/************************************************************************/
+/*                      OGR_L_GetAttributeFilter()                      */
+/************************************************************************/
+
+/**
+ * @brief Fetch the current attribute query string.
+ *
+ * This function is the same as the C++ method OGRLayer::GetAttrQueryString().
+ *
+ * @return the current attribute query string, or NULL if no attribute query is
+ * currently installed. The returned string is short lived and owned by the layer
+ * and should not be modified or freed by the caller.
+ *
+ * @see OGR_L_SetAttributeFilter() to set a new attribute query string.
+ * @since GDAL 3.13
+ */
+const char *OGR_L_GetAttributeFilter(OGRLayerH hLayer)
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_GetAttributeFilter", nullptr);
+
+    return OGRLayer::FromHandle(hLayer)->GetAttrQueryString();
 }
 
 /************************************************************************/
@@ -1195,10 +1230,8 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
     {
         // One time initialization
         m_poPrivate->m_bConvertGeomsIfNecessaryAlreadyCalled = true;
-        m_poPrivate->m_bSupportsCurve =
-            CPL_TO_BOOL(TestCapability(OLCCurveGeometries));
-        m_poPrivate->m_bSupportsM =
-            CPL_TO_BOOL(TestCapability(OLCMeasuredGeometries));
+        m_poPrivate->m_bSupportsCurve = TestCapability(OLCCurveGeometries);
+        m_poPrivate->m_bSupportsM = TestCapability(OLCMeasuredGeometries);
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_APPLY_GEOM_SET_PRECISION", "FALSE")))
         {
@@ -2059,7 +2092,7 @@ OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateField() not supported by this layer.\n");
+             "CreateField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2149,7 +2182,7 @@ OGRErr OGRLayer::DeleteField(int iField)
     (void)iField;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "DeleteField() not supported by this layer.\n");
+             "DeleteField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2239,7 +2272,7 @@ OGRErr OGRLayer::ReorderFields(int *panMap)
     (void)panMap;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "ReorderFields() not supported by this layer.\n");
+             "ReorderFields() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2474,7 +2507,7 @@ OGRErr OGRLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     (void)poNewFieldDefn;
     (void)nFlagsIn;
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterFieldDefn() not supported by this layer.\n");
+             "AlterFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2579,7 +2612,7 @@ OGRErr OGRLayer::AlterGeomFieldDefn(int iGeomField,
     (void)nFlagsIn;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterGeomFieldDefn() not supported by this layer.\n");
+             "AlterGeomFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2679,7 +2712,7 @@ OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateGeomField() not supported by this layer.\n");
+             "CreateGeomField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -3080,8 +3113,7 @@ const OGRSpatialReference *OGRLayer::GetSpatialRef() const
 {
     const auto poLayerDefn = GetLayerDefn();
     if (poLayerDefn->GetGeomFieldCount() > 0)
-        return const_cast<OGRSpatialReference *>(
-            poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef());
+        return poLayerDefn->GetGeomFieldDefn(0)->GetSpatialRef();
     else
         return nullptr;
 }
@@ -3121,7 +3153,7 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 /************************************************************************/
 
 /**
- \fn int OGRLayer::TestCapability( const char * pszCap ) const;
+ \fn bool OGRLayer::TestCapability( const char * pszCap ) const;
 
  \brief Test if this layer supported the named capability.
 
@@ -4061,9 +4093,10 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
                                  OGREnvelope &sEnvelope) const
 {
     OGRPreparedGeometry *pPreparedFilterGeom = m_pPreparedFilterGeom;
-    bool bRet = FilterWKBGeometry(
-        pabyWKB, nWKBSize, bEnvelopeAlreadySet, sEnvelope, m_poFilterGeom,
-        m_bFilterIsEnvelope, m_sFilterEnvelope, pPreparedFilterGeom);
+    bool bRet =
+        FilterWKBGeometry(pabyWKB, nWKBSize, bEnvelopeAlreadySet, sEnvelope,
+                          m_poFilterGeom, CPL_TO_BOOL(m_bFilterIsEnvelope),
+                          m_sFilterEnvelope, pPreparedFilterGeom);
     const_cast<OGRLayer *>(this)->m_pPreparedFilterGeom = pPreparedFilterGeom;
     return bRet;
 }
@@ -5266,15 +5299,37 @@ static OGRGeometry *set_filter_from(OGRLayer *pLayer,
     return geom;
 }
 
-static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
+static std::unique_ptr<OGRGeometry>
+promote_to_multi(std::unique_ptr<OGRGeometry> poGeom)
 {
     OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
     if (eType == wkbPoint)
-        return OGRGeometryFactory::forceToMultiPoint(poGeom);
+        return std::unique_ptr<OGRGeometry>(
+            OGRGeometryFactory::forceToMultiPoint(poGeom.release()));
     else if (eType == wkbPolygon)
-        return OGRGeometryFactory::forceToMultiPolygon(poGeom);
+        return std::unique_ptr<OGRGeometry>(
+            OGRGeometryFactory::forceToMultiPolygon(poGeom.release()));
     else if (eType == wkbLineString)
-        return OGRGeometryFactory::forceToMultiLineString(poGeom);
+        return std::unique_ptr<OGRGeometry>(
+            OGRGeometryFactory::forceToMultiLineString(poGeom.release()));
+    else
+        return poGeom;
+}
+
+static std::unique_ptr<OGRGeometry>
+convert_geometry(std::unique_ptr<OGRGeometry> poGeom, bool bPromoteToMulti,
+                 OGRwkbGeometryType eOutputGeometryType)
+{
+    if (eOutputGeometryType != wkbUnknown)
+    {
+        poGeom =
+            OGRGeometryFactory::forceTo(std::move(poGeom), eOutputGeometryType);
+        if (poGeom && poGeom->getGeometryType() != eOutputGeometryType)
+            return nullptr;
+        return poGeom;
+    }
+    else if (bPromoteToMulti)
+        return promote_to_multi(std::move(poGeom));
     else
         return poGeom;
 }
@@ -5311,6 +5366,11 @@ static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -5384,6 +5444,9 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CSLFetchNameValueDef(papszOptions, "PRETEST_CONTAINMENT", "NO"));
     bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -5498,7 +5561,7 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             OGRGeometry *y_geom = y->GetGeometryRef();
             if (!y_geom)
                 continue;
-            OGRGeometryUniquePtr z_geom;
+            std::unique_ptr<OGRGeometry> z_geom;
 
             if (x_prepared_geom)
             {
@@ -5564,8 +5627,10 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
             z->SetFieldsFrom(y.get(), mapMethod);
-            if (bPromoteToMulti)
-                z_geom.reset(promote_to_multi(z_geom.release()));
+            z_geom = convert_geometry(std::move(z_geom), bPromoteToMulti,
+                                      eOutputGeometryType);
+            if (!z_geom)
+                continue;
             z->SetGeometryDirectly(z_geom.release());
             ret = pLayerResult->CreateFeature(z.get());
 
@@ -5633,6 +5698,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -5735,6 +5805,11 @@ OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -5801,6 +5876,9 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
     bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -5891,7 +5969,7 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             }
         }
 
-        OGRGeometryUniquePtr x_geom_diff(
+        std::unique_ptr<OGRGeometry> x_geom_diff(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         for (auto &&y : pLayerMethod)
@@ -5927,7 +6005,8 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             }
 
             CPLErrorReset();
-            OGRGeometryUniquePtr poIntersection(x_geom->Intersection(y_geom));
+            std::unique_ptr<OGRGeometry> poIntersection(
+                x_geom->Intersection(y_geom));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr)
             {
                 if (!bSkipFailures)
@@ -5954,15 +6033,15 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                 OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
                 z->SetFieldsFrom(x.get(), mapInput);
                 z->SetFieldsFrom(y.get(), mapMethod);
-                if (bPromoteToMulti)
-                    poIntersection.reset(
-                        promote_to_multi(poIntersection.release()));
+                poIntersection =
+                    convert_geometry(std::move(poIntersection), bPromoteToMulti,
+                                     eOutputGeometryType);
                 z->SetGeometryDirectly(poIntersection.release());
 
                 if (x_geom_diff)
                 {
                     CPLErrorReset();
-                    OGRGeometryUniquePtr x_geom_diff_new(
+                    std::unique_ptr<OGRGeometry> x_geom_diff_new(
                         x_geom_diff->Difference(y_geom));
                     if (CPLGetLastErrorType() != CE_None ||
                         x_geom_diff_new == nullptr)
@@ -6008,8 +6087,10 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
-            if (bPromoteToMulti)
-                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            x_geom_diff = convert_geometry(
+                std::move(x_geom_diff), bPromoteToMulti, eOutputGeometryType);
+            if (!x_geom_diff)
+                continue;
             z->SetGeometryDirectly(x_geom_diff.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -6069,7 +6150,7 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr x_geom_diff(
+        std::unique_ptr<OGRGeometry> x_geom_diff(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         for (auto &&y : this)
@@ -6083,7 +6164,7 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             if (x_geom_diff)
             {
                 CPLErrorReset();
-                OGRGeometryUniquePtr x_geom_diff_new(
+                std::unique_ptr<OGRGeometry> x_geom_diff_new(
                     x_geom_diff->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None ||
                     x_geom_diff_new == nullptr)
@@ -6114,8 +6195,10 @@ OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapMethod);
-            if (bPromoteToMulti)
-                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            x_geom_diff = convert_geometry(
+                std::move(x_geom_diff), bPromoteToMulti, eOutputGeometryType);
+            if (!x_geom_diff)
+                continue;
             z->SetGeometryDirectly(x_geom_diff.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -6188,6 +6271,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -6282,6 +6370,11 @@ OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  * <li>PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons
  *     into MultiPolygons, or LineStrings to MultiLineStrings.
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -6334,6 +6427,9 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -6403,7 +6499,7 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr geom(
+        std::unique_ptr<OGRGeometry> geom(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         for (auto &&y : pLayerMethod)
@@ -6416,7 +6512,7 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             if (geom)
             {
                 CPLErrorReset();
-                OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
+                std::unique_ptr<OGRGeometry> geom_new(geom->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr)
                 {
                     if (!bSkipFailures)
@@ -6443,8 +6539,10 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
-            if (bPromoteToMulti)
-                geom.reset(promote_to_multi(geom.release()));
+            geom = convert_geometry(std::move(geom), bPromoteToMulti,
+                                    eOutputGeometryType);
+            if (!geom)
+                continue;
             z->SetGeometryDirectly(geom.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -6504,7 +6602,7 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr geom(
+        std::unique_ptr<OGRGeometry> geom(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         for (auto &&y : this)
@@ -6515,7 +6613,7 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             if (geom)
             {
                 CPLErrorReset();
-                OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
+                std::unique_ptr<OGRGeometry> geom_new(geom->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr)
                 {
                     if (!bSkipFailures)
@@ -6542,8 +6640,10 @@ OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapMethod);
-            if (bPromoteToMulti)
-                geom.reset(promote_to_multi(geom.release()));
+            geom = convert_geometry(std::move(geom), bPromoteToMulti,
+                                    eOutputGeometryType);
+            if (!geom)
+                continue;
             z->SetGeometryDirectly(geom.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -6616,6 +6716,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -6702,6 +6807,11 @@ OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -6765,6 +6875,9 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CSLFetchNameValueDef(papszOptions, "USE_PREPARED_GEOMETRIES", "YES"));
     bool bKeepLowerDimGeom = CPLTestBool(CSLFetchNameValueDef(
         papszOptions, "KEEP_LOWER_DIMENSION_GEOMETRIES", "YES"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -6852,7 +6965,7 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             }
         }
 
-        OGRGeometryUniquePtr x_geom_diff(
+        std::unique_ptr<OGRGeometry> x_geom_diff(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         for (auto &&y : pLayerMethod)
@@ -6886,7 +6999,8 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             }
 
             CPLErrorReset();
-            OGRGeometryUniquePtr poIntersection(x_geom->Intersection(y_geom));
+            std::unique_ptr<OGRGeometry> poIntersection(
+                x_geom->Intersection(y_geom));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr)
             {
                 if (!bSkipFailures)
@@ -6913,14 +7027,16 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                 OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
                 z->SetFieldsFrom(x.get(), mapInput);
                 z->SetFieldsFrom(y.get(), mapMethod);
-                if (bPromoteToMulti)
-                    poIntersection.reset(
-                        promote_to_multi(poIntersection.release()));
+                poIntersection =
+                    convert_geometry(std::move(poIntersection), bPromoteToMulti,
+                                     eOutputGeometryType);
+                if (!poIntersection)
+                    continue;
                 z->SetGeometryDirectly(poIntersection.release());
                 if (x_geom_diff)
                 {
                     CPLErrorReset();
-                    OGRGeometryUniquePtr x_geom_diff_new(
+                    std::unique_ptr<OGRGeometry> x_geom_diff_new(
                         x_geom_diff->Difference(y_geom));
                     if (CPLGetLastErrorType() != CE_None ||
                         x_geom_diff_new == nullptr)
@@ -6966,8 +7082,10 @@ OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
-            if (bPromoteToMulti)
-                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            x_geom_diff = convert_geometry(
+                std::move(x_geom_diff), bPromoteToMulti, eOutputGeometryType);
+            if (!x_geom_diff)
+                continue;
             z->SetGeometryDirectly(x_geom_diff.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -7035,6 +7153,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -7130,6 +7253,11 @@ OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -7181,6 +7309,9 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -7247,7 +7378,7 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr x_geom_diff(
+        std::unique_ptr<OGRGeometry> x_geom_diff(
             x_geom->clone());  // this will be the geometry of a result feature
         for (auto &&y : pLayerMethod)
         {
@@ -7257,7 +7388,7 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             if (x_geom_diff)
             {
                 CPLErrorReset();
-                OGRGeometryUniquePtr x_geom_diff_new(
+                std::unique_ptr<OGRGeometry> x_geom_diff_new(
                     x_geom_diff->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None ||
                     x_geom_diff_new == nullptr)
@@ -7288,8 +7419,10 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
-            if (bPromoteToMulti)
-                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            x_geom_diff = convert_geometry(
+                std::move(x_geom_diff), bPromoteToMulti, eOutputGeometryType);
+            if (!x_geom_diff)
+                continue;
             z->SetGeometryDirectly(x_geom_diff.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -7327,13 +7460,17 @@ OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             progress_counter += 1.0;
         }
 
-        OGRGeometry *y_geom = y->StealGeometry();
+        std::unique_ptr<OGRGeometry> y_geom(y->StealGeometry());
+        if (!y_geom)
+            continue;
+        y_geom = convert_geometry(std::move(y_geom), bPromoteToMulti,
+                                  eOutputGeometryType);
         if (!y_geom)
             continue;
         OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
         if (mapMethod)
             z->SetFieldsFrom(y.get(), mapMethod);
-        z->SetGeometryDirectly(y_geom);
+        z->SetGeometryDirectly(y_geom.release());
         ret = pLayerResult->CreateFeature(z.get());
         if (ret != OGRERR_NONE)
         {
@@ -7401,6 +7538,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -7479,6 +7621,11 @@ OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -7526,6 +7673,9 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -7587,7 +7737,7 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr
+        std::unique_ptr<OGRGeometry>
             geom;  // this will be the geometry of the result feature
         // incrementally add area from y to geom
         for (auto &&y : pLayerMethod)
@@ -7602,7 +7752,7 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             else
             {
                 CPLErrorReset();
-                OGRGeometryUniquePtr geom_new(geom->Union(y_geom));
+                std::unique_ptr<OGRGeometry> geom_new(geom->Union(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr)
                 {
                     if (!bSkipFailures)
@@ -7627,7 +7777,7 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         if (geom)
         {
             CPLErrorReset();
-            OGRGeometryUniquePtr poIntersection(
+            std::unique_ptr<OGRGeometry> poIntersection(
                 x_geom->Intersection(geom.get()));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr)
             {
@@ -7646,9 +7796,11 @@ OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             {
                 OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
                 z->SetFieldsFrom(x.get(), mapInput);
-                if (bPromoteToMulti)
-                    poIntersection.reset(
-                        promote_to_multi(poIntersection.release()));
+                poIntersection =
+                    convert_geometry(std::move(poIntersection), bPromoteToMulti,
+                                     eOutputGeometryType);
+                if (!poIntersection)
+                    continue;
                 z->SetGeometryDirectly(poIntersection.release());
                 ret = pLayerResult->CreateFeature(z.get());
                 if (ret != OGRERR_NONE)
@@ -7710,6 +7862,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
@@ -7788,6 +7945,11 @@ OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
  * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
+ * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.
  * </li>
@@ -7835,6 +7997,9 @@ OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SKIP_FAILURES", "NO"));
     const bool bPromoteToMulti = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "PROMOTE_TO_MULTI", "NO"));
+    const char *pszOutputGeometryType =
+        CSLFetchNameValueDef(papszOptions, "OUTPUT_GEOMETRY_TYPE", "GEOMETRY");
+    const auto eOutputGeometryType = OGRFromOGCGeomType(pszOutputGeometryType);
 
     // check for GEOS
     if (!OGRGeometryFactory::haveGEOS())
@@ -7897,7 +8062,7 @@ OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             continue;
         }
 
-        OGRGeometryUniquePtr geom(
+        std::unique_ptr<OGRGeometry> geom(
             x_geom
                 ->clone());  // this will be the geometry of the result feature
         // incrementally erase y from geom
@@ -7907,7 +8072,7 @@ OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
             if (!y_geom)
                 continue;
             CPLErrorReset();
-            OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
+            std::unique_ptr<OGRGeometry> geom_new(geom->Difference(y_geom));
             if (CPLGetLastErrorType() != CE_None || geom_new == nullptr)
             {
                 if (!bSkipFailures)
@@ -7936,8 +8101,10 @@ OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
         {
             OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
             z->SetFieldsFrom(x.get(), mapInput);
-            if (bPromoteToMulti)
-                geom.reset(promote_to_multi(geom.release()));
+            geom = convert_geometry(std::move(geom), bPromoteToMulti,
+                                    eOutputGeometryType);
+            if (!geom)
+                continue;
             z->SetGeometryDirectly(geom.release());
             ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE)
@@ -7998,6 +8165,11 @@ done:
  * <li>PROMOTE_TO_MULTI=YES/NO. Set to YES to convert Polygons
  *     into MultiPolygons, LineStrings to MultiLineStrings or
  *     Points to MultiPoints (only since GDAL 3.9.2 for the later)
+ * </li>
+ * <li>OUTPUT_GEOMETRY_TYPE=[MULTI]POINT/[MULTI]LINESTRING/[MULTI]POLYGON/GEOMETRYCOLLECTION/GEOMETRY
+ *     Output geometry type (since GDAL 3.14.0). If the output geometry cannot
+ *     be converted to it, the corresponding output feature is silently skipped.
+ *     Takes precedence over PROMOTE_TO_MULTI.
  * </li>
  * <li>INPUT_PREFIX=string. Set a prefix for the field names that
  *     will be created from the fields of the input layer.

@@ -10,7 +10,7 @@ JSONFG -- OGC Features and Geometries JSON
 .. built_in_by_default::
 
 This driver implements read/write support for access to features encoded
-in `OGC Features and Geometries JSON - Part 1: Core <https://docs.ogc.org/DRAFTS/21-045.html>`__ format.
+in `OGC Features and Geometries JSON - Part 1: Core <https://docs.ogc.org/is/21-045r1/21-045r1.html>`__ format.
 
 JSON-FG is a set of extensions over the :ref:`GeoJSON<vector.geojson>` format.
 
@@ -283,5 +283,5 @@ Example:
 See Also
 --------
 
--  `OGC Features and Geometries JSON - Part 1: Core <https://docs.ogc.org/DRAFTS/21-045.html>`__
+-  `OGC Features and Geometries JSON - Part 1: Core <https://docs.ogc.org/is/21-045r1/21-045r1.html>`__
 -  :ref:`GeoJSON driver <vector.geojson>`

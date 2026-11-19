@@ -11,6 +11,7 @@
 
 #include "gdal_minmax_element.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <random>
 
@@ -48,8 +49,7 @@ template <class T>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-benchIntegers(GDALDataType eDT, T noData)
+static void benchIntegers(GDALDataType eDT, T noData)
 {
     std::vector<T> x;
     x.resize(SIZE);
@@ -109,7 +109,8 @@ benchIntegers(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::min_element(x.begin(), x.end(),
-                                            [noData](T a, T b) {
+                                            [noData](T a, T b)
+                                            {
                                                 return b == noData   ? true
                                                        : a == noData ? false
                                                                      : a < b;
@@ -179,7 +180,8 @@ benchIntegers(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::max_element(x.begin(), x.end(),
-                                            [noData](T a, T b) {
+                                            [noData](T a, T b)
+                                            {
                                                 return a == noData   ? true
                                                        : b == noData ? false
                                                                      : a < b;
@@ -200,8 +202,7 @@ template <class T>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
+static void benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
 {
     std::vector<T> x;
     x.resize(SIZE);
@@ -230,7 +231,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::min_element(x.begin(), x.end(),
-                                            [](T a, T b) {
+                                            [](T a, T b)
+                                            {
                                                 return CPLIsNan(b)   ? true
                                                        : CPLIsNan(a) ? false
                                                                      : a < b;
@@ -309,7 +311,8 @@ benchFloatingPointsWithNaN(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::max_element(x.begin(), x.end(),
-                                            [](T a, T b) {
+                                            [](T a, T b)
+                                            {
                                                 return CPLIsNan(a)   ? true
                                                        : CPLIsNan(b) ? false
                                                                      : a < b;
@@ -371,8 +374,7 @@ template <class T>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
+static void benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
 {
     std::vector<T> x;
     x.resize(SIZE);
@@ -433,7 +435,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::min_element(x.begin(), x.end(),
-                                            [noData](T a, T b) {
+                                            [noData](T a, T b)
+                                            {
                                                 return b == noData   ? true
                                                        : a == noData ? false
                                                                      : a < b;
@@ -503,7 +506,8 @@ benchFloatingPointsWithoutNaN(GDALDataType eDT, T noData)
         {
             idx += static_cast<int>(std::distance(
                 x.begin(), std::max_element(x.begin(), x.end(),
-                                            [noData](T a, T b) {
+                                            [noData](T a, T b)
+                                            {
                                                 return a == noData   ? true
                                                        : b == noData ? false
                                                                      : a < b;

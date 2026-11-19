@@ -42,6 +42,11 @@ of the partitioned Parquet files and the path to them.
 This program is automatically called by :ref:`gdal_vector_partition` for a Parquet
 output.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

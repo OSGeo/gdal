@@ -182,7 +182,7 @@ MAIN_START(nArgc, papszArgv)
     if (!osSrcSRSFormat.empty())
         alg["source-crs-format"] = osSrcSRSFormat;
     if (!osTargetSRS.empty())
-        alg["dst-crs"] = osTargetSRS;
+        alg["output-crs"] = osTargetSRS;
     alg["accept-different-schemas"] = bAcceptDifferentSchemas;
     if (bSkipDifferentProjection)
         alg["skip-different-crs"] = bSkipDifferentProjection;

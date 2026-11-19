@@ -24,6 +24,7 @@ import socket
 import stat
 import subprocess
 import sys
+import tempfile as tmpfile
 import time
 import urllib.error
 import urllib.parse
@@ -40,25 +41,28 @@ jpeg2000_drv = None
 jp2ecw_drv = None
 jp2mrsid_drv = None
 jp2openjpeg_drv = None
+jp2grok_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
+jp2grok_drv_unregistered = False
+
+# Temporary directory for caching test data
+# This is used as a default location for caching test data by file_download() and similar functions.
+gdaltest_download_base_dir = None
 
 ###############################################################################
+#
+# Creates (if not exists) and return a temporary directory for caching test data
 
 
-def clean_tmp():
-    all_files = os.listdir("tmp")
-    for filename in all_files:
-        if filename in ["CVS", "do-not-remove"]:
-            continue
-
-        try:
-            os.remove("tmp/" + filename)
-        except OSError:
-            pass
+def get_cache_dir():
+    global gdaltest_download_base_dir
+    if gdaltest_download_base_dir is None:
+        gdaltest_download_base_dir = tmpfile.mkdtemp(suffix="gdaltest")
+    return gdaltest_download_base_dir
 
 
 ###############################################################################
@@ -116,7 +120,8 @@ class GDALTest:
         self.open_options = open_options
 
         if tmpdir is None:
-            self.tmpdir = "tmp/"
+            # TODO: make tmpdir a required argument
+            self.tmpdir = tmpfile.gettempdir()
         else:
             self.tmpdir = tmpdir
 
@@ -150,12 +155,11 @@ class GDALTest:
         else:
             wrk_filename = "data/" + self.filename
 
-        if self.open_options:
-            ds = gdal.OpenEx(
-                wrk_filename, gdal.OF_RASTER, open_options=self.open_options
-            )
-        else:
-            ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+        ds = gdal.Open(
+            wrk_filename,
+            gdal.OF_RASTER,
+            open_options=self.open_options if self.open_options else [],
+        )
 
         assert ds is not None, "Failed to open dataset: " + wrk_filename
 
@@ -206,7 +210,11 @@ class GDALTest:
                 main_virtual_filename = "/vsimem/tmp_testOpen/" + os.path.basename(
                     fl[0]
                 )
-                virtual_ds = gdal.Open(main_virtual_filename)
+                virtual_ds = gdal.Open(
+                    main_virtual_filename,
+                    gdal.OF_RASTER,
+                    open_options=self.open_options if self.open_options else [],
+                )
                 virtual_ds_is_None = virtual_ds is None
                 virtual_ds = None
 
@@ -236,8 +244,10 @@ class GDALTest:
                         drivers += [drv_name]
                 other_ds = None
                 with gdal.ExceptionMgr(useExceptions=False):
-                    other_ds = gdal.OpenEx(
-                        main_virtual_filename, gdal.OF_RASTER, allowed_drivers=drivers
+                    other_ds = gdal.Open(
+                        main_virtual_filename,
+                        gdal.OF_RASTER | gdal.OF_SILENT_ERROR,
+                        allowed_drivers=drivers,
                     )
                 other_ds_is_None = other_ds is None
                 other_ds_driver_name = None
@@ -385,11 +395,11 @@ class GDALTest:
             wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         if self.band > 0:
             minmax = src_ds.GetRasterBand(self.band).ComputeRasterMinMax()
@@ -467,11 +477,11 @@ class GDALTest:
         # hopefully it's closed now!
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(
+            new_ds = gdal.Open(
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         if self.band > 0:
@@ -569,11 +579,11 @@ class GDALTest:
             wrk_filename = "data/" + self.filename
 
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -625,11 +635,11 @@ class GDALTest:
         new_ds = None
 
         if dest_open_options is not None:
-            new_ds = gdal.OpenEx(
+            new_ds = gdal.Open(
                 new_filename, gdal.OF_RASTER, open_options=dest_open_options
             )
         else:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         for band in range(1, out_bands + 1):
@@ -658,11 +668,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -688,7 +698,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         eps = 0.00000001
@@ -716,11 +726,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -754,7 +764,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         expected_osr = osr.SpatialReference()
@@ -782,11 +792,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -833,11 +843,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -870,9 +880,9 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            mode = gdal.GA_Update
+            mode = gdal.OF_RASTER | gdal.OF_UPDATE
         else:
-            mode = gdal.GA_ReadOnly
+            mode = gdal.OF_RASTER
         new_ds = gdal.Open(new_filename, mode)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
@@ -888,7 +898,7 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            new_ds = gdal.Open(new_filename)
+            new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
             assert (
                 new_ds.GetRasterBand(1).GetNoDataValue() is None
             ), "Got nodata value whereas none was expected"
@@ -905,11 +915,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -933,7 +943,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         assert (
@@ -950,11 +960,11 @@ class GDALTest:
 
         wrk_filename = "data/" + self.filename
         if self.open_options:
-            src_ds = gdal.OpenEx(
+            src_ds = gdal.Open(
                 wrk_filename, gdal.OF_RASTER, open_options=self.open_options
             )
         else:
-            src_ds = gdal.Open(wrk_filename, gdal.GA_ReadOnly)
+            src_ds = gdal.Open(wrk_filename, gdal.OF_RASTER)
 
         xsize = src_ds.RasterXSize
         ysize = src_ds.RasterYSize
@@ -980,7 +990,7 @@ class GDALTest:
         src_ds = None
         new_ds = None
 
-        new_ds = gdal.Open(new_filename)
+        new_ds = gdal.Open(new_filename, gdal.OF_RASTER)
         assert new_ds is not None, "Failed to open dataset: " + new_filename
 
         new_unit = new_ds.GetRasterBand(1).GetUnitType()
@@ -1090,11 +1100,11 @@ def check_geotransform(gt1, gt2, gt_epsilon):
 
 
 ###############################################################################
-# Download file at url 'url' and put it as 'filename' in 'tmp/cache/'
+# Download file at url 'url' and put it as 'filename' in the cache dir (see get_cache_dir())
 #
-# If 'filename' already exits in 'tmp/cache/', it is not downloaded
+# If 'filename' already exists in the cache dir, it is not downloaded
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
-# If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
+# If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded as 'filename' in the cache dir
 
 
 def download_file(
@@ -1103,9 +1113,12 @@ def download_file(
     download_size=-1,
     force_download=False,
     max_download_duration=None,
-    base_dir="tmp/cache",
+    base_dir=None,
     chunk_size=1024,
 ):
+
+    if base_dir is None:
+        base_dir = get_cache_dir()
 
     if filename is None:
         filename = os.path.basename(url)
@@ -1275,8 +1288,8 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 
 
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2grok_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2grok_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
@@ -1310,6 +1323,12 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
         jp2openjpeg_drv.Deregister()
         jp2openjpeg_drv_unregistered = True
 
+    jp2grok_drv = gdal.GetDriverByName("JP2Grok")
+    if name_of_driver_to_keep != "JP2Grok" and jp2grok_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2Grok")
+        jp2grok_drv.Deregister()
+        jp2grok_drv_unregistered = True
+
     return True
 
 
@@ -1319,8 +1338,8 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
+
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2grok_drv_unregistered
 
     if jp2kak_drv_unregistered:
         jp2kak_drv.Register()
@@ -1347,6 +1366,11 @@ def reregister_all_jpeg2000_drivers():
         jp2openjpeg_drv_unregistered = False
         gdal.Debug("gdaltest", "Registering JP2OpenJPEG")
 
+    if jp2grok_drv_unregistered:
+        jp2grok_drv.Register()
+        jp2grok_drv_unregistered = False
+        gdal.Debug("gdaltest", "Registering JP2Grok")
+
     return True
 
 
@@ -1362,7 +1386,7 @@ def filesystem_supports_sparse_files(path):
         return False
 
     try:
-        (ret, err) = runexternal_out_and_err(f'stat -f -c "%T" {path}')
+        ret, err = runexternal_out_and_err(f'stat -f -c "%T" {path}')
     except OSError:
         return False
 
@@ -1839,7 +1863,7 @@ credential_keys = set()
 
 @contextlib.contextmanager
 def credentials(prefix, options):
-    global credential_keys
+
     # Special processing for nested with credentials() call on the same key
     clear_credentials = prefix not in credential_keys
     credential_keys.add(prefix)
@@ -1922,6 +1946,10 @@ def gdalurlopen(url, timeout=10):
         print(f"HTTP service for {url} timed out")
         socket.setdefaulttimeout(old_timeout)
         return None
+    except ConnectionResetError as e:
+        print(f"HTTP service for {url} is not available: ConnectionResetError : {e}")
+        socket.setdefaulttimeout(old_timeout)
+        return None
     except http.client.RemoteDisconnected as e:
         print(f"HTTP service for {url} is not available: RemoteDisconnected : {e}")
         socket.setdefaulttimeout(old_timeout)
@@ -1940,6 +1968,8 @@ def runexternal(
         command = cmd
     else:
         command = shlex.split(cmd)
+        if cmd.endswith('STRIP-ME"'):
+            command[-1] = '"' + command[-1][0 : -len("STRIP-ME")]
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:
@@ -1975,7 +2005,12 @@ def _read_in_thread(f, q):
 
 
 def runexternal_out_and_err(
-    cmd, check_memleak=True, encoding="ascii", stdin=None, close_stdin=False
+    cmd,
+    check_memleak=True,
+    encoding="ascii",
+    stdin=None,
+    close_stdin=False,
+    append_returncode_to_stderr=False,
 ):
     # pylint: disable=unused-argument
     if sys.platform == "win32":
@@ -2013,6 +2048,9 @@ def runexternal_out_and_err(
     waitcode = p.wait()
     if waitcode != 0:
         ret_stderr = f"{ret_stderr}\nERROR ret code = {waitcode}"
+
+    if append_returncode_to_stderr:
+        ret_stderr = f"{ret_stderr}\nReturn code = {p.returncode}"
 
     return (ret_stdout, ret_stderr)
 
@@ -2065,17 +2103,20 @@ def validate_json(jsn, schema):
 
         def retrieve_remote_file(uri: str):
             if not uri.startswith("http://") and not uri.startswith("https://"):
-                raise Exception(f"Cannot retrieve {uri}")
-            os.makedirs("tmp/cache", exist_ok=True)
-            filename = "tmp/cache/" + os.path.basename(uri)
+                raise ConnectionError(f"Cannot retrieve {uri}")
+            tmp_dir = get_cache_dir()
+            filename = tmp_dir + "/" + os.path.basename(uri)
             if not download_file(uri, filename=filename, force_download=True):
-                raise Exception(f"Cannot download {uri}")
+                raise ConnectionError(f"Cannot download {uri}")
             response = open(filename, "rb").read()
             return Resource.from_contents(json.loads(response))
 
-        registry = Registry(retrieve=retrieve_remote_file)
-        validator_cls = jsonschema.validators.validator_for(schema)
-        validator_cls(schema, registry=registry).validate(jsn)
+        try:
+            registry = Registry(retrieve=retrieve_remote_file)
+            validator_cls = jsonschema.validators.validator_for(schema)
+            validator_cls(schema, registry=registry).validate(jsn)
+        except ConnectionError as e:
+            pytest.skip(str(e))
 
     else:
         # jsonschema < 4.18
@@ -2103,7 +2144,7 @@ def reopen(ds, update=False, open_options=None):
     if open_options is None:
         open_options = {}
 
-    return gdal.OpenEx(
+    return gdal.Open(
         ds_loc,
         flags,
         allowed_drivers=[ds_drv.GetDescription()],
@@ -2151,7 +2192,7 @@ def error_raised(type, match=""):
     else:
         assert any(
             [err["level"] == type and match in err["message"] for err in errors]
-        ), f'Did not receive an error of type {err_levels[type]} matching "{match}. Received: {received}'
+        ), f'Did not receive an error of type {err_levels[type]} matching "{match}". Received: {received}'
 
 
 ###############################################################################
@@ -2166,11 +2207,15 @@ def gdal_has_vrt_expression_dialect(dialect):
 ###############################################################################
 
 
-def importorskip_gdal_array():
+def importorskip(lib):
     pytest_version = [int(x) for x in pytest.__version__.split(".")]
     if pytest_version >= [8, 2, 0]:
-        return pytest.importorskip("osgeo.gdal_array", exc_type=ImportError)
-    return pytest.importorskip("osgeo.gdal_array")
+        return pytest.importorskip(lib, exc_type=ImportError)
+    return pytest.importorskip(lib)
+
+
+def importorskip_gdal_array():
+    return importorskip("osgeo.gdal_array")
 
 
 ###############################################################################
@@ -2202,3 +2247,91 @@ def wkt_ds(wkts, *, geom_type=None, epsg=None):
         lyr.CreateFeature(f)
 
     return ds
+
+
+###############################################################################
+# Run cmd_line, which must be 'gdal completion' + arguments, and return its
+# output parsed as a list
+
+
+def run_and_parse_completion_output(cmd_line):
+    res = runexternal(cmd_line)
+    sep = "\r\n" if "\r\n" in res else "\n"
+    if res and res.endswith(sep):
+        res = res[0 : -len(sep)]
+    return res.split(sep)
+
+
+###############################################################################
+#
+
+
+def algorithm_check_ogrsf(alg, tmp_path):
+
+    if gdal.GetDriverByName("GDALG") is None:
+        pytest.skip("requires GDALG driver")
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip("test_ogrsf not available")
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+
+    alg["output"] = gdalg_filename
+    alg["output-format"] = "GDALG"
+
+    assert alg.Run()
+
+    gdalg_contents = json.load(open(gdalg_filename))
+    gdalg_contents["relative_paths_relative_to_this_file"] = False
+    json.dump(gdalg_contents, open(gdalg_filename, "w"))
+
+    ret = runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
+
+
+###############################################################################
+#
+@contextlib.contextmanager
+def set_cpl_tmpdir(tmp_path_factory, subdir_name):
+    """Yield after having created a temporary directory subdir_name in the
+    pytest tmp_path one, and set CPL_TMPDIR to that path."""
+
+    tmpdir = tmp_path_factory.mktemp(subdir_name)
+    with gdal.config_option("CPL_TMPDIR", tmpdir):
+        yield
+
+
+###############################################################################
+# Decorator / context manager for skipping tests that fail due to network problems
+
+
+@contextlib.contextmanager
+def skip_on_network_error():
+
+    assert (
+        gdal.GetUseExceptions()
+    ), "gdaltest.skip_on_network_error requires exceptions to be enabled"
+
+    try:
+        yield
+    except ConnectionResetError as e:
+        pytest.skip(str(e))
+    except Exception as e:
+        if (
+            "Connection reset by peer" in str(e)
+            or "Connection timed out" in str(e)
+            or "Connection timeout" in str(e)
+            or "Could not resolve host" in str(e)
+            or "Bad gateway" in str(e)
+            or "Gateway Time-out" in str(e)
+        ):
+            pytest.skip(str(e))
+        else:
+            raise

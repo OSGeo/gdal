@@ -309,6 +309,9 @@ struct GDALTranslateOptions
     /*! set to true to prevent overwriting existing dataset */
     bool bNoOverwrite = false;
 
+    /*! set to true to customize error messages when called from "new" (GDAL 3.11) CLI or Algorithm API */
+    bool bInvokedFromGdalAlgorithm = false;
+
     GDALTranslateOptions() = default;
     GDALTranslateOptions(const GDALTranslateOptions &) = default;
     GDALTranslateOptions &operator=(const GDALTranslateOptions &) = delete;
@@ -909,14 +912,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         GDALGeoTransform gt;
         poSrcDS->GetGeoTransform(gt);
 
-        if (gt[1] == 0.0 || gt[5] == 0.0)
+        if (gt.xscale == 0.0 || gt.yscale == 0.0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is "
                      "invalid.");
             return nullptr;
         }
-        if (gt[2] != 0.0 || gt[4] != 0.0)
+        if (!gt.IsAxisAligned())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is\n"
@@ -971,8 +974,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfULX = psOptions->dfULX;
         double dfULY = psOptions->dfULY;
 
-        psOptions->srcWin.dfXOff = (dfULX - gt[0]) / gt[1];
-        psOptions->srcWin.dfYOff = (dfULY - gt[3]) / gt[5];
+        psOptions->srcWin.dfXOff = (dfULX - gt.xorig) / gt.xscale;
+        psOptions->srcWin.dfYOff = (dfULY - gt.yorig) / gt.yscale;
 
         // In case of nearest resampling, round to integer pixels (#6610)
         if (bAlignToInputPixels)
@@ -982,15 +985,15 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->srcWin.dfYOff =
                 std::floor(psOptions->srcWin.dfYOff + 0.001);  // yoff
 
-            dfULX = psOptions->srcWin.dfXOff * gt[1] + gt[0];
-            dfULY = psOptions->srcWin.dfYOff * gt[5] + gt[3];
+            dfULX = psOptions->srcWin.dfXOff * gt.xscale + gt.xorig;
+            dfULY = psOptions->srcWin.dfYOff * gt.yscale + gt.yorig;
         }
 
         // Calculate xsize and ysize based on the (possibly snapped) ULX, ULY
         psOptions->srcWin.dfXSize =
-            (psOptions->dfLRX - dfULX) / gt[1];  // xsize
+            (psOptions->dfLRX - dfULX) / gt.xscale;  // xsize
         psOptions->srcWin.dfYSize =
-            (psOptions->dfLRY - dfULY) / gt[5];  // ysize
+            (psOptions->dfLRY - dfULY) / gt.yscale;  // ysize
 
         if (bAlignToInputPixels)
         {
@@ -999,14 +1002,6 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->srcWin.dfYSize =
                 std::ceil(psOptions->srcWin.dfYSize - 0.001);
         }
-
-        /*if( !bQuiet )
-            fprintf( stdout,
-                     "Computed -srcwin %g %g %g %g from projected window.\n",
-                     srcWin.dfXOff,
-                     srcWin.dfYOff,
-                     srcWin.dfXSize,
-                     srcWin.dfYSize ); */
     }
 
     /* -------------------------------------------------------------------- */
@@ -1015,15 +1010,15 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     if (poSrcDS->GetRasterXSize() != 0 && poSrcDS->GetRasterYSize() != 0 &&
         (psOptions->srcWin.dfXSize <= 0 || psOptions->srcWin.dfYSize <= 0))
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "Error: %s-srcwin %g %g %g %g has negative width and/or height.",
-            (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
-             psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
-                ? "Computed "
-                : "",
-            psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
-            psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error: %ssource window (x,y)=(%g,%g), (width,height)=(%g,%g) "
+                 "has negative width and/or height.",
+                 (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
+                  psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
+                     ? "Computed "
+                     : "",
+                 psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
+                 psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize);
         return nullptr;
     }
 
@@ -1049,18 +1044,21 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         {
             CPLErr eErr = bIsError ? CE_Failure : CE_Warning;
 
-            CPLError(eErr, CPLE_AppDefined,
-                     "%s-srcwin %g %g %g %g falls %s outside source raster "
-                     "extent.%s",
-                     (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
-                      psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
-                         ? "Computed "
-                         : "",
-                     psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
-                     psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
-                     bCompletelyOutside ? "completely" : "partially",
-                     bIsError
-                         ? ""
+            CPLError(
+                eErr, CPLE_AppDefined,
+                "%ssource window %g %g %g %g falls %s outside source raster "
+                "extent.%s",
+                (psOptions->dfULX != 0.0 || psOptions->dfULY != 0.0 ||
+                 psOptions->dfLRX != 0.0 || psOptions->dfLRY != 0.0)
+                    ? "Computed "
+                    : "",
+                psOptions->srcWin.dfXOff, psOptions->srcWin.dfYOff,
+                psOptions->srcWin.dfXSize, psOptions->srcWin.dfYSize,
+                bCompletelyOutside ? "completely" : "partially",
+                bIsError ? (psOptions->bInvokedFromGdalAlgorithm
+                                ? " You can allow this by setting "
+                                  "--allow-bbox-outside-source."
+                                : "")
                          : " Pixels outside the source raster extent will be "
                            "set to the NoData value (if defined), or zero.");
         }
@@ -1260,7 +1258,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 double dfMin, dfMax, dfMean, dfStdDev;
                 poSrcDS->GetRasterBand(i + 1)->ComputeStatistics(
                     psOptions->bApproxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                    GDALDummyProgress, nullptr);
+                    GDALDummyProgress, nullptr, nullptr);
             }
         }
 
@@ -1758,17 +1756,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          psOptions->aosDomainMetadataOptions);
 
     const char *pszInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave)
-        poVDS->SetMetadataItem("INTERLEAVE", pszInterleave, "IMAGE_STRUCTURE");
+        poVDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
+                               GDAL_MDD_IMAGE_STRUCTURE);
 
     {
-        const char *pszCompression =
-            poSrcDS->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcDS->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVDS->SetMetadataItem("COMPRESSION", pszCompression,
-                                   "IMAGE_STRUCTURE");
+            poVDS->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                   GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -1826,17 +1825,17 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        CSLConstList papszMD = poSrcDS->GetMetadata("RPC");
+        CSLConstList papszMD = poSrcDS->GetMetadata(GDAL_MDD_RPC);
         if (papszMD != nullptr)
-            poVDS->SetMetadata(papszMD, "RPC");
+            poVDS->SetMetadata(papszMD, GDAL_MDD_RPC);
 
-        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION);
         if (papszMD != nullptr)
-            poVDS->SetMetadata(papszMD, "GEOLOCATION");
+            poVDS->SetMetadata(papszMD, GDAL_MDD_GEOLOCATION);
     }
     else
     {
-        CPLStringList aosMD(poSrcDSOri->GetMetadata("RPC"));
+        CPLStringList aosMD(poSrcDSOri->GetMetadata(GDAL_MDD_RPC));
         if (!aosMD.empty())
         {
             double dfSAMP_OFF =
@@ -1885,7 +1884,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             osField.Printf("%.15g", dfSAMP_SCALE);
             aosMD.SetNameValue("SAMP_SCALE", osField);
 
-            poVDS->SetMetadata(aosMD.List(), "RPC");
+            poVDS->SetMetadata(aosMD.List(), GDAL_MDD_RPC);
         }
     }
 
@@ -2040,11 +2039,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 pszMin != nullptr && pszMax != nullptr)
             {
                 const bool bSrcIsInteger =
-                    CPL_TO_BOOL(GDALDataTypeIsInteger(eSrcBandType) &&
-                                !GDALDataTypeIsComplex(eSrcBandType));
+                    CPL_TO_BOOL(GDALDataTypeIsInteger(eSrcBandType)) &&
+                    !CPL_TO_BOOL(GDALDataTypeIsComplex(eSrcBandType));
                 const bool bDstIsInteger =
-                    CPL_TO_BOOL(GDALDataTypeIsInteger(eBandType) &&
-                                !GDALDataTypeIsComplex(eBandType));
+                    CPL_TO_BOOL(GDALDataTypeIsInteger(eBandType)) &&
+                    !CPL_TO_BOOL(GDALDataTypeIsComplex(eBandType));
                 if (bSrcIsInteger && bDstIsInteger)
                 {
                     std::int64_t nDstMin = 0;
@@ -2165,13 +2164,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
 
         // Preserve NBITS if no option change values
         const char *pszNBits =
-            poSrcBand->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
+            poSrcBand->GetMetadataItem(GDALMD_NBITS, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszNBits && psOptions->nRGBExpand == 0 &&
             psOptions->asScaleParams.empty() && !psOptions->bUnscale &&
             psOptions->eOutputType == GDT_Unknown &&
             psOptions->osResampling.empty())
         {
-            poVRTBand->SetMetadataItem("NBITS", pszNBits, "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_NBITS, pszNBits,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         // Preserve PIXELTYPE if no option change values
@@ -2181,22 +2181,22 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->osResampling.empty())
         {
             poSrcBand->EnablePixelTypeSignedByteWarning(false);
-            const char *pszPixelType =
-                poSrcBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+            const char *pszPixelType = poSrcBand->GetMetadataItem(
+                "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
             poSrcBand->EnablePixelTypeSignedByteWarning(true);
             if (pszPixelType)
             {
                 poVRTBand->SetMetadataItem("PIXELTYPE", pszPixelType,
-                                           "IMAGE_STRUCTURE");
+                                           GDAL_MDD_IMAGE_STRUCTURE);
             }
         }
 
-        const char *pszCompression =
-            poSrcBand->GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE");
+        const char *pszCompression = poSrcBand->GetMetadataItem(
+            GDALMD_COMPRESSION, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszCompression)
         {
-            poVRTBand->SetMetadataItem("COMPRESSION", pszCompression,
-                                       "IMAGE_STRUCTURE");
+            poVRTBand->SetMetadataItem(GDALMD_COMPRESSION, pszCompression,
+                                       GDAL_MDD_IMAGE_STRUCTURE);
         }
 
         /* --------------------------------------------------------------------
@@ -2340,7 +2340,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 }
             }
 
-            if (!bExponentScaling)
+            if (!bExponentScaling || dfExponent == 1)
             {
                 dfScale = (dfScaleDstMax - dfScaleDstMin) /
                           (dfScaleSrcMax - dfScaleSrcMin);
@@ -2354,33 +2354,44 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             dfOffset = poSrcBand->GetOffset();
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Create a simple or complex data source depending on the */
-        /*      translation type required. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      Create a simple or complex data source depending on the       */
+        /*      translation type required.                                    */
+        /* ------------------------------------------------------------------ */
         std::unique_ptr<VRTSimpleSource> poSimpleSource;
         if (psOptions->bUnscale || bScale ||
             (psOptions->nRGBExpand != 0 && i < psOptions->nRGBExpand))
         {
             auto poComplexSource = std::make_unique<VRTComplexSource>();
 
-            /* --------------------------------------------------------------------
-             */
-            /*      Set complex parameters. */
-            /* --------------------------------------------------------------------
-             */
+            /* -------------------------------------------------------------- */
+            /*      Set complex parameters.                                   */
+            /* -------------------------------------------------------------- */
 
-            if (dfOffset != 0.0 || dfScale != 1.0)
-            {
-                poComplexSource->SetLinearScaling(dfOffset, dfScale);
-            }
-            else if (bExponentScaling)
+            bool bSetBandScaleOffset = false;
+            if (bExponentScaling)
             {
                 poComplexSource->SetPowerScaling(
                     dfExponent, dfScaleSrcMin, dfScaleSrcMax, dfScaleDstMin,
                     dfScaleDstMax, !psOptions->bNoClip);
+                if (dfExponent == 1)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+            else if (dfOffset != 0.0 || dfScale != 1.0)
+            {
+                poComplexSource->SetLinearScaling(dfOffset, dfScale);
+                if (!psOptions->bUnscale)
+                {
+                    bSetBandScaleOffset = true;
+                }
+            }
+
+            if (bSetBandScaleOffset && dfScale != 0)
+            {
+                poVRTBand->SetScale(1 / dfScale);
+                poVRTBand->SetOffset(-dfOffset / dfScale);
             }
 
             poComplexSource->SetColorTableComponent(nComponent);
@@ -2427,17 +2438,18 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 static_cast<GDALColorInterp>(GCI_RedBand + i));
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      copy over some other information of interest. */
-        /* --------------------------------------------------------------------
-         */
+        /* ------------------------------------------------------------------ */
+        /*      copy over some other information of interest.                 */
+        /* ------------------------------------------------------------------ */
         else
         {
+            const bool bCopyScale = !psOptions->bUnscale &&
+                                    !psOptions->bSetScale &&
+                                    !psOptions->bSetOffset && !bScale;
+
             CopyBandInfo(poSrcBand, poVRTBand,
                          !psOptions->bStats && !bFilterOutStatsMetadata,
-                         !psOptions->bUnscale && !psOptions->bSetScale &&
-                             !psOptions->bSetOffset,
+                         bCopyScale,
                          !psOptions->bSetNoData && !psOptions->bUnsetNoData,
                          !psOptions->bNoRAT, psOptions.get());
             if (psOptions->asScaleParams.empty() &&
@@ -2474,8 +2486,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                 poVRTBand->GetRasterDataType() == GDT_UInt8)
             {
                 poVRTBand->EnablePixelTypeSignedByteWarning(false);
-                pszPixelType =
-                    poVRTBand->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+                pszPixelType = poVRTBand->GetMetadataItem(
+                    "PIXELTYPE", GDAL_MDD_IMAGE_STRUCTURE);
                 poVRTBand->EnablePixelTypeSignedByteWarning(true);
             }
 
@@ -2505,9 +2517,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
             if (bCannotBeExactlyRepresented)
             {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Nodata value was not set to output band, "
-                         "as it cannot be represented on its data type.");
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "NoData value of %s was not set for output band %d, "
+                    "because it cannot be represented in its data type (%s).",
+                    psOptions->osNoData.c_str(), i + 1,
+                    GDALGetDataTypeName(poVRTBand->GetRasterDataType()));
             }
         }
 
@@ -2589,7 +2604,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             double dfMin, dfMax, dfMean, dfStdDev;
             poVDS->GetRasterBand(i + 1)->ComputeStatistics(
                 psOptions->bApproxStats, &dfMin, &dfMax, &dfMean, &dfStdDev,
-                GDALDummyProgress, nullptr);
+                GDALDummyProgress, nullptr, nullptr);
         }
     }
 
@@ -2941,7 +2956,7 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
         .help(_("Set the size of the output file."));
 
     argParser->add_argument("-tr")
-        .metavar("<xres> <yes>")
+        .metavar("<xres> <yres>")
         .nargs(2)
         .scan<'g', double>()
         .help(_("Set target resolution."));
@@ -3191,6 +3206,11 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
     // Undocumented option used by gdal raster clip
     argParser->add_argument("--no-warn-about-outside-window")
         .store_into(psOptions->bNoWarnAboutOutsideWindow)
+        .hidden();
+
+    // Undocumented option used by gdal raster * algorithms
+    argParser->add_argument("--invoked-from-gdal-algorithm")
+        .store_into(psOptions->bInvokedFromGdalAlgorithm)
         .hidden();
 
     if (psOptionsForBinary)
@@ -3529,7 +3549,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asGCPs.empty() && psOptions->bNoGCP)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-nogcp and -gcp cannot be used as the same time");
+                     "-nogcp and -gcp cannot be used at the same time");
             return nullptr;
         }
 
@@ -3545,7 +3565,7 @@ GDALTranslateOptionsNew(char **papszArgv,
         if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-scale and -unscale cannot be used as the same time");
+                     "-scale and -unscale cannot be used at the same time");
             return nullptr;
         }
 

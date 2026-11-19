@@ -67,9 +67,6 @@
 #include <algorithm>
 #include <limits>
 #include <vector>
-#if defined(ZSTD_SUPPORT)
-#include <zstd.h>
-#endif
 using std::string;
 using std::vector;
 
@@ -79,7 +76,7 @@ NAMESPACE_MRF_START
 MRFDataset::MRFDataset()
     : zslice(0), idxSize(0), clonedSource(FALSE), nocopy(FALSE),
       bypass_cache(
-          CPLTestBool(CPLGetConfigOption("MRF_BYPASSCACHING", "FALSE"))),
+          !CPLTestBool(CPLGetConfigOption("MRF_ENABLE_CACHING", "FALSE"))),
       mp_safe(FALSE), hasVersions(FALSE), verCount(0),
       bCrystalized(TRUE),  // Assume not in create mode
       spacing(0), no_errors(0), missing(0), poSrcDS(nullptr), level(-1),
@@ -301,10 +298,10 @@ CPLErr MRFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 
                 // The scale value is the same as first overview
                 scale =
-                    strtod(CPLGetXMLValue(
-                               config, "Rsets.scale",
-                               CPLOPrintf("%d", panOverviewList[0]).c_str()),
-                           nullptr);
+                    CPLStrtod(CPLGetXMLValue(
+                                  config, "Rsets.scale",
+                                  CPLOPrintf("%d", panOverviewList[0]).c_str()),
+                              nullptr);
                 if (scale == 0.0)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -626,7 +623,7 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
             insidefn = string("/vsitar/") + pszFileName + "/" + pszHeader;
             config = CPLParseXMLFile(insidefn.c_str());
         }
-#if defined(LERC)
+#if defined(GDAL_USE_LERC_INTERNAL)
         else
             config = LERC_Band::GetMRFConfig(poOpenInfo);
 #endif
@@ -691,6 +688,15 @@ GDALDataset *MRFDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
+    // Caching requires a tile compression
+    if (!ds->source.empty() && IL_NONE == ds->current.comp)
+    {
+        delete ds;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDAL MRF: Cached MRF must use some compression");
+        return nullptr;
+    }
+
     // Open a single version
     if (version != 0)
         ret = ds->SetVersion(version);
@@ -728,12 +734,12 @@ CPLErr MRFDataset::SetVersion(int version)
     for (int bcount = 1; bcount <= nBands; bcount++)
     {
         MRFRasterBand *srcband =
-            reinterpret_cast<MRFRasterBand *>(GetRasterBand(bcount));
+            cpl::down_cast<MRFRasterBand *>(GetRasterBand(bcount));
         srcband->img.idxoffset += idxSize * verCount;
         for (int l = 0; l < srcband->GetOverviewCount(); l++)
         {
             MRFRasterBand *band =
-                reinterpret_cast<MRFRasterBand *>(srcband->GetOverview(l));
+                cpl::down_cast<MRFRasterBand *>(srcband->GetOverview(l));
             if (band != nullptr)
                 band->img.idxoffset += idxSize * verCount;
         }
@@ -752,8 +758,10 @@ CPLErr MRFDataset::LevelInit(const int l)
         return CE_Failure;
     }
 
-    MRFRasterBand *srcband = reinterpret_cast<MRFRasterBand *>(
-        cds->GetRasterBand(1)->GetOverview(l));
+    MRFRasterBand *srcband =
+        cpl::down_cast<MRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
+    if (!srcband)
+        return CE_Failure;
 
     // Copy the sizes from this level
     full = srcband->img;
@@ -764,14 +772,16 @@ CPLErr MRFDataset::LevelInit(const int l)
     if (poSRS)
         m_oSRS = *poSRS;
 
-    SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
-    SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
+                    GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
     for (int i = 0; i < l + 1; i++)
     {
-        m_gt[1] *= scale;
-        m_gt[5] *= scale;
+        m_gt.xscale *= scale;
+        m_gt.yscale *= scale;
     }
 
     nRasterXSize = current.size.x;
@@ -989,6 +999,14 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
             ds->SetMaxValue(pszValue);
     }
 
+    // Check that pagesize.c is 64 or less so we can use bitmasks
+    if (image.pagesize.c > 64)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: Max number of pixel interleaved bands is 64");
+        return CE_Failure;
+    }
+
     // Calculate the page size in bytes
     const int nDTSize = GDALGetDataTypeSizeBytes(image.dt);
     if (nDTSize <= 0 || image.pagesize.z <= 0 ||
@@ -1000,7 +1018,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
                 image.pagesize.c >
             INT_MAX / nDTSize)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF page size too big");
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF page size is too large");
         return CE_Failure;
     }
     image.pageSizeBytes = nDTSize * image.pagesize.x * image.pagesize.y *
@@ -1366,13 +1384,13 @@ CPLXMLNode *MRFDataset::BuildConfig()
     // Do we have an affine transform different from identity?
     GDALGeoTransform gt;
     if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
-        (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 || gt[3] != 0 || gt[4] != 0 ||
-         gt[5] != 1))
+        (gt.xorig != 0 || gt.xscale != 1 || gt.xrot != 0 || gt.yorig != 0 ||
+         gt.yrot != 0 || gt.yscale != 1))
     {
-        double minx = gt[0];
-        double maxx = gt[1] * full.size.x + minx;
-        double maxy = gt[3];
-        double miny = gt[5] * full.size.y + maxy;
+        double minx = gt.xorig;
+        double maxx = gt.xscale * full.size.x + minx;
+        double maxy = gt.yorig;
+        double miny = gt.yscale * full.size.y + maxy;
         CPLXMLNode *bbox = CPLCreateXMLNode(gtags, CXT_Element, "BoundingBox");
         XMLSetAttributeVal(bbox, "minx", minx);
         XMLSetAttributeVal(bbox, "miny", miny);
@@ -1433,17 +1451,17 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     {
         double x0, x1, y0, y1;
 
-        x0 = atof(CPLGetXMLValue(bbox, "minx", "0"));
-        x1 = atof(CPLGetXMLValue(bbox, "maxx", "1"));
-        y1 = atof(CPLGetXMLValue(bbox, "maxy", "1"));
-        y0 = atof(CPLGetXMLValue(bbox, "miny", "0"));
+        x0 = CPLAtof(CPLGetXMLValue(bbox, "minx", "0"));
+        x1 = CPLAtof(CPLGetXMLValue(bbox, "maxx", "1"));
+        y1 = CPLAtof(CPLGetXMLValue(bbox, "maxy", "1"));
+        y0 = CPLAtof(CPLGetXMLValue(bbox, "miny", "0"));
 
-        m_gt[0] = x0;
-        m_gt[1] = (x1 - x0) / full.size.x;
-        m_gt[2] = 0;
-        m_gt[3] = y1;
-        m_gt[4] = 0;
-        m_gt[5] = (y0 - y1) / full.size.y;
+        m_gt.xorig = x0;
+        m_gt.xscale = (x1 - x0) / full.size.x;
+        m_gt.xrot = 0;
+        m_gt.yorig = y1;
+        m_gt.yrot = 0;
+        m_gt.yscale = (y0 - y1) / full.size.y;
         bGeoTransformValid = TRUE;
     }
 
@@ -1459,8 +1477,9 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     if (current.size.z != 1)
     {
         SetMetadataItem("ZSIZE", CPLOPrintf("%d", current.size.z),
-                        "IMAGE_STRUCTURE");
-        SetMetadataItem("ZSLICE", CPLOPrintf("%d", zslice), "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem("ZSLICE", CPLOPrintf("%d", zslice),
+                        GDAL_MDD_IMAGE_STRUCTURE);
         // Capture the zslice in pagesize.l
         current.pagesize.l = zslice;
         // Adjust offset for base image
@@ -1481,12 +1500,14 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     }
 
     // Dataset metadata setup
-    SetMetadataItem("INTERLEAVE", OrderName(current.order), "IMAGE_STRUCTURE");
-    SetMetadataItem("COMPRESSION", CompName(current.comp), "IMAGE_STRUCTURE");
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
+                    GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_COMPRESSION, CompName(current.comp),
+                    GDAL_MDD_IMAGE_STRUCTURE);
 
     if (is_Endianness_Dependent(current.dt, current.comp))
         SetMetadataItem("NETBYTEORDER", current.nbo ? "TRUE" : "FALSE",
-                        "IMAGE_STRUCTURE");
+                        GDAL_MDD_IMAGE_STRUCTURE);
 
     // Open the files for the current image, either RW or RO
     nRasterXSize = current.size.x;
@@ -1517,7 +1538,8 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
         if (std::string::npos != nSepPos)
         {
             s.resize(nSepPos);
-            SetMetadataItem(s, optlist.FetchNameValue(s), "IMAGE_STRUCTURE");
+            SetMetadataItem(s, optlist.FetchNameValue(s),
+                            GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
 
@@ -1752,9 +1774,9 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
     char **options = CSLDuplicate(papszOptions);
 
     const char *pszValue =
-        poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
-    options =
-        CSLAddIfMissing(options, "INTERLEAVE", pszValue ? pszValue : "PIXEL");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+    options = CSLAddIfMissing(options, GDALMD_INTERLEAVE,
+                              pszValue ? pszValue : "PIXEL");
     int xb, yb;
     poSrcBand1->GetBlockSize(&xb, &yb);
 
@@ -1800,9 +1822,9 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
                 poDS->vMax.push_back(dfData);
 
             // Copy the band metadata, PAM will handle it
-            CSLConstList meta = srcBand->GetMetadata("IMAGE_STRUCTURE");
+            CSLConstList meta = srcBand->GetMetadata(GDAL_MDD_IMAGE_STRUCTURE);
             if (CSLCount(meta))
-                mBand->SetMetadata(meta, "IMAGE_STRUCTURE");
+                mBand->SetMetadata(meta, GDAL_MDD_IMAGE_STRUCTURE);
 
             meta = srcBand->GetMetadata();
             if (CSLCount(meta))
@@ -2122,7 +2144,7 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     if (val && IL_ERR_COMP == (img.comp = CompToken(val)))
         throw CPLString("GDAL MRF: Error setting compression");
 
-    val = opt.FetchNameValue("INTERLEAVE");
+    val = opt.FetchNameValue(GDALMD_INTERLEAVE);
     if (val && IL_ERR_ORD == (img.order = OrderToken(val)))
         throw CPLString("GDAL MRF: Error setting interleave");
 
@@ -2151,6 +2173,8 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     val = opt.FetchNameValue("CACHEDSOURCE");
     if (val)
     {
+        if (IL_NONE == img.comp)
+            throw CPLString("GDAL MRF: Compression is required when caching");
         source = val;
         nocopy = opt.FetchBoolean("NOCOPY", FALSE);
     }
@@ -2182,8 +2206,6 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     // General Fixups
     if (img.order == IL_Interleaved)
         img.pagesize.c = img.size.c;
-
-    // Compression dependent fixups
 }
 
 /**
@@ -2538,7 +2560,7 @@ CPLErr MRFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     gt = m_gt;
     MRFDataset *nonConstThis = const_cast<MRFDataset *>(this);
-    if (nonConstThis->GetMetadata("RPC") || nonConstThis->GetGCPCount())
+    if (nonConstThis->GetMetadata(GDAL_MDD_RPC) || nonConstThis->GetGCPCount())
         bGeoTransformValid = FALSE;
     if (!bGeoTransformValid)
         return CE_Failure;

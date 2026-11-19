@@ -113,8 +113,8 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset *poSrcDS,
     if (pszCompress != NULL && !EQUAL(pszCompress, "JPEG"))
         return FALSE;
 
-    const char *pszSrcColorSpace =
-        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    const char *pszSrcColorSpace = poSrcDS->GetMetadataItem(
+        "SOURCE_COLOR_SPACE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcColorSpace != NULL &&
         (EQUAL(pszSrcColorSpace, "CMYK") || EQUAL(pszSrcColorSpace, "YCbCrK")))
         return FALSE;
@@ -145,10 +145,10 @@ int GTIFF_CanDirectCopyFromJPEG(GDALDataset *poSrcDS,
 
         if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_UInt8)
             papszCreateOptions =
-                CSLSetNameValue(papszCreateOptions, "NBITS", "12");
+                CSLSetNameValue(papszCreateOptions, GDALMD_NBITS, "12");
         else
             papszCreateOptions =
-                CSLSetNameValue(papszCreateOptions, "NBITS", NULL);
+                CSLSetNameValue(papszCreateOptions, GDALMD_NBITS, NULL);
 
         papszCreateOptions = CSLSetNameValue(papszCreateOptions, "TILED", NULL);
         papszCreateOptions =
@@ -269,8 +269,8 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     const int nBlockYSize =
         atoi(CSLFetchNameValueDef(papszCreateOptions, "BLOCKYSIZE", "0"));
     int nMCUSize = 8;
-    const char *pszSrcColorSpace =
-        poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
+    const char *pszSrcColorSpace = poSrcDS->GetMetadataItem(
+        "SOURCE_COLOR_SPACE", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszSrcColorSpace != nullptr && EQUAL(pszSrcColorSpace, "YCbCr"))
         nMCUSize = 16;
 
@@ -309,7 +309,7 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     }
 
     const char *pszInterleave =
-        CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
+        CSLFetchNameValue(papszCreateOptions, GDALMD_INTERLEAVE);
 
     const bool bCompatibleInterleave =
         pszInterleave == nullptr ||
@@ -319,14 +319,14 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
 
     // We don't want to apply lossy JPEG on a source using lossless JPEG !
     const char *pszReversibility = poSrcDS->GetMetadataItem(
-        "COMPRESSION_REVERSIBILITY", "IMAGE_STRUCTURE");
+        "COMPRESSION_REVERSIBILITY", GDAL_MDD_IMAGE_STRUCTURE);
     if (pszReversibility && EQUAL(pszReversibility, "LOSSLESS"))
         return FALSE;
 
     if ((nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
         (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
         poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
-        CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr &&
+        CSLFetchNameValue(papszCreateOptions, GDALMD_NBITS) == nullptr &&
         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == nullptr)
     {
         if (nMCUSize == 16 && pszPhotometric == nullptr)

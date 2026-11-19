@@ -146,7 +146,7 @@ class OGRWFSLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr ISetSpatialFilter(int iGeomField,
                              const OGRGeometry *poGeom) override;
@@ -287,7 +287,7 @@ class OGRWFSJoinLayer final : public OGRLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     GIntBig GetFeatureCount(int bForce = TRUE) override;
 

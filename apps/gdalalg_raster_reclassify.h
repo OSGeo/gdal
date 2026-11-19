@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_RECLASSIFY_INCLUDED
 #define GDALALG_RASTER_RECLASSIFY_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 
@@ -37,6 +37,7 @@ class GDALRasterReclassifyAlgorithm : public GDALRasterPipelineStepAlgorithm
 
     std::string m_mapping{};
     std::string m_type{};
+    bool m_keepColorTable{false};
 };
 
 /************************************************************************/

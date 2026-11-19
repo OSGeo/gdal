@@ -32,13 +32,32 @@ pytestmark = pytest.mark.require_driver("netCDF")
 ###############################################################################
 # check for necessary software
 
+_cfchecks_available = None
+
 
 def cfchecks_available():
-    try:
-        _, err = gdaltest.runexternal_out_and_err("cfchecks --help")
-        return err == ""
-    except OSError:
-        return False
+    global _cfchecks_available
+    if _cfchecks_available is None:
+
+        def f():
+            try:
+                _, err = gdaltest.runexternal_out_and_err("cfchecks --help")
+                if err != "":
+                    return False
+            except OSError:
+                return False
+
+            url = "https://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml"
+            conn = gdaltest.gdalurlopen(url)
+            if conn is None:
+                print(f"cannot open {url}")
+                return False
+            conn.close()
+            return True
+
+        _cfchecks_available = f()
+
+    return _cfchecks_available
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -68,6 +87,8 @@ def netcdf_cf_check_file(ifile, version="auto"):
 
     # There should be a ERRORS detected summary
     if "ERRORS detected" not in ret:
+        if "urlopen error" in err:
+            pytest.skip("cfchecks network failure: " + err.strip()[:200])
         print(err)
         pytest.fail("ERROR with command - " + command)
 
@@ -303,7 +324,7 @@ netcdf_cfproj_format_fnames = {
 
 def netcdf_cfproj_test_cf(proj, projNc) -> None:
     command = "ncdump -h " + projNc
-    (dumpStr, err) = gdaltest.runexternal_out_and_err(command)
+    dumpStr, err = gdaltest.runexternal_out_and_err(command)
 
     assert err == ""
 
@@ -328,35 +349,52 @@ def netcdf_cfproj_test_cf(proj, projNc) -> None:
 # Netcdf CF Tests
 ###############################################################################
 
+
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
-def test_netcdf_cf_1(netcdf_setup):  # noqa
-    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, "tmp/netcdf_cf_1.nc")
+def test_netcdf_cf_1(tmp_path, netcdf_setup):  # noqa
+    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, str(tmp_path / "netcdf_cf_1.nc"))
 
-    netcdf_cf_check_file("tmp/netcdf_cf_1.nc")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_1.nc"))
 
-    netcdf_test_copy("tmp/netcdf_cf_1.nc", 1, 14, "tmp/netcdf_cf_1.tif", [], "GTIFF")
+    netcdf_test_copy(
+        str(tmp_path / "netcdf_cf_1.nc"),
+        1,
+        14,
+        str(tmp_path / "netcdf_cf_1.tif"),
+        [],
+        "GTIFF",
+    )
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, nc->nc
-def test_netcdf_cf_2():
+def test_netcdf_cf_2(tmp_path):
 
-    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, "tmp/netcdf_cf_2.nc")
+    netcdf_test_copy("data/netcdf/trmm.nc", 1, 14, str(tmp_path / "netcdf_cf_2.nc"))
 
-    netcdf_cf_check_file("tmp/netcdf_cf_2.nc", "auto")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_2.nc"), "auto")
 
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (W*S84) file, tif->nc->tif
 # note: this test fails in trunk (before r23246)
-def test_netcdf_cf_3():
+def test_netcdf_cf_3(tmp_path):
 
-    netcdf_test_copy("data/netcdf/trmm-wgs84.tif", 1, 14, "tmp/netcdf_cf_3.nc")
+    netcdf_test_copy(
+        "data/netcdf/trmm-wgs84.tif", 1, 14, str(tmp_path / "netcdf_cf_3.nc")
+    )
 
-    netcdf_test_copy("tmp/netcdf_cf_3.nc", 1, 14, "tmp/netcdf_cf_3.tif", [], "GTIFF")
+    netcdf_test_copy(
+        str(tmp_path / "netcdf_cf_3.nc"),
+        1,
+        14,
+        str(tmp_path / "netcdf_cf_3.tif"),
+        [],
+        "GTIFF",
+    )
 
-    netcdf_cf_check_file("tmp/netcdf_cf_3.nc", "auto")
+    netcdf_cf_check_file(str(tmp_path / "netcdf_cf_3.nc"), "auto")
 
 
 ###############################################################################
@@ -380,7 +418,7 @@ def test_netcdf_cf_4(proj_key):
 
     # Test if ncdump is available
     try:
-        (_, err) = gdaltest.runexternal_out_and_err("ncdump -h")
+        _, err = gdaltest.runexternal_out_and_err("ncdump -h")
 
         if "netcdf library version " not in err:
             pytest.skip("NOTICE: netcdf version not found")

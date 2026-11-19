@@ -742,7 +742,7 @@ def test_vsizip_deflate64():
         len_data2 = len(data2)
         assert len_data2 == size
         assert data2 == data
-        for (pos, nread) in [
+        for pos, nread in [
             (10000, 1000),
             (1, 1),
             (size - 1, 1),

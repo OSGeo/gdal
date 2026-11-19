@@ -181,7 +181,8 @@ See :cpp:func:`GDALRasterBand::GetColorTable`.
 
 Returns
 -------
-ColorTable or ``None``
+ColorTable
+    The :py:class:`ColorTable`, or ``None`` if it has not been defined.
 ";
 
 %feature("docstring")  GetDataCoverageStatus "

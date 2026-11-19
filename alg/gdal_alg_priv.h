@@ -349,13 +349,30 @@ int GDALComputeMedianCutPCTInternal(
     GByte *pabyRedBand, GByte *pabyGreenBand, GByte *pabyBlueBand,
     int (*pfnIncludePixel)(int, int, void *), int nColors, int nBits,
     T *panHistogram, GDALColorTableH hColorTable, GDALProgressFunc pfnProgress,
-    void *pProgressArg);
+    void *pProgressArg,
+    std::vector<T> *panPixelCountPerColorTableEntry = nullptr);
 
-int GDALDitherRGB2PCTInternal(GDALRasterBandH hRed, GDALRasterBandH hGreen,
-                              GDALRasterBandH hBlue, GDALRasterBandH hTarget,
-                              GDALColorTableH hColorTable, int nBits,
-                              GInt16 *pasDynamicColorMap, int bDither,
-                              GDALProgressFunc pfnProgress, void *pProgressArg);
+int CPL_DLL GDALComputeMedianCutPCT(
+    GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
+    GByte *pabyRedBand, GByte *pabyGreenBand, GByte *pabyBlueBand,
+    int (*pfnIncludePixel)(int, int, void *), int nColors, int nBits,
+    GUInt32 *panHistogram, GDALColorTableH hColorTable,
+    GDALProgressFunc pfnProgress, void *pProgressArg,
+    std::vector<GUInt32> *panPixelCountPerColorTableEntry = nullptr);
+
+int CPL_DLL GDALComputeMedianCutPCT(
+    GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
+    GByte *pabyRedBand, GByte *pabyGreenBand, GByte *pabyBlueBand,
+    int (*pfnIncludePixel)(int, int, void *), int nColors, int nBits,
+    GUIntBig *panHistogram, GDALColorTableH hColorTable,
+    GDALProgressFunc pfnProgress, void *pProgressArg,
+    std::vector<GUIntBig> *panPixelCountPerColorTableEntry = nullptr);
+
+int CPL_DLL GDALDitherRGB2PCTInternal(
+    GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
+    GDALRasterBandH hTarget, GDALColorTableH hColorTable, int nBits,
+    GInt16 *pasDynamicColorMap, int bDither, GDALProgressFunc pfnProgress,
+    void *pProgressArg);
 
 #define PRIME_FOR_65536 98317
 

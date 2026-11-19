@@ -1,5 +1,7 @@
 .. _gdal_raster_overview_add:
 
+.. program:: gdal_raster_overview_add
+
 ================================================================================
 ``gdal raster overview add``
 ================================================================================
@@ -92,7 +94,7 @@ Program-Specific Options
 
     Mutually exclusive with :option:`--levels`
 
-.. option:: --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
+.. option:: -r, --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not
     appropriate if sub-pixel accuracy is desired.
@@ -134,6 +136,11 @@ Standard Options
     .. include:: gdal_options/co.rst
 
     .. include:: gdal_options/oo.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -191,4 +198,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal pipeline read input.tif ! reproject --dst-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG
+       gdal pipeline read input.tif ! reproject --output-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG

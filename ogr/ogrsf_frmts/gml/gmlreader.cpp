@@ -300,7 +300,7 @@ bool GMLReader::SetupParserXerces()
         XMLString::release(&xmlUriNS);
 
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Exception initializing Xerces based GML reader.\n");
+                 "Exception initializing Xerces based GML reader.");
         return false;
     }
 
@@ -479,7 +479,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
         VSIFErrorL(fpGML))
         return nullptr;
 
-    nFeatureTabLength = 0;
+    this->nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
     int nDone = 0;
@@ -504,20 +504,16 @@ GMLFeature *GMLReader::NextFeatureExpat()
         {
             // Defer emission of the error message until we have to return
             // nullptr
-            m_osErrorMessage.Printf(
-                "XML parsing of GML file failed : %s "
-                "at line %d, column %d",
-                XML_ErrorString(XML_GetErrorCode(oParser)),
-                static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+            m_osErrorMessage.Printf("XML parsing of GML file failed : %s",
+                                    OGRExpatGetParseError(oParser));
             m_bStopParsing = true;
         }
         if (!m_bStopParsing)
             m_bStopParsing = static_cast<GMLExpatHandler *>(m_poGMLHandler)
                                  ->HasStoppedParsing();
-    } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
+    } while (!nDone && !m_bStopParsing && this->nFeatureTabLength == 0);
 
-    if (nFeatureTabLength)
+    if (this->nFeatureTabLength)
         return ppoFeatureTab[nFeatureTabIndex++];
 
     if (!m_osErrorMessage.empty())

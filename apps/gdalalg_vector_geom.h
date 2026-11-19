@@ -13,7 +13,8 @@
 #ifndef GDALALG_VECTOR_GEOM_INCLUDED
 #define GDALALG_VECTOR_GEOM_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
+
 #include "ogr_geos.h"
 
 //! @cond Doxygen_Suppress
@@ -82,7 +83,7 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
         return TranslateFeature(std::move(poSrcFeature)).release();
     }
 
-    int TestCapability(const char *pszCap) const override
+    bool TestCapability(const char *pszCap) const override
     {
         if (EQUAL(pszCap, OLCRandomRead) || EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
@@ -124,13 +125,14 @@ class GDALVectorGeomOneToOneAlgorithmLayer /* non final */
     virtual std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const = 0;
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
         auto poDstFeature = TranslateFeature(std::move(poSrcFeature));
-        if (poDstFeature)
+        if (poDstFeature && PassesFilters(poDstFeature.get()))
             apoOutFeatures.push_back(std::move(poDstFeature));
+        return true;
     }
 
   private:
@@ -165,7 +167,8 @@ class GDALGeosNonStreamingAlgorithmLayer
 
     std::unique_ptr<OGRFeature> GetNextProcessedFeature() override;
 
-    virtual bool ProcessGeos() = 0;
+    virtual bool ProcessGeos(GDALProgressFunc pfnProgress,
+                             void *pProgressData) = 0;
 
     /// Whether the operation should fail if non-polygonal geometries are present
     virtual bool PolygonsOnly() const = 0;

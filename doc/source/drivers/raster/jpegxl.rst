@@ -188,7 +188,7 @@ The following creation options are available:
       :choices: YES, NO
       :default: NO
 
-      (libjxl > 0.6.1) Whether to to decompress Exif/XMP/GeoJP2 boxes
+      (libjxl > 0.6.1) Whether to compress Exif/XMP/GeoJP2 boxes
       using Brotli compression.
 
 See Also

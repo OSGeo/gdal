@@ -179,7 +179,7 @@ int OGRLVBAGDataSource::GetLayerCount() const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRLVBAGDataSource::TestCapability(const char * /* pszCap */) const
+bool OGRLVBAGDataSource::TestCapability(const char * /* pszCap */) const
 {
     return FALSE;
 }

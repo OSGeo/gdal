@@ -30,12 +30,14 @@ std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
 /*                 ZarrV3CodecSequence::InitFromJson()                  */
 /************************************************************************/
 
-bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
+bool ZarrV3CodecSequence::InitFromJson(const std::string &osArrayName,
+                                       const CPLJSONObject &oCodecs,
                                        ZarrArrayMetadata &oOutputArrayMetadata)
 {
     if (oCodecs.GetType() != CPLJSONObject::Type::Array)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "codecs is not an array");
+        CPLError(CE_Failure, CPLE_AppDefined, "%s: codecs is not an array",
+                 osArrayName.c_str());
         return false;
     }
     auto oCodecsArray = oCodecs.ToArray();
@@ -49,7 +51,11 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
     {
         CPL_IGNORE_RET_VAL(this);
         if (eLastType == ZarrV3Codec::IOType::ARRAY &&
-            oInputArrayMetadata.oElt.nativeSize > 1)
+            oInputArrayMetadata.oElt.nativeSize > 1 &&
+            oInputArrayMetadata.oElt.nativeType !=
+                DtypeElt::NativeType::STRING_ASCII &&
+            oInputArrayMetadata.oElt.nativeType !=
+                DtypeElt::NativeType::STRING_UNICODE)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "'bytes' codec missing. Assuming little-endian storage, "
@@ -57,8 +63,9 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
             auto poEndianCodec = std::make_unique<ZarrV3CodecBytes>();
             ZarrArrayMetadata oTmpOutputArrayMetadata;
             poEndianCodec->InitFromConfiguration(
-                ZarrV3CodecBytes::GetConfiguration(true), oInputArrayMetadata,
-                oTmpOutputArrayMetadata, /* bEmitWarnings = */ true);
+                std::string(), ZarrV3CodecBytes::GetConfiguration(true),
+                oInputArrayMetadata, oTmpOutputArrayMetadata,
+                /* bEmitWarnings = */ true);
             oInputArrayMetadata = std::move(oTmpOutputArrayMetadata);
             eLastType = poEndianCodec->GetOutputType();
             osLastCodec = poEndianCodec->GetName();
@@ -94,15 +101,39 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
             poCodec = std::make_unique<ZarrV3CodecTranspose>();
         else if (osName == ZarrV3CodecCRC32C::NAME)
             poCodec = std::make_unique<ZarrV3CodecCRC32C>();
+        else if (osName == ZarrV3CodecVLenUTF8::NAME)
+            poCodec = std::make_unique<ZarrV3CodecVLenUTF8>();
         else if (osName == ZarrV3CodecShardingIndexed::NAME)
         {
             bShardingFound = true;
             poCodec = std::make_unique<ZarrV3CodecShardingIndexed>();
         }
+        else if (osName == ZarrV3CodecPcodec::NAME)
+        {
+#ifdef HAVE_PCODEC
+            constexpr bool bHasPcodec = true;
+#else
+            constexpr bool bHasPcodec = false;
+#endif
+            if constexpr (bHasPcodec)
+            {
+                poCodec = std::make_unique<ZarrV3CodecPcodec>();
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "%s: Codec '%s' is supported by GDAL, but not in this "
+                    "particular build. Requires building GDAL with "
+                    "-DGDAL_USE_PCODEC=ON and with a Rust toolchain available",
+                    osArrayName.c_str(), osName.c_str());
+                return false;
+            }
+        }
         else
         {
-            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported codec: %s",
-                     osName.c_str());
+            CPLError(CE_Failure, CPLE_NotSupported, "%s: Unsupported codec: %s",
+                     osArrayName.c_str(), osName.c_str());
             return false;
         }
 
@@ -126,10 +157,10 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
         {
             anBlockSizesBeforeSharding = oInputArrayMetadata.anBlockSizes;
         }
-        if (!poCodec->InitFromConfiguration(oCodec["configuration"],
-                                            oInputArrayMetadata,
-                                            oStepOutputArrayMetadata,
-                                            /* bEmitWarnings = */ true))
+        if (!poCodec->InitFromConfiguration(
+                osArrayName, oCodec["configuration"], oInputArrayMetadata,
+                oStepOutputArrayMetadata,
+                /* bEmitWarnings = */ true))
         {
             return false;
         }
@@ -279,6 +310,41 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
                                     anCount))
             return false;
         std::swap(abyBuffer, m_abyTmp);
+    }
+    return true;
+}
+
+/************************************************************************/
+/*              ZarrV3CodecSequence::BatchDecodePartial()               */
+/************************************************************************/
+
+bool ZarrV3CodecSequence::BatchDecodePartial(
+    VSIVirtualHandle *poFile, const char *pszFilename,
+    const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+        &anRequests,
+    std::vector<ZarrByteVectorQuickResize> &aResults)
+{
+    // Only batch-decode when sharding is the sole codec. If other codecs
+    // (e.g. transpose) precede it, indices and output need codec-specific
+    // transformations that BatchDecodePartial does not handle.
+    if (m_apoCodecs.size() == 1)
+    {
+        auto *poSharding = dynamic_cast<ZarrV3CodecShardingIndexed *>(
+            m_apoCodecs.back().get());
+        if (poSharding)
+        {
+            return poSharding->BatchDecodePartial(poFile, pszFilename,
+                                                  anRequests, aResults);
+        }
+    }
+
+    // Fallback: sequential DecodePartial for non-sharding codec chains
+    aResults.resize(anRequests.size());
+    for (size_t i = 0; i < anRequests.size(); ++i)
+    {
+        if (!DecodePartial(poFile, aResults[i], anRequests[i].first,
+                           anRequests[i].second))
+            return false;
     }
     return true;
 }

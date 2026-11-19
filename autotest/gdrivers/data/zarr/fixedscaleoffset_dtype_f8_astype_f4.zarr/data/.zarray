@@ -1,0 +1,23 @@
+{
+  "shape": [
+    10
+  ],
+  "chunks": [
+    10
+  ],
+  "dtype": "<f8",
+  "fill_value": 0.0,
+  "order": "C",
+  "filters": [
+    {
+      "id": "fixedscaleoffset",
+      "scale": 10.0,
+      "offset": 1000.0,
+      "dtype": "<f8",
+      "astype": "<f4"
+    }
+  ],
+  "dimension_separator": ".",
+  "compressor": null,
+  "zarr_format": 2
+}

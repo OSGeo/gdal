@@ -22,12 +22,10 @@
 
 OGRGmtLayer::OGRGmtLayer(GDALDataset *poDS, const char *pszFilename,
                          VSILFILE *fp, const OGRSpatialReference *poSRS,
-                         int bUpdateIn)
-    : m_poDS(poDS), poFeatureDefn(nullptr), iNextFID(0),
-      bUpdate(CPL_TO_BOOL(bUpdateIn)),
+                         bool bUpdateIn)
+    : m_poDS(poDS), poFeatureDefn(nullptr), iNextFID(0), bUpdate(bUpdateIn),
       // Assume header complete in readonly mode.
-      bHeaderComplete(CPL_TO_BOOL(!bUpdate)), bRegionComplete(false),
-      nRegionOffset(0),
+      bHeaderComplete(!bUpdate), bRegionComplete(false), nRegionOffset(0),
       m_fp(fp ? fp : VSIFOpenL(pszFilename, (bUpdateIn ? "r+" : "r"))),
       papszKeyedValues(nullptr), bValidFile(false)
 {
@@ -632,6 +630,16 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                     }
                     break;
 
+                    case wkbMultiPoint:
+                    {
+                        OGRMultiPoint *poMP = poGeom->toMultiPoint();
+                        OGRPoint oPoint(dfX, dfY);
+                        if (nDim == 3)
+                            oPoint.setZ(dfZ);
+                        poMP->addGeometry(&oPoint);
+                    }
+                    break;
+
                     default:
                         CPLAssert(false);
                 }
@@ -985,7 +993,7 @@ OGRErr OGRGmtLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRGmtLayer::TestCapability(const char *pszCap) const
+bool OGRGmtLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCRandomRead))

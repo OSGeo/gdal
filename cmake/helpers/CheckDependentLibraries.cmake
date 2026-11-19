@@ -246,14 +246,14 @@ endif ()
 gdal_check_package(SQLite3 "Enable SQLite3 support (used by SQLite/Spatialite, GPKG, Rasterlite, MBTiles, etc.)"
                    CAN_DISABLE RECOMMENDED
                    VERSION 3.31)
-if (SQLite3_FOUND)
+if (SQLite3_FOUND AND GDAL_USE_SQLITE3)
   if (NOT DEFINED SQLite3_HAS_COLUMN_METADATA)
     message(FATAL_ERROR "missing SQLite3_HAS_COLUMN_METADATA")
   endif ()
   if (NOT DEFINED SQLite3_HAS_MUTEX_ALLOC)
     message(FATAL_ERROR "missing SQLite3_HAS_MUTEX_ALLOC")
   endif ()
-  if (GDAL_USE_SQLITE3 AND NOT SQLite3_HAS_MUTEX_ALLOC)
+  if (NOT SQLite3_HAS_MUTEX_ALLOC)
     if (NOT ACCEPT_MISSING_SQLITE3_MUTEX_ALLOC)
       message(
         FATAL_ERROR
@@ -521,3 +521,5 @@ find_package(CSharp)
 set_package_properties(CSharp PROPERTIES PURPOSE "SWIG_CSharp: CSharp binding")
 
 # vim: ts=4 sw=4 sts=4 et
+
+include(CheckDependentLibrariesGrok)

@@ -287,9 +287,9 @@ def test_gdalalg_vector_explode_collections_type_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector explode-collections --geometry-type"
-    ).split(" ")
+    )
     assert out == [
         "GEOMETRY",
         "GEOMETRYZ",
@@ -329,9 +329,9 @@ def test_gdalalg_vector_explode_collections_type_autocomplete():
         "TINZM",
     ]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector explode-collections --geometry-type COMPOUNDCURVE"
-    ).split(" ")
+    )
     assert len(out) == 4
 
 
@@ -355,3 +355,18 @@ def test_gdalalg_vector_explode_collections_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_explode_collections_pipeline_layer_interleaved(tmp_vsimem):
+
+    with gdal.alg.vector.pipeline(
+        input="../ogr/data/osm/test.pbf",
+        pipeline='read --layer lines  ! explode-collections ! filter --where "highway IS NOT NULL" ! write --format=MEM --output=""',
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1
+        f = lyr.GetNextFeature()
+        assert f["osm_id"] == "1"
+        assert f["highway"] == "motorway"

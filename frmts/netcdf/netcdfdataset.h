@@ -210,17 +210,17 @@ static const char *const papszCFLatitudeAttribValues[] = {CF_DEGREES_NORTH,
                                                           nullptr};
 
 static const char *const papszCFProjectionXVarNames[] = {CF_PROJ_X_VAR_NAME,
-                                                         "xc", nullptr};
-static const char *const papszCFProjectionXAttribNames[] = {CF_STD_NAME,
-                                                            CF_AXIS, nullptr};
-static const char *const papszCFProjectionXAttribValues[] = {CF_PROJ_X_COORD,
-                                                             "X", nullptr};
+                                                         "xc", "rlon", nullptr};
+static const char *const papszCFProjectionXAttribNames[] = {
+    CF_STD_NAME, CF_AXIS, CF_STD_NAME, nullptr};
+static const char *const papszCFProjectionXAttribValues[] = {
+    CF_PROJ_X_COORD, "X", "grid_longitude", nullptr};
 static const char *const papszCFProjectionYVarNames[] = {CF_PROJ_Y_VAR_NAME,
-                                                         "yc", nullptr};
-static const char *const papszCFProjectionYAttribNames[] = {CF_STD_NAME,
-                                                            CF_AXIS, nullptr};
-static const char *const papszCFProjectionYAttribValues[] = {CF_PROJ_Y_COORD,
-                                                             "Y", nullptr};
+                                                         "yc", "rlat", nullptr};
+static const char *const papszCFProjectionYAttribNames[] = {
+    CF_STD_NAME, CF_AXIS, CF_STD_NAME, nullptr};
+static const char *const papszCFProjectionYAttribValues[] = {
+    CF_PROJ_Y_COORD, "Y", "grid_latitude", nullptr};
 
 static const char *const papszCFVerticalAttribNames[] = {CF_AXIS, "positive",
                                                          "positive", nullptr};
@@ -278,7 +278,7 @@ class netCDFWriterConfigAttribute
     CPLString m_osType;
     CPLString m_osValue;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigField
@@ -289,7 +289,7 @@ class netCDFWriterConfigField
     CPLString m_osMainDim;
     std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfigLayer
@@ -301,7 +301,7 @@ class netCDFWriterConfigLayer
     std::vector<netCDFWriterConfigAttribute> m_aoAttributes;
     std::map<CPLString, netCDFWriterConfigField> m_oFields;
 
-    bool Parse(CPLXMLNode *psNode);
+    bool Parse(const CPLXMLNode *psNode);
 };
 
 class netCDFWriterConfiguration
@@ -319,7 +319,7 @@ class netCDFWriterConfiguration
     }
 
     bool Parse(const char *pszFilename);
-    static bool SetNameValue(CPLXMLNode *psNode,
+    static bool SetNameValue(const CPLXMLNode *psNode,
                              std::map<CPLString, CPLString> &oMap);
 };
 
@@ -357,8 +357,8 @@ class netCDFDataset final : public GDALPamDataset
 #endif
     VSILFILE *fpVSIMEM = nullptr;
     int nSubDatasets;
-    char **papszSubDatasets;
-    char **papszMetadata;
+    CPLStringList aosSubDatasets;
+    CPLStringList aosMetadata;
 
     // Used to report metadata found in Sentinel 5
     std::map<std::string, CPLStringList> m_oMapDomainToJSon{};
@@ -371,7 +371,8 @@ class netCDFDataset final : public GDALPamDataset
                            driver? */
     char *pszCFProjection;
     const char *pszCFCoordinates;
-    double nCFVersion;
+    int nCFVersionMajor = 1;
+    int nCFVersionMinor = 6;
     bool bSGSupport;
     MultipleLayerBehavior eMultipleLayerBehavior;
     std::vector<netCDFDataset *> apoVectorDatasets;
@@ -403,7 +404,7 @@ class netCDFDataset final : public GDALPamDataset
     bool bAddedGridMappingRef;
 
     /* create vars */
-    char **papszCreationOptions;
+    CPLStringList aosCreationOptions;
     NetCDFCompressEnum eCompress;
     int nZLevel;
     bool bChunking;
@@ -468,16 +469,17 @@ class netCDFDataset final : public GDALPamDataset
     static double rint(double);
 
     double FetchCopyParam(const char *pszGridMappingValue, const char *pszParam,
-                          double dfDefault, bool *pbFound = nullptr);
+                          double dfDefault, bool *pbFound = nullptr) const;
 
     std::vector<std::string>
-    FetchStandardParallels(const char *pszGridMappingValue);
+    FetchStandardParallels(const char *pszGridMappingValue) const;
 
-    const char *FetchAttr(const char *pszVarFullName, const char *pszAttr);
-    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr);
+    const char *FetchAttr(const char *pszVarFullName,
+                          const char *pszAttr) const;
+    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr) const;
 
-    void ProcessCreationOptions();
-    int DefVarDeflate(int nVarId, bool bChunkingArg = true);
+    bool ProcessCreationOptions();
+    int DefVarDeflate(int nVarId, bool bChunkingArg = true) const;
     CPLErr AddProjectionVars(bool bDefsOnly, GDALProgressFunc pfnProgress,
                              void *pProgressData);
     bool AddGridMappingRef();
@@ -522,8 +524,8 @@ class netCDFDataset final : public GDALPamDataset
 
     CPLErr
     FilterVars(int nCdfId, bool bKeepRasters, bool bKeepVectors,
-               char **papszIgnoreVars, int *pnRasterVars, int *pnGroupId,
-               int *pnVarId, int *pnIgnoredVars,
+               const CPLStringList &aosIgnoreVars, int *pnRasterVars,
+               int *pnGroupId, int *pnVarId, int *pnIgnoredVars,
                // key is (dim1Id, dim2Id, nc_type varType)
                // value is (groupId, varId)
                std::map<std::array<int, 3>, std::vector<std::pair<int, int>>>
@@ -572,7 +574,7 @@ class netCDFDataset final : public GDALPamDataset
     CPLErr SetMetadata(CSLConstList papszMD,
                        const char *pszDomain = "") override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     int GetLayerCount() const override
     {
@@ -692,9 +694,10 @@ class netCDFLayer final : public OGRLayer
 
     OGRFeature *GetNextRawFeature();
     double Get1DVarAsDouble(int nVarId, nc_type nVarType, size_t nIndex,
-                            const NCDFNoDataUnion &noDataVal, bool *pbIsNoData);
-    CPLErr GetFillValue(int nVarID, char **ppszValue);
-    CPLErr GetFillValue(int nVarID, double *pdfValue);
+                            const NCDFNoDataUnion &noDataVal,
+                            bool *pbIsNoData) const;
+    CPLErr GetFillValue(int nVarID, char **ppszValue) const;
+    CPLErr GetFillValue(int nVarID, double *pdfValue) const;
     void GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData);
     void GetNoDataValueForDouble(int nVarId, NCDFNoDataUnion *puNoData);
     void GetNoDataValue(int nVarId, nc_type nVarType,
@@ -704,7 +707,7 @@ class netCDFLayer final : public OGRLayer
     OGRFeature *buildSGeometryFeature(size_t featureInd);
     void netCDFWriteAttributesFromConf(
         int cdfid, int varid,
-        const std::vector<netCDFWriterConfigAttribute> &aoAttributes);
+        const std::vector<netCDFWriterConfigAttribute> &aoAttributes) const;
 
   protected:
     bool FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
@@ -756,7 +759,7 @@ class netCDFLayer final : public OGRLayer
 
     GIntBig GetFeatureCount(int bForce) override;
 
-    int TestCapability(const char *pszCap) const override;
+    bool TestCapability(const char *pszCap) const override;
 
     using OGRLayer::GetLayerDefn;
     const OGRFeatureDefn *GetLayerDefn() const override;
@@ -791,6 +794,8 @@ CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
                    double *pdfValue);
 CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
                    char **pszValue);
+CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
+                   std::string &osValue);
 bool NCDFIsUnlimitedDim(bool bIsNC4, int cdfid, int nDimId);
 bool NCDFIsUserDefinedType(int ncid, int type);
 

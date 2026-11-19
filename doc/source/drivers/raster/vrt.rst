@@ -11,11 +11,13 @@ VRT -- GDAL Virtual Format
 Introduction
 ------------
 
-The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
+GDAL Virtual Format is a raster driver that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
-extension .vrt.
+extension .vrt.  The :ref:`gdal_raster_mosaic` or :ref:`gdal_raster_stack` programs can build a VRT from a list of datasets.
+
+
 
 Note .vrt files starting with
 
@@ -606,7 +608,7 @@ ArraySource
 .. versionadded:: 3.8
 
 The ArraySource_ indicates that raster data should be read from a 2D array using
-the multidimensional API. If the original array is not a 3D array, a DerivedArray
+the multidimensional API. If the original array is not a 2D array, a DerivedArray
 with a View step must be typically used to create a 2D slice.
 
 ArraySource can have the following child elements:
@@ -1213,6 +1215,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **abs**
+     - 1
+     -
+     - (GDAL >= 3.14) Returns the absolute value
+   * - **area**
+     - 0
+     -
+     - (GDAL >= 3.13) Returns the area of each pixel in square meters.
    * - **argmax**
      - >= 1
      - ``propagateNoData`` (optional, default=false)
@@ -1235,6 +1245,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Computes the complex conjugate of a single raster band
 
        (just a copy if the input is non-complex)
+   * - **count**
+     - >= 1
+     - -
+     - (GDAL >= 3.14) Number of sources with defined (non-NoData) values
    * - **dB**
      - 1
      - ``fact`` (optional)
@@ -1294,7 +1308,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
        Note: this function is the recommended one to perform conversion form
 
-       logarithmic scale (dB): `` 10. ^ (x / 20.)``, in this case
+       logarithmic scale (dB): ``10. ^ (x / 20.)``, in this case
 
        ``base = 10.`` and ``fact = 0.05`` i.e. ``1. / 20``
 
@@ -1474,7 +1488,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
    * - **mod**
      - 1
      - -
-     - Extract module from a single raster band (real or complex)
+     - Extract module from a single raster band (real or complex). Starting with GDAL 3.14, NoData
+       values in real input bands will be preserved.
    * - **mode**
      - >= 1
      - ``propagateNoData`` (optional, default=false)
@@ -1539,6 +1554,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
        Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
 
        (set with ``<NoDataValue>``), the result will be the NoData value.
+   * - **quantile**
+     - 1
+     - ``q``
+     - Calculate the specified quantile (``q``) of the input raster bands.
+
+       If the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
      - -
@@ -1572,6 +1595,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - = 1
      - ``to`` (optional)
      - Convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
+   * - **round**
+     - = 1
+     - - ``digits`` (optional)
+     - (GDAL >= 3.13) Round the input to the specified number of digits to the right of the decimal point.
    * - **scale**
      - = 1
      - -
@@ -1592,7 +1619,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - >= 1
      - ``k`` (optional)
 
-       ``propagateNoData`` (optional, default=``false``)
+       ``propagateNoData`` (optional, default=\ ``false``)
      - Sum 1 or more raster bands. If the optional ``k`` parameter is provided
 
        then it is added to each element of the result.
@@ -1704,7 +1731,7 @@ A :cpp:type:`GDALDerivedPixelFuncWithArgs` is defined with a signature similar t
    :param nLineSpace: The byte offset from the start of one scanline in
     pData to the start of the next.
 
-   :param papszArgs: An optional string list of named function arguments (e.g. ``y=4``)
+   :param papszArgs: An optional string list of named function arguments (e.g., ``y=4``)
 
 
 It is also possible to register a :cpp:type:`GDALDerivedPixelFunc` (which omits the final :cpp:type:`CSLConstList` argument) using :cpp:func:`GDALAddDerivedBandPixelFunc`.
@@ -2022,7 +2049,7 @@ Currently only CPython 3 is supported. The GDAL shared object
 is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
-interpreter itself, or if another program, e.g. QGIS, has already loaded the
+interpreter itself, or if another program, e.g., QGIS, has already loaded the
 CPython library). Otherwise it will look if the :config:`PYTHONSO` configuration option is
 defined. This option can be set to point to the name of the Python library to
 use, either as a shortname like "libpython3.10.so" if it is accessible through
@@ -2275,7 +2302,7 @@ projection and geotransform from the panchromatic band will be reused for the VR
 dataset.
 
 It is possible to create more explicit and declarative pansharpened VRT, allowing
-for example to only output part of the input spectral bands (e.g. only RGB when
+for example to only output part of the input spectral bands (e.g., only RGB when
 the input multispectral dataset is RGBNir). It is also possible to add "classic"
 VRTRasterBands, in addition to the pansharpened bands.
 
@@ -2286,7 +2313,7 @@ the PansharpeningOptions element may have the following children elements :
 - **AlgorithmOptions**: to specify the options of the pansharpening algorithm. With WeightedBrovey algorithm, the only supported option is a **Weights** child element whose content must be a comma separated list of real values assigning the weight of each of the declared input spectral bands. There must be as many values as declared input spectral bands.
 - **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average, Near, CubicSpline, Bilinear, Lanczos.
 - **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the :config:`GDAL_NUM_THREADS` configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
-- **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
+- **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g., 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
 - **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents. None will not proceed to any adjustment at all, but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
 
@@ -2432,7 +2459,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, and ``sd``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, ``sd``, and ``block``.
 
 Other options may be added in the future.
 
@@ -2505,7 +2532,7 @@ The effect of the ``a_gt`` option (added in GDAL 3.8) is to override/assign the 
 the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 
 The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
-consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
+consists of string key value pairs with multiple pairs separated by commas, e.g., ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
 The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. To apply this use syntax ``unscale=true``, or ``unscale=false`` (which is the default if not specified). Do consider the need for also using ``ot`` option in order to accommodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
 
@@ -2542,6 +2569,21 @@ The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` w
 ``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
 transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
 This option is mutually exclusive with ``sd_name`` and ``sd``.
+
+The effect of the ``block`` option (added in GDAL 3.13) is to access a natural block
+from the raster as a subwindow defined by the internal block indexing as per
+:cpp:func:`GDALRasterBand::ReadBlock`. The value consists of two integers separated by commas,
+in the order 'nXBlockOff,nYBlockOff', the horizontal and vertical block offset, with 0 indicating
+the left-most or top-most block, 1 the next block, and so forth. Marginal blocks are extracted with
+reduced size if implied by imperfect divisor matching of block size versus raster size. It is an error
+to provide fewer or more than two values to the ``block`` option, and an error for values that are
+less than zero, or greater than the maximum block index. This option is mutually exclusive with
+``srcwin``, ``projwin``, ``outsize``, ``tr``, ``r``, and ``ovr``.
+
+.. spelling:word-list::
+    nXBlockOff
+    nYBlockOff
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

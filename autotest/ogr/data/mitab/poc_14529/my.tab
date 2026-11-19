@@ -1,0 +1,9 @@
+!Table
+!Version 100
+Open Table "first_table" Hide
+Open Table "second_table" Hide
+
+Create View view_first_table_second_table As
+Select ID,foo
+From second_table, first_table
+Where second_table.joint_field=first_table.joint_field

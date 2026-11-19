@@ -11,7 +11,6 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
-import os
 import shutil
 
 import gdaltest
@@ -29,13 +28,13 @@ pytestmark = pytest.mark.require_driver("DIMAP")
     not gdaltest.vrt_has_open_support(),
     reason="VRT driver open missing",
 )
-def test_dimap_1():
+def test_dimap_1(tmp_path):
 
-    shutil.copy("data/dimap/METADATA.DIM", "tmp")
-    shutil.copy("data/dimap/IMAGERY.TIF", "tmp")
-    shutil.copy("data/rgbsmall.tif", "tmp")
+    shutil.copy("data/dimap/METADATA.DIM", tmp_path)
+    shutil.copy("data/dimap/IMAGERY.TIF", tmp_path)
+    shutil.copy("data/rgbsmall.tif", tmp_path)
 
-    ds = gdal.Open("tmp/METADATA.DIM")
+    ds = gdal.Open(tmp_path / "METADATA.DIM")
 
     assert (
         ds.RasterCount == 1 and ds.RasterXSize == 6000 and ds.RasterYSize == 6000
@@ -65,9 +64,6 @@ def test_dimap_1():
     ), "GCPs wrong."
 
     ds = None
-    os.unlink("tmp/METADATA.DIM")
-    os.unlink("tmp/IMAGERY.TIF")
-    os.unlink("tmp/rgbsmall.tif")
 
 
 ###############################################################################
@@ -96,7 +92,6 @@ def test_dimap_2_single_component():
             "EPHEMERIS_NADIR_LON": "NADIR_LON",
             "EPHEMERIS_ACQUISITION_ORBIT_NUMBER": "ACQUISITION_ORBIT_NUMBER",
             "SPECTRAL_PROCESSING": "PMS",
-            "CLOUDCOVER_MEASURE_TYPE": "AUTOMATIC",
             "DATASET_JOB_ID": "JOB_ID",
             "MISSION": "PHR",
             "GEOMETRIC_GROUND_SETTING": "true",
@@ -104,7 +99,6 @@ def test_dimap_2_single_component():
             "DATASET_PRODUCTION_DATE": "PRODUCTION_DATE",
             "DATASET_PRODUCER_CONTACT": "PRODUCER_CONTACT",
             "IMAGING_DATE": "2016-06-17",
-            "CLOUDCOVER_QUALITY_TABLES": "PHR",
             "DATASET_PRODUCER_NAME": "PRODUCER_NAME",
             "GEOMETRIC_GEOMETRIC_PROCESSING": "SENSOR",
             "GEOMETRIC_EPHEMERIS_USED": "CORRECTED",
@@ -116,7 +110,6 @@ def test_dimap_2_single_component():
             "INSTRUMENT_INDEX": "1A",
             "EPHEMERIS_NADIR_LAT": "NADIR_LAT",
             "INSTRUMENT": "PHR",
-            "CLOUDCOVER_MEASURE_NAME": "Cloud_Cotation (CLD)",
             "FACILITY_SOFTWARE": "SOFTWARE",
             "IMAGING_TIME": "12:34:56",
             "MISSION_INDEX": "1A",
@@ -141,8 +134,14 @@ def test_dimap_2_single_component():
             "RADIOMETRIC_INTER_ARRAY_RECONSTRUCTION": "true",
             "RADIOMETRIC_RADIOMETRIC_STRETCH": "false",
             "RADIOMETRIC_OUT_OF_ORDER_THRESHOLD": "0.5",
+            "CLOUD_COVERAGE": "2",
+            "CLOUD_COVERAGE_UNIT": "percent",
+            "SNOW_COVERAGE": "3",
+            "SNOW_COVERAGE_UNIT": "percent",
         }
         assert md == expected_md, "metadata wrong."
+
+        assert ds.GetMetadata("IMAGERY") == {"CLOUDCOVER": "2"}
 
         rpc = ds.GetMetadata("RPC")
         expected_rpc = {

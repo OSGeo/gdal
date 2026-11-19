@@ -775,9 +775,9 @@ static void GXFScanForZMinMax(GXFHandle hGXF)
             if (padfScanline[iPixel] != psGXF->dfSetDummyTo)
             {
                 psGXF->dfZMinimum =
-                    MIN(psGXF->dfZMinimum, padfScanline[iPixel]);
+                    CPL_MIN(psGXF->dfZMinimum, padfScanline[iPixel]);
                 psGXF->dfZMaximum =
-                    MAX(psGXF->dfZMaximum, padfScanline[iPixel]);
+                    CPL_MAX(psGXF->dfZMaximum, padfScanline[iPixel]);
             }
         }
     }

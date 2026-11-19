@@ -132,13 +132,14 @@ static bool WriteFloat32(VSILFILE *fp, float fVal)
 /*                          PatchSectionSize()                          */
 /************************************************************************/
 
-static void PatchSectionSize(VSILFILE *fp, vsi_l_offset nStartSection)
+static bool PatchSectionSize(VSILFILE *fp, vsi_l_offset nStartSection)
 {
     vsi_l_offset nCurOffset = VSIFTellL(fp);
-    VSIFSeekL(fp, nStartSection, SEEK_SET);
+    bool bRet = VSIFSeekL(fp, nStartSection, SEEK_SET) == 0;
     GUInt32 nSect3Size = static_cast<GUInt32>(nCurOffset - nStartSection);
-    WriteUInt32(fp, nSect3Size);
-    VSIFSeekL(fp, nCurOffset, SEEK_SET);
+    bRet &= WriteUInt32(fp, nSect3Size);
+    bRet &= VSIFSeekL(fp, nCurOffset, SEEK_SET) == 0;
+    return bRet;
 }
 
 /************************************************************************/
@@ -194,10 +195,12 @@ GRIB2Section3Writer::GRIB2Section3Writer(VSILFILE *fpIn, GDALDataset *poSrcDSIn)
 
     poSrcDS->GetGeoTransform(m_gt);
 
-    dfLLX = m_gt[0] + m_gt[1] / 2;
-    dfLLY = m_gt[3] + m_gt[5] / 2 + (poSrcDS->GetRasterYSize() - 1) * m_gt[5];
-    dfURX = m_gt[0] + m_gt[1] / 2 + (poSrcDS->GetRasterXSize() - 1) * m_gt[1];
-    dfURY = m_gt[3] + m_gt[5] / 2;
+    dfLLX = m_gt.xorig + m_gt.xscale / 2;
+    dfLLY = m_gt.yorig + m_gt.yscale / 2 +
+            (poSrcDS->GetRasterYSize() - 1) * m_gt.yscale;
+    dfURX = m_gt.xorig + m_gt.xscale / 2 +
+            (poSrcDS->GetRasterXSize() - 1) * m_gt.xscale;
+    dfURY = m_gt.yorig + m_gt.yscale / 2;
     if (dfURY < dfLLY)
     {
         double dfTemp = dfURY;
@@ -215,56 +218,57 @@ bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
     const double dfSemiMajor = oSRS.GetSemiMajor();
     const double dfSemiMinor = oSRS.GetSemiMinor();
     const double dfInvFlattening = oSRS.GetInvFlattening();
+    bool bRet = true;
     if (std::abs(dfSemiMajor - 6378137.0) < 0.01 &&
         std::abs(dfInvFlattening - 298.257223563) < 1e-9)  // WGS84
     {
-        WriteByte(fp, 5);  // WGS84
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, 5);  // WGS84
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     }
     else if (std::abs(dfSemiMajor - 6378137.0) < 0.01 &&
              std::abs(dfInvFlattening - 298.257222101) < 1e-9)  // GRS80
     {
-        WriteByte(fp, 4);  // GRS80
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, 4);  // GRS80
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     }
     else if (dfInvFlattening == 0)
     {
         // Earth assumed spherical with radius specified (in m)
         // by data producer
-        WriteByte(fp, 1);
-        WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, 1);
+        bRet &= WriteByte(fp, 2);  // scale = * 100
+        bRet &= WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     }
     else
     {
         // Earth assumed oblate spheroid with major and minor axes
         // specified (in m) by data producer
-        WriteByte(fp, 7);
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt32(fp, GRIB2MISSING_u4);
-        WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
-        WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMinor * 100 + 0.5));
+        bRet &= WriteByte(fp, 7);
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteByte(fp, 2);  // scale = * 100
+        bRet &= WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
+        bRet &= WriteByte(fp, 2);  // scale = * 100
+        bRet &= WriteUInt32(fp, static_cast<GUInt32>(dfSemiMinor * 100 + 0.5));
     }
-    WriteUInt32(fp, poSrcDS->GetRasterXSize());
-    WriteUInt32(fp, poSrcDS->GetRasterYSize());
+    bRet &= WriteUInt32(fp, poSrcDS->GetRasterXSize());
+    bRet &= WriteUInt32(fp, poSrcDS->GetRasterYSize());
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -282,9 +286,9 @@ bool GRIB2Section3Writer::WriteScaled(double dfVal, double dfUnit)
 
 bool GRIB2Section3Writer::WriteGeographic()
 {
-    WriteUInt16(fp, GS3_LATLON);  // Grid template number
+    bool bRet = WriteUInt16(fp, GS3_LATLON);  // Grid template number
 
-    WriteEllipsoidAndRasterSize();
+    bRet &= WriteEllipsoidAndRasterSize();
 
     if (dfLLX < 0 &&
         CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")))
@@ -296,16 +300,17 @@ bool GRIB2Section3Writer::WriteGeographic()
 
         if (dfLLX > dfURX)
         {
-            if (fabs(360 - poSrcDS->GetRasterXSize() * m_gt[1]) < m_gt[1] / 4)
+            if (fabs(360 - poSrcDS->GetRasterXSize() * m_gt.xscale) <
+                m_gt.xscale / 4)
             {
                 // Find the first row number east of the prime meridian
                 nSplitAndSwapColumn =
-                    static_cast<int>(ceil((0 - dfOrigLLX) / m_gt[1]));
+                    static_cast<int>(ceil((0 - dfOrigLLX) / m_gt.xscale));
                 CPLDebug("GRIB",
                          "Rewrapping around the prime meridian at column %d",
                          nSplitAndSwapColumn);
                 dfLLX = 0;
-                dfURX = 360 - m_gt[1];
+                dfURX = 360 - m_gt.xscale;
             }
             else
             {
@@ -316,20 +321,21 @@ bool GRIB2Section3Writer::WriteGeographic()
         CPLDebug("GRIB", "Target longitudes range is %lf %lf", dfLLX, dfURX);
     }
 
-    WriteUInt32(fp, 0);  // Basic angle. 0 equivalent of 1
+    bRet &= WriteUInt32(fp, 0);  // Basic angle. 0 equivalent of 1
     // Subdivisions of basic angle used. ~0 equivalent of 10^6
-    WriteUInt32(fp, GRIB2MISSING_u4);
+    bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
-    WriteScaled(dfLLX, dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
-    WriteScaled(dfURY, dfAngUnit);
-    WriteScaled(dfURX, dfAngUnit);
-    WriteScaled(m_gt[1], dfAngUnit);
-    WriteScaled(fabs(m_gt[5]), dfAngUnit);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_3 |
+                              GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(dfURY, dfAngUnit);
+    bRet &= WriteScaled(dfURX, dfAngUnit);
+    bRet &= WriteScaled(m_gt.xscale, dfAngUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -340,9 +346,9 @@ bool GRIB2Section3Writer::WriteRotatedLatLon(double dfLatSouthernPole,
                                              double dfLonSouthernPole,
                                              double dfAxisRotation)
 {
-    WriteUInt16(fp, GS3_ROTATED_LATLON);  // Grid template number
+    bool bRet = WriteUInt16(fp, GS3_ROTATED_LATLON);  // Grid template number
 
-    WriteEllipsoidAndRasterSize();
+    bRet &= WriteEllipsoidAndRasterSize();
 
     if (dfLLX < 0 &&
         CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES")))
@@ -354,16 +360,17 @@ bool GRIB2Section3Writer::WriteRotatedLatLon(double dfLatSouthernPole,
 
         if (dfLLX > dfURX)
         {
-            if (fabs(360 - poSrcDS->GetRasterXSize() * m_gt[1]) < m_gt[1] / 4)
+            if (fabs(360 - poSrcDS->GetRasterXSize() * m_gt.xscale) <
+                m_gt.xscale / 4)
             {
                 // Find the first row number east of the prime meridian
                 nSplitAndSwapColumn =
-                    static_cast<int>(ceil((0 - dfOrigLLX) / m_gt[1]));
+                    static_cast<int>(ceil((0 - dfOrigLLX) / m_gt.xscale));
                 CPLDebug("GRIB",
                          "Rewrapping around the prime meridian at column %d",
                          nSplitAndSwapColumn);
                 dfLLX = 0;
-                dfURX = 360 - m_gt[1];
+                dfURX = 360 - m_gt.xscale;
             }
             else
             {
@@ -374,23 +381,24 @@ bool GRIB2Section3Writer::WriteRotatedLatLon(double dfLatSouthernPole,
         CPLDebug("GRIB", "Target longitudes range is %lf %lf", dfLLX, dfURX);
     }
 
-    WriteUInt32(fp, 0);  // Basic angle. 0 equivalent of 1
+    bRet &= WriteUInt32(fp, 0);  // Basic angle. 0 equivalent of 1
     // Subdivisions of basic angle used. ~0 equivalent of 10^6
-    WriteUInt32(fp, GRIB2MISSING_u4);
+    bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
-    WriteScaled(dfLLX, dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
-    WriteScaled(dfURY, dfAngUnit);
-    WriteScaled(dfURX, dfAngUnit);
-    WriteScaled(m_gt[1], dfAngUnit);
-    WriteScaled(fabs(m_gt[5]), dfAngUnit);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
-    WriteScaled(dfLatSouthernPole, dfAngUnit);
-    WriteScaled(Lon180to360(dfLonSouthernPole), dfAngUnit);
-    WriteScaled(dfAxisRotation, dfAngUnit);
+    bRet &= WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_3 |
+                              GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(dfURY, dfAngUnit);
+    bRet &= WriteScaled(dfURX, dfAngUnit);
+    bRet &= WriteScaled(m_gt.xscale, dfAngUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteScaled(dfLatSouthernPole, dfAngUnit);
+    bRet &= WriteScaled(Lon180to360(dfLonSouthernPole), dfAngUnit);
+    bRet &= WriteScaled(dfAxisRotation, dfAngUnit);
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -479,20 +487,21 @@ bool GRIB2Section3Writer::WriteMercator2SP(OGRSpatialReference *poSRS)
         return false;
 
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
-    WriteScaled(dfLLX, dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
-    WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
-                dfAngUnit);
-    WriteScaled(dfURY, dfAngUnit);
-    WriteScaled(dfURX, dfAngUnit);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
-    WriteInt32(fp, 0);          // angle of the grid
+    bool bRet = WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_3 |
+                              GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
+                        dfAngUnit);
+    bRet &= WriteScaled(dfURY, dfAngUnit);
+    bRet &= WriteScaled(dfURX, dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteInt32(fp, 0);          // angle of the grid
     const double dfLinearUnit = 1e-3;
-    WriteScaled(m_gt[1], dfLinearUnit);
-    WriteScaled(fabs(m_gt[5]), dfLinearUnit);
+    bRet &= WriteScaled(m_gt.xscale, dfLinearUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfLinearUnit);
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -501,30 +510,35 @@ bool GRIB2Section3Writer::WriteMercator2SP(OGRSpatialReference *poSRS)
 
 bool GRIB2Section3Writer::WriteTransverseMercator()
 {
-    WriteUInt16(fp, GS3_TRANSVERSE_MERCATOR);  // Grid template number
-    WriteEllipsoidAndRasterSize();
+    bool bRet =
+        WriteUInt16(fp, GS3_TRANSVERSE_MERCATOR);  // Grid template number
+    bRet &= WriteEllipsoidAndRasterSize();
 
     const double dfAngUnit = 1e-6;
-    WriteScaled(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
-                dfAngUnit);
-    WriteScaled(Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
-                dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                        dfAngUnit);
+    bRet &= WriteScaled(
+        Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
+        dfAngUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_3 |
+                              GRIB2BIT_4);  // Resolution and component flags
     float fScale =
         static_cast<float>(oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 0.0));
-    WriteFloat32(fp, fScale);
+    bRet &= WriteFloat32(fp, fScale);
     const double dfLinearUnit = 1e-2;
-    WriteScaled(oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0), dfLinearUnit);
-    WriteScaled(oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0), dfLinearUnit);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
-    WriteScaled(m_gt[1], dfLinearUnit);
-    WriteScaled(fabs(m_gt[5]), dfLinearUnit);
-    WriteScaled(dfLLX, dfLinearUnit);
-    WriteScaled(dfLLY, dfLinearUnit);
-    WriteScaled(dfURX, dfLinearUnit);
-    WriteScaled(dfURY, dfLinearUnit);
+    bRet &= WriteScaled(oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0),
+                        dfLinearUnit);
+    bRet &= WriteScaled(oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0),
+                        dfLinearUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteScaled(m_gt.xscale, dfLinearUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfLinearUnit);
+    bRet &= WriteScaled(dfLLX, dfLinearUnit);
+    bRet &= WriteScaled(dfLLY, dfLinearUnit);
+    bRet &= WriteScaled(dfURX, dfLinearUnit);
+    bRet &= WriteScaled(dfURY, dfLinearUnit);
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -533,29 +547,31 @@ bool GRIB2Section3Writer::WriteTransverseMercator()
 
 bool GRIB2Section3Writer::WritePolarStereographic()
 {
-    WriteUInt16(fp, GS3_POLAR);  // Grid template number
-    WriteEllipsoidAndRasterSize();
+    bool bRet = WriteUInt16(fp, GS3_POLAR);  // Grid template number
+    bRet &= WriteEllipsoidAndRasterSize();
 
     if (!TransformToGeo(dfLLX, dfLLY))
         return false;
 
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
-    WriteScaled(dfLLX, dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
+    // Resolution and component flags
+    bRet &= WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);
     const double dfLatOrigin =
         oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-    WriteScaled(dfLatOrigin, dfAngUnit);
-    WriteScaled(Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
-                dfAngUnit);
+    bRet &= WriteScaled(dfLatOrigin, dfAngUnit);
+    bRet &= WriteScaled(
+        Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
+        dfAngUnit);
     const double dfLinearUnit = 1e-3;
-    WriteScaled(m_gt[1], dfLinearUnit);
-    WriteScaled(fabs(m_gt[5]), dfLinearUnit);
+    bRet &= WriteScaled(m_gt.xscale, dfLinearUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfLinearUnit);
     // Projection center flag: BIT1=0 North Pole, BIT1=1 South Pole
-    WriteByte(fp, (dfLatOrigin < 0) ? GRIB2BIT_1 : 0);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteByte(fp, (dfLatOrigin < 0) ? GRIB2BIT_1 : 0);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -598,28 +614,29 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference *poSRS)
         return false;
 
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
-    WriteScaled(dfLLX, dfAngUnit);
+    bool bRet = WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
     // Resolution and component flags. "not applicable" ==> 0 ?
-    WriteByte(fp, 0);
-    WriteScaled(poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
-                dfAngUnit);
-    WriteScaled(Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
-                dfAngUnit);
+    bRet &= WriteByte(fp, 0);
+    bRet &= WriteScaled(poSRS->GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0),
+                        dfAngUnit);
+    bRet &= WriteScaled(
+        Lon180to360(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)),
+        dfAngUnit);
     const double dfLinearUnit = 1e-3;
-    WriteScaled(m_gt[1], dfLinearUnit);
-    WriteScaled(fabs(m_gt[5]), dfLinearUnit);
-    WriteByte(fp, 0);           // Projection centre flag
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
-    WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
-                dfAngUnit);
-    WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0),
-                dfAngUnit);
+    bRet &= WriteScaled(m_gt.xscale, dfLinearUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfLinearUnit);
+    bRet &= WriteByte(fp, 0);           // Projection centre flag
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    bRet &= WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0),
+                        dfAngUnit);
+    bRet &= WriteScaled(poSRS->GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0),
+                        dfAngUnit);
     // Latitude of the southern pole of projection
-    WriteUInt32(fp, GRIB2MISSING_u4);
+    bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     // Longitude of the southern pole of projection
-    WriteUInt32(fp, GRIB2MISSING_u4);
-    return true;
+    bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
+    return bRet;
 }
 
 /************************************************************************/
@@ -628,9 +645,9 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference *poSRS)
 
 bool GRIB2Section3Writer::WriteLAEA()
 {
-    WriteUInt16(fp, GS3_LAMBERT_AZIMUTHAL);  // Grid template number
+    bool bRet = WriteUInt16(fp, GS3_LAMBERT_AZIMUTHAL);  // Grid template number
 
-    WriteEllipsoidAndRasterSize();
+    bRet &= WriteEllipsoidAndRasterSize();
 
     if (!TransformToGeo(dfLLX, dfLLY) || !TransformToGeo(dfURX, dfURY))
         return false;
@@ -639,22 +656,24 @@ bool GRIB2Section3Writer::WriteLAEA()
         CPLTestBool(CPLGetConfigOption("GRIB_ADJUST_LONGITUDE_RANGE", "YES"));
 
     const double dfAngUnit = 1e-6;
-    WriteScaled(dfLLY, dfAngUnit);
+    bRet &= WriteScaled(dfLLY, dfAngUnit);
     if (!bNormalizeLongitude && dfLLX > 360)
         dfLLX -= 360;
-    WriteScaled(dfLLX, dfAngUnit);
-    WriteScaled(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0),
-                dfAngUnit);
+    bRet &= WriteScaled(dfLLX, dfAngUnit);
+    bRet &= WriteScaled(oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_CENTER, 0.0),
+                        dfAngUnit);
     const double dfLonCenter =
         oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0);
-    WriteScaled(bNormalizeLongitude ? Lon180to360(dfLonCenter) : dfLonCenter,
-                dfAngUnit);
-    WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);  // Resolution and component flags
+    bRet &= WriteScaled(bNormalizeLongitude ? Lon180to360(dfLonCenter)
+                                            : dfLonCenter,
+                        dfAngUnit);
+    // Resolution and component flags
+    bRet &= WriteByte(fp, GRIB2BIT_3 | GRIB2BIT_4);
     const double dfLinearUnit = 1e-3;
-    WriteScaled(m_gt[1], dfLinearUnit);
-    WriteScaled(fabs(m_gt[5]), dfLinearUnit);
-    WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
-    return true;
+    bRet &= WriteScaled(m_gt.xscale, dfLinearUnit);
+    bRet &= WriteScaled(fabs(m_gt.yscale), dfLinearUnit);
+    bRet &= WriteByte(fp, GRIB2BIT_2);  // Scanning mode: bottom-to-top
+    return bRet;
 }
 
 /************************************************************************/
@@ -666,26 +685,25 @@ bool GRIB2Section3Writer::Write()
     // Section 3: Grid Definition Section
     vsi_l_offset nStartSection = VSIFTellL(fp);
 
-    WriteUInt32(fp, GRIB2MISSING_u4);  // section size
+    bool bRet = WriteUInt32(fp, GRIB2MISSING_u4);  // section size
 
-    WriteByte(fp, 3);  // section number
+    bRet &= WriteByte(fp, 3);  // section number
 
     // Source of grid definition = Specified in Code Table 3.1
-    WriteByte(fp, 0);
+    bRet &= WriteByte(fp, 0);
 
     const GUInt32 nDataPoints =
         static_cast<GUInt32>(poSrcDS->GetRasterXSize()) *
         poSrcDS->GetRasterYSize();
-    WriteUInt32(fp, nDataPoints);
+    bRet &= WriteUInt32(fp, nDataPoints);
 
     // Number of octets for optional list of numbers defining number of points
-    WriteByte(fp, 0);
+    bRet &= WriteByte(fp, 0);
 
     // Interpretation of list of numbers defining number of points =
     // No appended list
-    WriteByte(fp, 0);
+    bRet &= WriteByte(fp, 0);
 
-    bool bRet = false;
     if (oSRS.IsGeographic())
     {
         if (oSRS.IsDerivedGeographic())
@@ -721,8 +739,8 @@ bool GRIB2Section3Writer::Write()
                 const double dfLatSouthernPole = -dfLatp;
                 const double dfLonSouthernPole = dfLon0;
                 const double dfAxisRotation = -dfLonp;
-                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
-                                          dfAxisRotation);
+                bRet &= WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                           dfAxisRotation);
             }
             else if (poConversion &&
                      EQUAL(pszMethod, "Pole rotation (netCDF CF convention)"))
@@ -741,8 +759,8 @@ bool GRIB2Section3Writer::Write()
                 const double dfLatSouthernPole = -dfLatp;
                 const double dfLonSouthernPole = dfLon0;
                 const double dfAxisRotation = -dfLonp;
-                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
-                                          dfAxisRotation);
+                bRet &= WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                           dfAxisRotation);
             }
             else if (poConversion &&
                      EQUAL(pszMethod, "Pole rotation (GRIB convention)"))
@@ -754,8 +772,8 @@ bool GRIB2Section3Writer::Write()
                 const double dfAxisRotation =
                     oValMap["Axis rotation (GRIB convention)"];
 
-                bRet = WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
-                                          dfAxisRotation);
+                bRet &= WriteRotatedLatLon(dfLatSouthernPole, dfLonSouthernPole,
+                                           dfAxisRotation);
             }
             else
             {
@@ -767,43 +785,43 @@ bool GRIB2Section3Writer::Write()
         }
         else
         {
-            bRet = WriteGeographic();
+            bRet &= WriteGeographic();
         }
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_MERCATOR_1SP))
     {
-        bRet = WriteMercator1SP();
+        bRet &= WriteMercator1SP();
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_MERCATOR_2SP))
     {
-        bRet = WriteMercator2SP();
+        bRet &= WriteMercator2SP();
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
     {
-        bRet = WriteTransverseMercator();
+        bRet &= WriteTransverseMercator();
     }
     else if (pszProjection && EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
     {
-        bRet = WritePolarStereographic();
+        bRet &= WritePolarStereographic();
     }
     else if (pszProjection != nullptr &&
              EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP))
     {
-        bRet = WriteLCC1SP();
+        bRet &= WriteLCC1SP();
     }
     else if (pszProjection != nullptr &&
              (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) ||
               EQUAL(pszProjection, SRS_PT_ALBERS_CONIC_EQUAL_AREA)))
     {
-        bRet = WriteLCC2SPOrAEA();
+        bRet &= WriteLCC2SPOrAEA();
     }
     else if (pszProjection &&
              EQUAL(pszProjection, SRS_PT_LAMBERT_AZIMUTHAL_EQUAL_AREA))
     {
-        bRet = WriteLAEA();
+        bRet &= WriteLAEA();
     }
 
-    PatchSectionSize(fp, nStartSection);
+    bRet &= PatchSectionSize(fp, nStartSection);
 
     return bRet;
 }
@@ -909,10 +927,10 @@ float *GRIB2Section567Writer::GetFloatData()
     }
     CPLErr eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
         GF_Read, m_nSplitAndSwap, 0, m_nXSize - m_nSplitAndSwap, m_nYSize,
-        pafData + (m_gt[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0),
+        pafData + (m_gt.yscale < 0 ? (m_nYSize - 1) * m_nXSize : 0),
         m_nXSize - m_nSplitAndSwap, m_nYSize, GDT_Float32, sizeof(float),
-        m_gt[5] < 0 ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
-                    : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+        m_gt.yscale < 0 ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
+                        : static_cast<GSpacing>(m_nXSize * sizeof(float)),
         nullptr);
     if (eErr != CE_None)
     {
@@ -923,11 +941,11 @@ float *GRIB2Section567Writer::GetFloatData()
     {
         eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
             GF_Read, 0, 0, m_nSplitAndSwap, m_nYSize,
-            pafData + (m_gt[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0) +
+            pafData + (m_gt.yscale < 0 ? (m_nYSize - 1) * m_nXSize : 0) +
                 (m_nXSize - m_nSplitAndSwap),
             m_nSplitAndSwap, m_nYSize, GDT_Float32, sizeof(float),
-            m_gt[5] < 0 ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
-                        : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+            m_gt.yscale < 0 ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
+                            : static_cast<GSpacing>(m_nXSize * sizeof(float)),
             nullptr);
         if (eErr != CE_None)
         {
@@ -1404,7 +1422,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
         pProgressData);
     for (int i = 0; i < m_nYSize; i++)
     {
-        int iSrcLine = m_gt[5] < 0 ? m_nYSize - 1 - i : i;
+        int iSrcLine = m_gt.yscale < 0 ? m_nYSize - 1 - i : i;
         CPLErr eErr = m_poSrcDS->GetRasterBand(m_nBand)->RasterIO(
             GF_Read, m_nSplitAndSwap, iSrcLine, m_nXSize - m_nSplitAndSwap, 1,
             pData, m_nXSize - m_nSplitAndSwap, 1, eReqDT, 0, 0, nullptr);
@@ -1635,7 +1653,7 @@ bool GRIB2Section567Writer::WritePNG()
     CPLFree(pafData);
 
     CPLStringList aosPNGOptions;
-    aosPNGOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
+    aosPNGOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", m_nBits));
 
     const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
@@ -1821,7 +1839,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(CSLConstList papszOptions)
                 "TARGET", CPLSPrintf("%f", 100.0 - 100.0 / nCompressionRatio));
         }
     }
-    aosJ2KOptions.SetNameValue("NBITS", CPLSPrintf("%d", m_nBits));
+    aosJ2KOptions.SetNameValue(GDALMD_NBITS, CPLSPrintf("%d", m_nBits));
 
     const GDALDataType eReducedDT = (m_nBits <= 8) ? GDT_UInt8 : GDT_UInt16;
     GDALDataset *poMEMDS =
@@ -2007,7 +2025,7 @@ bool GRIB2Section567Writer::Write(float fValOffset, CSLConstList papszOptions,
     }
 
     const char *pszBits =
-        GetBandOption(papszOptions, nullptr, m_nBand, "NBITS", nullptr);
+        GetBandOption(papszOptions, nullptr, m_nBand, GDALMD_NBITS, nullptr);
     if (pszBits == nullptr && eDataEncoding != IEEE_FLOATING_POINT)
     {
         pszBits = m_poSrcDS->GetRasterBand(m_nBand)->GetMetadataItem(
@@ -2322,9 +2340,9 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
 {
     // Section 4: Product Definition Section
     vsi_l_offset nStartSection4 = VSIFTellL(fp);
-    WriteUInt32(fp, GRIB2MISSING_u4);  // section size
-    WriteByte(fp, 4);                  // section number
-    WriteUInt16(fp, 0);  // Number of coordinate values after template
+    bool bRet = WriteUInt32(fp, GRIB2MISSING_u4);  // section size
+    bRet &= WriteByte(fp, 4);                      // section number
+    bRet &= WriteUInt16(fp, 0);  // Number of coordinate values after template
 
     // 0 = Analysis or forecast at a horizontal level or in a horizontal
     // layer at a point in time
@@ -2353,28 +2371,30 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
             pszInputUnit = osInputUnit.c_str();
         }
     }
-    WriteUInt16(fp, nPDTN);  // PDTN
+    bRet &= WriteUInt16(fp, nPDTN);  // PDTN
     if (nPDTN == 0 && pszPDSTemplateNumbers == nullptr &&
         pszPDSTemplateAssembledValues == nullptr)
     {
         // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp4-0.shtml
-        WriteByte(fp, GRIB2MISSING_u1);  // Parameter category = Missing
-        WriteByte(fp, GRIB2MISSING_u1);  // Parameter number = Missing
-        WriteByte(fp, GRIB2MISSING_u1);  // Type of generating process = Missing
-        WriteByte(fp, 0);  // Background generating process identifier
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);  // Parameter category = Missing
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);  // Parameter number = Missing
+        bRet &= WriteByte(
+            fp, GRIB2MISSING_u1);  // Type of generating process = Missing
+        bRet &= WriteByte(fp, 0);  // Background generating process identifier
         // Analysis or forecast generating process identified
-        WriteByte(fp, GRIB2MISSING_u1);
-        WriteUInt16(fp, 0);  // Hours
-        WriteByte(fp, 0);    // Minutes
-        WriteByte(fp, 0);    // Indicator of unit of time range: 0=Minute
-        WriteUInt32(fp, 0);  // Forecast time in units
-        WriteByte(fp, 0);    // Type of first fixed surface
-        WriteByte(fp, 0);    // Scale factor of first fixed surface
-        WriteUInt32(fp, 0);  // Type of second fixed surface
-        WriteByte(fp, GRIB2MISSING_u1);  // Type of second fixed surface
-        WriteByte(fp, GRIB2MISSING_u1);  // Scale factor of second fixed surface
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);
+        bRet &= WriteUInt16(fp, 0);  // Hours
+        bRet &= WriteByte(fp, 0);    // Minutes
+        bRet &= WriteByte(fp, 0);  // Indicator of unit of time range: 0=Minute
+        bRet &= WriteUInt32(fp, 0);  // Forecast time in units
+        bRet &= WriteByte(fp, 0);    // Type of first fixed surface
+        bRet &= WriteByte(fp, 0);    // Scale factor of first fixed surface
+        bRet &= WriteUInt32(fp, 0);  // Type of second fixed surface
+        bRet &= WriteByte(fp, GRIB2MISSING_u1);  // Type of second fixed surface
+        bRet &= WriteByte(
+            fp, GRIB2MISSING_u1);  // Scale factor of second fixed surface
         // Scaled value of second fixed surface
-        WriteUInt32(fp, GRIB2MISSING_u4);
+        bRet &= WriteUInt32(fp, GRIB2MISSING_u4);
     }
     else if (pszPDSTemplateNumbers == nullptr &&
              pszPDSTemplateAssembledValues == nullptr)
@@ -2414,14 +2434,14 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
         CSLDestroy(papszTokens);
 
         // Read back section
-        PatchSectionSize(fp, nStartSection4);
+        bRet &= PatchSectionSize(fp, nStartSection4);
 
         vsi_l_offset nCurOffset = VSIFTellL(fp);
-        VSIFSeekL(fp, nStartSection4, SEEK_SET);
+        bRet &= VSIFSeekL(fp, nStartSection4, SEEK_SET) == 0;
         size_t nSizeSect4 = static_cast<size_t>(nCurOffset - nStartSection4);
         GByte *pabySect4 = static_cast<GByte *>(CPLMalloc(nSizeSect4));
-        VSIFReadL(pabySect4, 1, nSizeSect4, fp);
-        VSIFSeekL(fp, nCurOffset, SEEK_SET);
+        bRet &= VSIFReadL(pabySect4, 1, nSizeSect4, fp) == nSizeSect4;
+        bRet &= VSIFSeekL(fp, nCurOffset, SEEK_SET) == 0;
 
         // Check consistency with template definition
         g2int iofst = 0;
@@ -2552,8 +2572,8 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
         free(mappds);
         CSLDestroy(papszTokens);
     }
-    PatchSectionSize(fp, nStartSection4);
-    return true;
+    bRet &= PatchSectionSize(fp, nStartSection4);
+    return bRet;
 }
 
 /************************************************************************/
@@ -2582,7 +2602,7 @@ GDALDataset *GRIBDataset::CreateCopy(const char *pszFilename,
                  "Source dataset must have a geotransform");
         return nullptr;
     }
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Geotransform with rotation terms not supported");

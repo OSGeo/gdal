@@ -180,7 +180,9 @@ std::pair<GDALDataset *, bool> OGRIDFDataSource::Parse() const
         if (poGPKGDriver)
         {
             CPLString osTmpFilename(m_osFilename + "_tmp.gpkg");
-            VSILFILE *fp = VSIFOpenL(osTmpFilename, "wb");
+            VSILFILE *fp = CPLGetConfigOption("CPL_TMPDIR", nullptr)
+                               ? nullptr
+                               : VSIFOpenL(osTmpFilename, "wb");
             if (fp)
             {
                 VSIFCloseL(fp);
@@ -633,7 +635,7 @@ const OGRLayer *OGRIDFDataSource::GetLayer(int iLayer) const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRIDFDataSource::TestCapability(const char *pszCap) const
+bool OGRIDFDataSource::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, ODsCMeasuredGeometries))
         return true;
@@ -1129,7 +1131,7 @@ OGRFeature *OGRVDVLayer::GetNextFeature()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVDVLayer::TestCapability(const char *pszCap) const
+bool OGRVDVLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCFastFeatureCount) && m_nTotalFeatureCount > 0 &&
         m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
@@ -1603,7 +1605,7 @@ OGRErr OGRVDVWriterLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVDVWriterLayer::TestCapability(const char *pszCap) const
+bool OGRVDVWriterLayer::TestCapability(const char *pszCap) const
 {
     if (EQUAL(pszCap, OLCSequentialWrite))
         return m_bWritePossible;
@@ -2034,7 +2036,7 @@ void OGRVDVDataSource::SetCurrentWriterLayer(OGRVDVWriterLayer *poLayer)
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRVDVDataSource::TestCapability(const char *pszCap) const
+bool OGRVDVDataSource::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, ODsCCreateLayer))

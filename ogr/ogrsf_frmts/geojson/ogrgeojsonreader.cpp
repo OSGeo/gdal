@@ -603,10 +603,8 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
             CPLString osNativeData("NATIVE_DATA=");
             osNativeData += json_object_get_string(poRootObj);
 
-            char *apszMetadata[3] = {
-                const_cast<char *>(osNativeData.c_str()),
-                const_cast<char *>(
-                    "NATIVE_MEDIA_TYPE=application/vnd.geo+json"),
+            const char *const apszMetadata[] = {
+                osNativeData.c_str(), "NATIVE_MEDIA_TYPE=application/geo+json",
                 nullptr};
 
             poLayer->SetMetadata(apszMetadata, "NATIVE_DATA");
@@ -2176,7 +2174,7 @@ OGRFeature *OGRGeoJSONBaseReader::ReadFeature(OGRLayer *poLayer,
         poFeature->SetNativeData(pszSerializedObj
                                      ? pszSerializedObj
                                      : json_object_to_json_string(poObj));
-        poFeature->SetNativeMediaType("application/vnd.geo+json");
+        poFeature->SetNativeMediaType("application/geo+json");
     }
 
     /* -------------------------------------------------------------------- */
@@ -2477,9 +2475,8 @@ void OGRGeoJSONReader::ReadFeatureCollection(OGRGeoJSONLayer *poLayer,
 
         osNativeData = "NATIVE_DATA=" + osNativeData;
 
-        char *apszMetadata[3] = {
-            const_cast<char *>(osNativeData.c_str()),
-            const_cast<char *>("NATIVE_MEDIA_TYPE=application/vnd.geo+json"),
+        const char *const apszMetadata[] = {
+            osNativeData.c_str(), "NATIVE_MEDIA_TYPE=application/geo+json",
             nullptr};
 
         poLayer->SetMetadata(apszMetadata, "NATIVE_DATA");

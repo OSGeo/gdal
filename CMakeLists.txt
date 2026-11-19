@@ -50,6 +50,11 @@ include(CheckCXXSourceCompiles)
 
 #
 if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+    cmake_diagnostic(PUSH)
+    cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+  endif()
+
   check_compiler_machine_option(flag SSE)
   if (NOT ${flag} STREQUAL "")
     set(HAVE_SSE_AT_COMPILE_TIME 1)
@@ -120,6 +125,10 @@ if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "(i586|i686|x86|AMD64)")
         c = _mm256_fmadd_pd(a,b,c);
         return 0;
     }" HAVE_AVX2_FMA_WITHOUT_FLAG)
+
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+    cmake_diagnostic(POP)
+  endif()
 
 else()
 
@@ -221,14 +230,16 @@ if(DEFINED ENV{MKL_ENABLE_INSTRUCTIONS})
 endif()
 set(ENV{MKL_ENABLE_INSTRUCTIONS} "SSE4_2")
 
-if (Python_LOOKUP_VERSION)
-    set(Python_FIND_STRATEGY VERSION)
-    find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
-else ()
-    set(Python_FIND_STRATEGY LOCATION)
-    find_package(Python 3.8 COMPONENTS Interpreter Development NumPy)
-endif ()
-set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
+if (BUILD_PYTHON_BINDINGS OR (NOT DEFINED BUILD_PYTHON_BINDINGS))
+    if (Python_LOOKUP_VERSION)
+        set(Python_FIND_STRATEGY VERSION)
+        find_package(Python ${Python_LOOKUP_VERSION} EXACT COMPONENTS Interpreter Development NumPy)
+    else ()
+        set(Python_FIND_STRATEGY LOCATION)
+        find_package(Python 3.8 COMPONENTS Interpreter Development NumPy)
+    endif ()
+    set_package_properties(Python PROPERTIES PURPOSE "SWIG_PYTHON: Python binding")
+endif()
 
 if (Python_Interpreter_FOUND)
   file(

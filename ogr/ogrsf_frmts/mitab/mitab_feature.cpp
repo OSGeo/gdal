@@ -8360,7 +8360,7 @@ int TABDebugFeature::WriteGeometryToMAPFile(
     // Nothing to do here!
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "TABDebugFeature::WriteGeometryToMAPFile() not implemented.\n");
+             "TABDebugFeature::WriteGeometryToMAPFile() not implemented.");
 
     return -1;
 }

@@ -195,7 +195,7 @@ class OGRMySQLTableLayer final : public OGRMySQLLayer
         bPreservePrecision = bFlag;
     }
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
                       bool bForce) override;
@@ -221,7 +221,7 @@ class OGRMySQLResultLayer final : public OGRMySQLLayer
     void ResetReading() override;
     GIntBig GetFeatureCount(int) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 };
 
 /************************************************************************/
@@ -241,9 +241,7 @@ class OGRMySQLDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
     OGRMySQLLayer *poLongResultLayer;
 
@@ -262,7 +260,7 @@ class OGRMySQLDataSource final : public GDALDataset
 
     int FetchSRSId(const OGRSpatialReference *poSRS);
 
-    const OGRSpatialReference *FetchSRS(int nSRSId);
+    OGRSpatialReferenceRefCountedPtr FetchSRS(int nSRSId);
 
     OGRErr InitializeMetadataTables();
     OGRErr UpdateMetadataTables(const char *pszLayerName,
@@ -284,7 +282,7 @@ class OGRMySQLDataSource final : public GDALDataset
                            const OGRGeomFieldDefn *poGeomFieldDefn,
                            CSLConstList papszOptions) override;
 
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     OGRLayer *ExecuteSQL(const char *pszSQLCommand,
                          OGRGeometry *poSpatialFilter,

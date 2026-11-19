@@ -189,6 +189,24 @@ def test_gdalalg_vector_update_by_fid():
     assert f["some_field"] == "foo"
 
 
+def test_gdalalg_vector_update_src_without_geometry_field():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("src")
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    src_lyr.CreateFeature(ogr.Feature(src_lyr.GetLayerDefn()))
+
+    dst_ds = gdal.GetDriverByName("MEM").CreateVector("dst")
+    dst_lyr = dst_ds.CreateLayer("test")
+    f = ogr.Feature(dst_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    dst_lyr.CreateFeature(f)
+
+    assert gdal.alg.vector.update(input=src_ds, output=dst_ds)
+
+    assert dst_lyr.GetFeatureCount() == 1
+    assert dst_lyr.GetNextFeature().GetGeometryRef() is not None
+
+
 @pytest.mark.parametrize("mode", ["merge", "update-only", "append-only"])
 def test_gdalalg_vector_update_mode(mode):
 
@@ -256,8 +274,8 @@ def test_gdalalg_vector_update_src_is_same_as_dst_filename(tmp_vsimem):
 
     with pytest.raises(Exception, match="Input and output datasets must be different"):
         gdal.alg.vector.update(
-            input=gdal.OpenEx(filename, gdal.OF_VECTOR),
-            output=gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE),
+            input=gdal.Open(filename, gdal.OF_VECTOR),
+            output=gdal.Open(filename, gdal.OF_VECTOR | gdal.OF_UPDATE),
         )
 
 
@@ -399,3 +417,88 @@ def test_gdalalg_vector_update_pipeline_intermediate_step(tmp_vsimem):
     ) as alg:
         j = alg.Output()
         assert j["layers"][0]["featureCount"] == 1
+
+
+def test_gdalalg_vector_update_null_key():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("src")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    src_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetFieldNull("id")
+    f["name"] = "updated"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    src_lyr.CreateFeature(f)
+
+    dst_ds = gdal.GetDriverByName("MEM").CreateVector("dst")
+    dst_lyr = dst_ds.CreateLayer("test")
+    dst_lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+    dst_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    f = ogr.Feature(dst_lyr.GetLayerDefn())
+    f["id"] = 0
+    f["name"] = "initial"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    dst_lyr.CreateFeature(f)
+
+    assert gdal.alg.vector.update(input=src_ds, output=dst_ds, key="id")
+
+    assert dst_lyr.GetFeatureCount() == 1
+    f = dst_lyr.GetNextFeature()
+    assert f["id"] == 0
+    assert f["name"] == "initial"
+    assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+# Test with a MSSQL dataset
+
+
+@pytest.fixture()
+def mssql_update_ds(mssql_ds):
+
+    mssql_ds.ExecuteSQL("DROP TABLE IF EXISTS vector_update_cursor_test")
+
+    yield mssql_ds
+
+    mssql_ds.ExecuteSQL("DROP TABLE IF EXISTS vector_update_cursor_test")
+
+
+@pytest.mark.require_driver("MSSQLSpatial")
+def test_gdalalg_mssql_vector_update(mssql_update_ds):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("src")
+    src_lyr = src_ds.CreateLayer("test")
+    src_lyr.CreateField(ogr.FieldDefn("key_field", ogr.OFTInteger))
+    src_lyr.CreateField(ogr.FieldDefn("value_field", ogr.OFTString))
+
+    num_features = 5
+    for i in range(num_features):
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f["key_field"] = i
+        f["value_field"] = f"updated_{i}"
+        src_lyr.CreateFeature(f)
+
+    dst_lyr = mssql_update_ds.CreateLayer(
+        "vector_update_cursor_test", geom_type=ogr.wkbNone
+    )
+    dst_lyr.CreateField(ogr.FieldDefn("key_field", ogr.OFTInteger))
+    dst_lyr.CreateField(ogr.FieldDefn("value_field", ogr.OFTString))
+
+    for i in range(num_features):
+        f = ogr.Feature(dst_lyr.GetLayerDefn())
+        f["key_field"] = i
+        f["value_field"] = f"initial_{i}"
+        dst_lyr.CreateFeature(f)
+
+    assert gdal.alg.vector.update(
+        input=src_ds,
+        output=mssql_update_ds,
+        output_layer="vector_update_cursor_test",
+        key=["key_field"],
+        mode="update-only",
+    )
+
+    dst_lyr.ResetReading()
+    updated = {f["key_field"]: f["value_field"] for f in dst_lyr}
+    assert updated == {i: f"updated_{i}" for i in range(num_features)}

@@ -778,7 +778,7 @@ const OGRFeatureDefn *OGRWFSJoinLayer::GetLayerDefn() const
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRWFSJoinLayer::TestCapability(const char *) const
+bool OGRWFSJoinLayer::TestCapability(const char *) const
 {
     return FALSE;
 }

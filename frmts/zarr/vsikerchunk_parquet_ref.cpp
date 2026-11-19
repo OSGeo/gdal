@@ -60,7 +60,8 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
   public:
     VSIKerchunkParquetRefFileSystem()
     {
-        IsFileSystemInstantiated() = true;
+        bool *pbInstantiated = &IsFileSystemInstantiated();
+        *pbInstantiated = true;
     }
 
     ~VSIKerchunkParquetRefFileSystem() override;
@@ -124,7 +125,8 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
 VSIKerchunkParquetRefFileSystem::~VSIKerchunkParquetRefFileSystem()
 {
     CleanCache();
-    IsFileSystemInstantiated() = false;
+    bool *pbInstantiated = &IsFileSystemInstantiated();
+    *pbInstantiated = false;
 }
 
 /************************************************************************/

@@ -208,10 +208,8 @@ def move(
         print("No error threshold in pixels selected with -et, file not updated.")
 
     else:
-        print(
-            f"""Maximum check point error is {max_error:.5f} pixels which exceeds the
-                error threshold so the file has not been updated."""
-        )
+        print(f"""Maximum check point error is {max_error:.5f} pixels which exceeds the
+                error threshold so the file has not been updated.""")
 
     ds = None
 

@@ -24,6 +24,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("OpenFileGDB")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -183,7 +184,7 @@ def test_ogr_openfilegdb_write_field_types(tmp_vsimem, use_synctodisk):
         f.SetField("float32", 1.25)
         f.SetField("int64", 12345678912345)
         f.SetField("dt", "2022-11-04T12:34:56+02:00")
-        f.SetField("binary", b"\x00\xFF\x7F")
+        f.SetField("binary", b"\x00\xff\x7f")
         f.SetField("xml", "<some_elt/>")
         f.SetField("guid", "{12345678-9ABC-DEF0-1234-567890ABCDEF}")
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
@@ -1349,6 +1350,67 @@ def test_ogr_openfilegdb_write_delete_field_before_geom(tmp_vsimem):
 
 
 ###############################################################################
+# Test changing the fields of a table does not modify the flags of the
+# geometry field.
+# See https://github.com/OSGeo/gdal/issues/15263
+
+
+def get_geom_field_flags(gdbtable_filename, field_name="SHAPE"):
+    """Return the flags byte of a geometry field in a .gdbtable file
+    (0x01 = nullable, 0x02 = required, 0x04 = editable)"""
+
+    f = gdal.VSIFOpenL(gdbtable_filename, "rb")
+    assert f
+    data = gdal.VSIFReadL(1, gdal.VSIStatL(gdbtable_filename).size, f)
+    gdal.VSIFCloseL(f)
+
+    # A field descriptor starts with its name: a count of UTF-16 chars, then the chars
+    name = bytes([len(field_name)]) + field_name.encode("utf-16le")
+    pos = data.find(name)
+    assert pos >= 0
+    pos += len(name)
+
+    # Then the alias, in the same format
+    alias_len = data[pos]
+    pos += 1 + alias_len * 2
+
+    # Then one byte each for the field type, the role and the flags
+    field_type, _, flags = data[pos : pos + 3]
+    assert field_type == 7  # FGFT_GEOMETRY
+    return flags
+
+
+@pytest.mark.parametrize("operation", ["create", "delete", "alter"])
+def test_ogr_openfilegdb_write_geom_field_flags(tmp_vsimem, operation):
+
+    dirname = tmp_vsimem / "out.gdb"
+    gdbtable_filename = dirname / "a00000009.gdbtable"
+
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+    assert lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString)) == ogr.OGRERR_NONE
+    ds = None
+
+    # 0x07 = nullable | required | editable
+    assert get_geom_field_flags(gdbtable_filename) == 0x07
+
+    ds = ogr.Open(dirname, update=1)
+    lyr = ds.GetLayer(0)
+    if operation == "create":
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+    elif operation == "delete":
+        assert lyr.DeleteField(0) == ogr.OGRERR_NONE
+    else:
+        fld_defn = ogr.FieldDefn("str2", ogr.OFTString)
+        assert lyr.AlterFieldDefn(0, fld_defn, ogr.ALTER_NAME_FLAG) == ogr.OGRERR_NONE
+    ds = None
+
+    # flags should not have changed
+    assert get_geom_field_flags(gdbtable_filename) == 0x07
+
+
+###############################################################################
 
 
 def test_ogr_openfilegdb_write_feature_dataset_no_crs(tmp_vsimem):
@@ -1372,7 +1434,7 @@ def test_ogr_openfilegdb_write_feature_dataset_no_crs(tmp_vsimem):
     assert lyr is not None
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     rg = ds.GetRootGroup()
 
     assert rg.GetGroupNames() == ["my_feature_dataset"]
@@ -1437,11 +1499,11 @@ def test_ogr_openfilegdb_write_feature_dataset_crs(tmp_vsimem):
 
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     lyr = ds.GetLayerByName("inherited_srs")
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
 
 
 ###############################################################################
@@ -2462,7 +2524,7 @@ def test_ogr_openfilegdb_write_domains(tmp_vsimem):
     assert ds.AddFieldDomain(domain)
     ds = None
 
-    ds = gdal.OpenEx(dirname)
+    ds = gdal.Open(dirname)
     assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 4
 
     domain = ds.GetFieldDomain("int_range_domain")
@@ -2575,7 +2637,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     items_lyr = ds.GetLayerByName("GDB_Items")
     f = items_lyr.GetFeature(1)
@@ -2590,7 +2652,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     assert f["Name"] == "dest_table"
     dest_table_uuid = f["UUID"]
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     assert ds.AddRelationship(relationship)
 
@@ -2677,9 +2739,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     )
     assert f["DatasetSubtype1"] == 1
     assert f["DatasetSubtype2"] == 0
-    assert (
-        f["Documentation"]
-        == """<metadata xml:lang="en">
+    assert f["Documentation"] == """<metadata xml:lang="en">
   <Esri>
     <CreaDate></CreaDate>
     <CreaTime></CreaTime>
@@ -2691,10 +2751,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
   </Esri>
 </metadata>
 """
-    )
-    assert (
-        f["ItemInfo"]
-        == """<ESRI_ItemInformation culture="">
+    assert f["ItemInfo"] == """<ESRI_ItemInformation culture="">
   <name>my_relationship</name>
   <catalogPath>\\my_relationship</catalogPath>
   <snippet></snippet>
@@ -2732,7 +2789,6 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
   <propValues></propValues>
 </ESRI_ItemInformation>
 """
-    )
     # check item relationships have been created
     item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
 
@@ -2751,7 +2807,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     assert f["DestID"] == relationship_uuid
     assert f["Type"] == "{DC78F1AB-34E4-43AC-BA47-1C4EABD0E7C7}"
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {"my_relationship"}
 
     # one to many
@@ -2763,7 +2819,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     # should be rejected -- duplicate name
     assert not ds.AddRelationship(relationship)
@@ -2781,7 +2837,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetBackwardPathLabel("backward label")
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -2890,7 +2946,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("destination_fk", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     relationship = gdal.Relationship(
         "many_to_many",
@@ -2910,7 +2966,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetMappingTableName("many_to_many")
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3030,7 +3086,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
 
     relationship = gdal.Relationship(
         "many_to_many_auto",
@@ -3043,7 +3099,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
 
     assert ds.AddRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3089,7 +3145,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
         "my_one_to_many_relationship",
         "many_to_many",
     }
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3129,7 +3185,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetBackwardPathLabel("my new backward label")
     assert ds.UpdateRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3155,7 +3211,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     fld_defn = ogr.FieldDefn("new_dest_pkey", ogr.OFTInteger)
     assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     relationship = gdal.Relationship(
         "my_one_to_many_relationship",
         "new_origin_table",
@@ -3166,7 +3222,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     relationship.SetRightTableFields(["new_dest_pkey"])
     assert ds.UpdateRelationship(relationship)
 
-    ds = gdal.OpenEx(dirname, gdal.GA_Update)
+    ds = gdal.Open(dirname, gdal.GA_Update)
     assert set(ds.GetRelationshipNames()) == {
         "my_relationship",
         "my_one_to_many_relationship",
@@ -3901,7 +3957,7 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn(tmp_vsimem):
     assert "WKID" in xml
 
     assert lyr.GetGeometryColumn() == "shape_renamed"
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
 
     # Set SRS to None
     fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
@@ -3958,13 +4014,13 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn(tmp_vsimem):
         == ogr.OGRERR_NONE
     )
     assert lyr.GetSpatialRef() is not None
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     ds = None
 
     ds = ogr.Open(dirname, update=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef() is not None
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
 
     sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
     assert sql_lyr
@@ -4132,8 +4188,7 @@ def test_ogr_openfilegdb_write_compound_crs(tmp_vsimem, write_wkid, write_vcswki
 
     ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
+    srs.SetFromUserInput("""COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
 PROJCRS["WGS_1984_Complex_UTM_Zone_22N",
     BASEGEOGCRS["WGS 84",
         DATUM["World Geodetic System 1984",
@@ -4181,8 +4236,7 @@ VERTCRS["MSL height",
         AREA["World."],
         BBOX[-90,-180,90,180]],
     ID["EPSG",5714]]]
-    """
-    )
+    """)
     d = {
         "OPENFILEGDB_WRITE_WKID": None if write_wkid else "FALSE",
         "OPENFILEGDB_WRITE_VCSWKID": None if write_vcswkid else "FALSE",

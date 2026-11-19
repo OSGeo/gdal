@@ -50,7 +50,7 @@ static std::wstring StringToWString(const std::string &utf8string)
 {
     wchar_t *pszUTF16 =
         CPLRecodeToWChar(utf8string.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
-    std::wstring utf16string = pszUTF16;
+    std::wstring utf16string(pszUTF16);
     CPLFree(pszUTF16);
     return utf16string;
 }
@@ -63,7 +63,7 @@ static std::string WStringToString(const std::wstring &utf16string)
 {
     char *pszUTF8 =
         CPLRecodeFromWChar(utf16string.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
-    std::string utf8string = pszUTF8;
+    std::string utf8string(pszUTF8);
     CPLFree(pszUTF8);
     return utf8string;
 }
@@ -306,7 +306,7 @@ bool OGROpenFileGDBLayer::CreateFeatureDataset(const char *pszFeatureDataset)
     }
 
     char *pszDefinition = CPLSerializeXMLTree(oTree.get());
-    const std::string osDefinition = pszDefinition;
+    const std::string osDefinition(pszDefinition);
     CPLFree(pszDefinition);
 
     m_osFeatureDatasetGUID = OFGDBGenerateUUID();
@@ -432,7 +432,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     const char *pszFeatureDataset =
         m_aosCreationOptions.FetchNameValue("FEATURE_DATASET");
     std::string osFeatureDatasetDef;
-    std::unique_ptr<OGRSpatialReference> poFeatureDatasetSRS;
+    OGRSpatialReferenceRefCountedPtr poFeatureDatasetSRS;
     if (pszFeatureDataset)
     {
         {
@@ -487,7 +487,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
                 CPLSearchXMLNode(psParentTree, "=DEFeatureDataset");
             if (psParentInfo != nullptr)
             {
-                poFeatureDatasetSRS.reset(m_poDS->BuildSRS(psParentInfo));
+                poFeatureDatasetSRS = m_poDS->BuildSRS(psParentInfo);
             }
             CPLDestroyXMLNode(psParentTree);
         }
@@ -601,15 +601,13 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
                 return false;
             }
 
-            auto poSRSClone = poSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
+            auto poSRSClone =
+                OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
+            poGeomFieldDefn->SetSpatialRef(poSRSClone.get());
         }
         else if (poFeatureDatasetSRS)
         {
-            auto poSRSClone = poFeatureDatasetSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
+            poGeomFieldDefn->SetSpatialRef(poFeatureDatasetSRS.get());
         }
 
         std::string osWKT;
@@ -1184,7 +1182,7 @@ OGRErr OGROpenFileGDBLayer::CreateField(const OGRFieldDefn *poFieldIn,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Field %s of type Date will be written as a DateTime. "
-                 "To get DateTime, use layer creation option "
+                 "To get Date, use layer creation option "
                  "TARGET_ARCGIS_VERSION=ARCGIS_PRO_3_2_OR_LATER",
                  poField->GetNameRef());
     }
@@ -1784,16 +1782,9 @@ OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn(
                 return OGRERR_FAILURE;
             }
 
-            if (poNewSRS)
-            {
-                auto poNewSRSClone = poNewSRS->Clone();
-                oField.SetSpatialRef(poNewSRSClone);
-                poNewSRSClone->Release();
-            }
-            else
-            {
-                oField.SetSpatialRef(nullptr);
-            }
+            auto poNewSRSClone =
+                OGRSpatialReferenceRefCountedPtr::makeClone(poNewSRS);
+            oField.SetSpatialRef(poNewSRSClone.get());
         }
     }
 
@@ -2327,8 +2318,8 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                         m_bWarnedDateNotConvertibleUTC = true;
                         CPLError(
                             CE_Warning, CPLE_AppDefined,
-                            "Attempt at writing a datetime with a unknown time "
-                            "zone "
+                            "Attempt at writing a datetime with an unknown "
+                            "time zone "
                             "or local time in a layer that expects dates "
                             "to be convertible to UTC. It will be written as "
                             "if it was expressed in UTC.");

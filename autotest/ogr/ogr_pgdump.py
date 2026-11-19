@@ -20,6 +20,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PGDump")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -57,7 +58,7 @@ def test_ogr_pgdump_1(tmp_path):
 
     dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_lyr = shp_ds.GetLayer(0)
     feat = shp_lyr.GetNextFeature()
 
@@ -144,7 +145,7 @@ def test_ogr_pgdump_2(tmp_path):
 
         dst_feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
 
-        shp_ds = ogr.Open("data/poly.shp")
+        shp_ds = gdal.Open("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
         shp_lyr = shp_ds.GetLayer(0)
         feat = shp_lyr.GetNextFeature()
 
@@ -1583,7 +1584,7 @@ def test_ogr_pgdump_long_identifiers(
 
 def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_YES.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=YES"])
@@ -1603,7 +1604,7 @@ def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
 
 def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_NO.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=NO"])
@@ -1623,7 +1624,7 @@ def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
 
 def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_ASCII.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute, options=["LAUNDER_ASCII=YES"])
@@ -1672,3 +1673,32 @@ def test_ogr_pgdump_skip_conflicts(tmp_vsimem):
         sql = sql[sql.find(needle) + len(needle) :]
 
     check_and_remove(") ON CONFLICT DO NOTHING;")
+
+
+###############################################################################
+# Test that " and \ in string list items are escaped in both COPY and INSERT mode
+
+
+@pytest.mark.parametrize("pg_use_copy", ["YES", "NO"])
+def test_ogr_pgdump_stringlist_escaping(tmp_vsimem, pg_use_copy):
+
+    with gdaltest.config_option("PG_USE_COPY", pg_use_copy):
+        ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+            tmp_vsimem / "ogr_pgdump_stringlist_escape.sql"
+        )
+        lyr = ds.CreateLayer("testlayer", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("stringlist", ogr.OFTStringList))
+
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetFieldStringList(0, ["a\\b", 'c"d'])
+        lyr.CreateFeature(feat)
+        ds = None
+
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_pgdump_stringlist_escape.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    if pg_use_copy == "YES":
+        assert r'{"a\\\\b","c\\"d"}' in sql, sql
+    else:
+        assert "ARRAY['a\\b','c\"d']" in sql, sql

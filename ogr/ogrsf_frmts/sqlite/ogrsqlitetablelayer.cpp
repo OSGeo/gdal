@@ -15,6 +15,8 @@
 #include "ogr_sqlite.h"
 #include "ogrsqliteutility.h"
 
+#include <json.h>  // JSON-C
+
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -33,6 +35,7 @@
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "ogr_core.h"
+#include "ogrlibjsonutils.h"
 #include "ogr_feature.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
@@ -179,7 +182,7 @@ CPLErr OGRSQLiteTableLayer::Initialize(const char *m_pszTableNameIn,
 
 static OGRSQLiteGeomFormat GetGeomFormat(const char *pszGeomFormat)
 {
-    OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
+    OGRSQLiteGeomFormat eGeomFormat = OSGF_Unknown;
     if (pszGeomFormat)
     {
         if (EQUAL(pszGeomFormat, "WKT"))
@@ -444,7 +447,7 @@ CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
         rc = sqlite3_get_table(hDB, pszSQLConst, &papszResult, &nRowCount,
                                &nColCount, &pszErrMsg);
         OGRwkbGeometryType eGeomType = wkbUnknown;
-        OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
+        OGRSQLiteGeomFormat eGeomFormat = OSGF_Unknown;
         if (rc == SQLITE_OK && nRowCount == 1)
         {
             char **papszRow = papszResult + nColCount;
@@ -800,7 +803,10 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
                 m_iFIDCol = iCol;
                 if (nIdx >=
                     0) /* in case it has also been created as a regular field */
+                {
+                    m_panFieldOrdinals[nIdx] = iCol;
                     nCountFieldOrdinals++;
+                }
             }
             continue;
         }
@@ -1153,7 +1159,7 @@ void OGRSQLiteTableLayer::BuildWhere()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteTableLayer::TestCapability(const char *pszCap) const
+bool OGRSQLiteTableLayer::TestCapability(const char *pszCap) const
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
@@ -1640,10 +1646,9 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     auto poSRSIn = poGeomFieldIn->GetSpatialRef();
     if (poSRSIn)
     {
-        auto l_poSRS = poSRSIn->Clone();
+        auto l_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
         l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        poGeomField->SetSpatialRef(l_poSRS);
-        l_poSRS->Release();
+        poGeomField->SetSpatialRef(l_poSRS.get());
     }
 
     /* -------------------------------------------------------------------- */
@@ -2062,8 +2067,8 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
         return OGRERR_FAILURE;
 
-        // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
-        // there was bug fixes related to it until 3.35.5
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
 #if SQLITE_VERSION_NUMBER >= 3035005L
     const char *pszFieldName =
         m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();
@@ -2278,7 +2283,27 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         oTmpFieldDefn.SetUnique(poNewFieldDefn->IsUnique());
     }
 
-    if (nActualFlags == ALTER_NAME_FLAG)
+    int nActualFlagsToApplyWithSQL = nActualFlags;
+
+#if SQLITE_VERSION_NUMBER >= 3053000L
+    if ((nActualFlagsToApplyWithSQL & ALTER_NULLABLE_FLAG) != 0)
+    {
+        OGRErr eErr =
+            SQLCommand(m_poDS->GetDB(),
+                       CPLString().Printf(
+                           "ALTER TABLE \"%s\" ALTER COLUMN \"%s\" %s NOT NULL",
+                           SQLEscapeName(m_pszTableName).c_str(),
+                           SQLEscapeName(osOldColName).c_str(),
+                           poNewFieldDefn->IsNullable() ? "DROP" : "SET"));
+
+        if (eErr != OGRERR_NONE)
+            return eErr;
+
+        nActualFlagsToApplyWithSQL &= ~ALTER_NULLABLE_FLAG;
+    }
+#endif
+
+    if (nActualFlagsToApplyWithSQL == ALTER_NAME_FLAG)
     {
         CPLDebug("SQLite", "Running ALTER TABLE RENAME COLUMN");
         OGRErr eErr = SQLCommand(
@@ -2293,7 +2318,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
         if (eErr != OGRERR_NONE)
             return eErr;
     }
-    else
+    else if (nActualFlagsToApplyWithSQL != 0)
     {
         /* --------------------------------------------------------------------
          */
@@ -2783,14 +2808,45 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                 {
                     const char *pszRawValue =
                         poFeature->GetFieldAsString(iField);
+                    std::string osValue(pszRawValue);
+
+                    // If the field subtype is JSON and the current value cannot
+                    // be parsed as a valid JSON, encode it as a JSON string.
+                    if (poFieldDefn->GetType() == OFTString &&
+                        poFieldDefn->GetSubType() == OFSTJSON)
+                    {
+                        json_object *poObjProp = nullptr;
+                        if (!OGRJSonParse(
+                                osValue.c_str(), &poObjProp, false,
+                                static_cast<int>(osValue.length() + 1)))
+                        {
+                            // Emit warning once
+                            CPLErrorOnce(
+                                CE_Warning, CPLE_AppDefined,
+                                "Field %s is declared as JSON but the "
+                                "value is not a valid JSON. Storing as "
+                                "string.",
+                                poFieldDefn->GetNameRef());
+                            // Escape and quote
+                            osValue =
+                                CPLJSONObject(pszRawValue)
+                                    .Format(CPLJSONObject::PrettyFormat::Plain);
+                        }
+                        else
+                        {
+                            osValue = json_object_to_json_string(poObjProp);
+                        }
+                        json_object_put(poObjProp);
+                    }
+
                     if (CSLFindString(m_papszCompressedColumns,
                                       m_poFeatureDefn->GetFieldDefn(iField)
                                           ->GetNameRef()) >= 0)
                     {
                         size_t nBytesOut = 0;
-                        void *pOut =
-                            CPLZLibDeflate(pszRawValue, strlen(pszRawValue), -1,
-                                           nullptr, 0, &nBytesOut);
+                        void *pOut = CPLZLibDeflate(osValue.c_str(),
+                                                    strlen(osValue.c_str()), -1,
+                                                    nullptr, 0, &nBytesOut);
                         if (pOut != nullptr)
                         {
                             rc = sqlite3_bind_blob(
@@ -2803,7 +2859,7 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
                     else
                     {
                         rc = sqlite3_bind_text(m_hStmtIn, nBindField++,
-                                               pszRawValue, -1,
+                                               osValue.c_str(), -1,
                                                SQLITE_TRANSIENT);
                     }
                     break;

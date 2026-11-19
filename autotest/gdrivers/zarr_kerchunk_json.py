@@ -23,16 +23,6 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("ZARR")
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def load_zarr():
-    # Make sure the ZARR driver is fully loaded so that /vsikerchunk_json_ref
-    # is available
-    with pytest.raises(Exception):
-        gdal.Open("ZARR:")
-
-
 ###############################################################################
 
 
@@ -288,7 +278,7 @@ def test_zarr_kerchunk_json_open_very_large(tmp_vsimem):
     ],
 )
 def test_zarr_kerchunk_json_gdal_open(filename):
-    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+    with gdal.Open(filename, gdal.OF_MULTIDIM_RASTER) as ds:
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("x")
         assert ar.Read() == b"\x01"
@@ -303,7 +293,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -333,7 +323,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
 
     try:
         handler = webserver.FileHandler({"/ref.json.zarr": content})
-        with webserver.install_http_handler(handler), gdal.OpenEx(
+        with webserver.install_http_handler(handler), gdal.Open(
             f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
@@ -342,7 +332,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
             with pytest.raises(Exception, match="tries to access local file"):
                 ar.Read()
 
-        with webserver.install_http_handler(handler), gdal.OpenEx(
+        with webserver.install_http_handler(handler), gdal.Open(
             f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
@@ -354,7 +344,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
                 with pytest.raises(Exception, match="tries to access local file"):
                     ar.Read()
 
-        with webserver.install_http_handler(handler), gdal.OpenEx(
+        with webserver.install_http_handler(handler), gdal.Open(
             f"/vsicurl/http://localhost:{webserver_port}/ref.json.zarr",
             gdal.OF_MULTIDIM_RASTER,
         ) as ds:
@@ -408,7 +398,7 @@ def test_vsikerchunk_json_ref_cache(tmp_vsimem, tmp_path):
             "CPL_VSI_MEM_MTIME": "0",
         }
     ):
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             json_filename,
             gdal.OF_MULTIDIM_RASTER,
             open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -440,7 +430,7 @@ def test_vsikerchunk_json_ref_cache(tmp_vsimem, tmp_path):
         # but from the cached Kerchunk Parquet dataset
         gdal.FileFromMemBuffer(json_filename, content.replace(b".bin", b".xxx"))
 
-        ds = gdal.OpenEx(
+        ds = gdal.Open(
             json_filename,
             gdal.OF_MULTIDIM_RASTER,
             open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -500,7 +490,7 @@ def test_vsikerchunk_json_ref_cache_concurrent_generation(tmp_vsimem, tmp_path):
                     / f"test_vsikerchunk_json_ref_cache_concurrent_{s.size}_{s.mtime}.zarr"
                 )
 
-                ds = gdal.OpenEx(
+                ds = gdal.Open(
                     json_filename,
                     gdal.OF_MULTIDIM_RASTER,
                     open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -571,7 +561,7 @@ def test_vsikerchunk_json_ref_cache_stalled_lock(tmp_vsimem, tmp_path):
             "VSIKERCHUNK_FOR_TESTS": "SHORT_DELAY_STALLED_LOCK",
         }
     ):
-        gdal.OpenEx(
+        gdal.Open(
             json_filename,
             gdal.OF_MULTIDIM_RASTER,
             open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -603,7 +593,7 @@ def test_vsikerchunk_json_ref_cache_stalled_lock(tmp_vsimem, tmp_path):
             tmp_vsimem / "subdir" / "test_vsikerchunk_json_ref_cache_stalled_lock.json"
         )
         gdal.FileFromMemBuffer(json_filename, content)
-        gdal.OpenEx(
+        gdal.Open(
             json_filename,
             gdal.OF_MULTIDIM_RASTER,
             open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -645,15 +635,16 @@ def test_vsikerchunk_json_ref_cache_cannot_create_cache_dir(tmp_vsimem, tmp_path
 
     with gdal.config_options(
         {
-            "VSIKERCHUNK_CACHE_DIR": "/i_do/not/exist",
+            # Pick-up a directory where we cannot even write as root
+            "VSIKERCHUNK_CACHE_DIR": "/proc/bus/i_cannot/create",
             "CPL_VSI_MEM_MTIME": "0",
         }
     ):
         with pytest.raises(
             Exception,
-            match="Cannot create directory /i_do/not/exist/test_vsikerchunk_json_ref_cache_cannot_create_cache_dir_",
+            match="Cannot create directory /proc/bus/i_cannot/create/test_vsikerchunk_json_ref_cache_cannot_create_cache_dir_",
         ):
-            gdal.OpenEx(
+            gdal.Open(
                 json_filename,
                 gdal.OF_MULTIDIM_RASTER,
                 open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -718,7 +709,7 @@ def test_vsikerchunk_json_ref_cache_wrong_json(
         }
     ):
         with pytest.raises(Exception, match=exception_msg):
-            gdal.OpenEx(
+            gdal.Open(
                 json_filename,
                 gdal.OF_MULTIDIM_RASTER,
                 open_options=["CACHE_KERCHUNK_JSON=YES"],
@@ -773,7 +764,7 @@ def test_vsikerchunk_json_ref_create_copy(tmp_vsimem):
 
     assert pct_tab[0] == 1.0
 
-    ds = gdal.OpenEx("ZARR:" + str(out_filename), gdal.OF_MULTIDIM_RASTER)
+    ds = gdal.Open("ZARR:" + str(out_filename), gdal.OF_MULTIDIM_RASTER)
     rg = ds.GetRootGroup()
     ar = rg.OpenMDArray("x")
     assert ar.Read() == b"\x01"

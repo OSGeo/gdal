@@ -129,24 +129,26 @@ box column and/or DuckDB native RTree spatial indices are used when available.
 Examples
 --------
 
-- Assuming :file:`libduckdb.so`, :file:`libduckdb.dylib` or :file:`duckdb.dll`
-  is available (and it is in a system location, or can be located through
-  LD_LIBRARY_PATH on Linux, DYLD_LIBRARY_PATH on MacOSX or PATH on Windows).
+.. example::
+   :title: Convert a Parquet file to GeoPackage
 
-  Convert a Parquet file to GeoPackage:
+   Assuming :file:`libduckdb.so`, :file:`libduckdb.dylib` or :file:`duckdb.dll`
+   is available (and it is in a system location, or can be located through
+   LD_LIBRARY_PATH on Linux, DYLD_LIBRARY_PATH on MacOSX or PATH on Windows).
 
-  ::
+   .. code-block:: bash
 
       ogr2ogr out.gpkg in.parquet
 
+.. example::
+   :title: Convert a DuckDB database to GeoPackage
 
-- Assuming :file:`libduckdb.so`, :file:`libduckdb.dylib` or :file:`duckdb.dll`
-  is available (and it is in a system location, or can be located through
-  LD_LIBRARY_PATH on Linux, DYLD_LIBRARY_PATH on MacOSX or PATH on Windows).
+   Assuming :file:`libduckdb.so`, :file:`libduckdb.dylib` or :file:`duckdb.dll`
+   is available (and it is in a system location, or can be located through
+   LD_LIBRARY_PATH on Linux, DYLD_LIBRARY_PATH on MacOSX or PATH on Windows).
 
-  Convert a DuckDB database to GeoPackage:
-
-  ::
+  
+   .. code-block:: bash
 
       ogr2ogr out.gpkg in.duckdb
 

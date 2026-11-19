@@ -316,12 +316,12 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    poDS->m_gt[0] = southWestLon;
-    poDS->m_gt[1] = dfPixelSize;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = southWestLat + nYSize * dfPixelSize;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -dfPixelSize;
+    poDS->m_gt.xorig = southWestLon;
+    poDS->m_gt.xscale = dfPixelSize;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = southWestLat + nYSize * dfPixelSize;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -dfPixelSize;
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects                                 */

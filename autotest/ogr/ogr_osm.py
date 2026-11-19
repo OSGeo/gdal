@@ -43,7 +43,7 @@ def setup_driver():
 # Test .pbf
 
 
-def test_ogr_osm_1(filename="data/osm/test.pbf"):
+def test_ogr_osm_1(tmp_path, filename="data/osm/test.pbf"):
 
     ds = ogr.Open(filename)
 
@@ -110,7 +110,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
 
     # Test multipolygons
     lyr = ds.GetLayer("multipolygons")
-    if filename == "tmp/ogr_osm_3":
+    if filename == tmp_path / "ogr_osm_3":
         assert lyr.GetGeomType() == ogr.wkbPolygon
     else:
         assert lyr.GetGeomType() == ogr.wkbMultiPolygon
@@ -124,7 +124,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         feat.DumpReadable()
         pytest.fail()
 
-    if filename == "tmp/ogr_osm_3":
+    if filename == tmp_path / "ogr_osm_3":
         ogrtest.check_feature_geometry(
             feat,
             "POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))",
@@ -159,7 +159,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
 
     # Test multilinestrings
     lyr = ds.GetLayer("multilinestrings")
-    if filename == "tmp/ogr_osm_3":
+    if filename == tmp_path / "ogr_osm_3":
         assert lyr.GetGeomType() == ogr.wkbLineString
     else:
         assert lyr.GetGeomType() == ogr.wkbMultiLineString
@@ -172,7 +172,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         feat.DumpReadable()
         pytest.fail()
 
-    if filename == "tmp/ogr_osm_3":
+    if filename == tmp_path / "ogr_osm_3":
         ogrtest.check_feature_geometry(feat, "LINESTRING (2 49,3 50)")
     else:
         ogrtest.check_feature_geometry(feat, "MULTILINESTRING ((2 49,3 50))")
@@ -184,7 +184,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
 
     # Test other_relations
     lyr = ds.GetLayer("other_relations")
-    if filename == "tmp/ogr_osm_3":
+    if filename == tmp_path / "ogr_osm_3":
         assert lyr is None
     else:
         assert lyr.GetGeomType() == ogr.wkbGeometryCollection
@@ -227,47 +227,47 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
 # Test .osm
 
 
-def test_ogr_osm_2():
+def test_ogr_osm_2(tmp_path):
 
     if not ogrtest.osm_drv_parse_osm:
         pytest.skip("Expat support missing")
 
-    return test_ogr_osm_1("data/osm/test.osm")
+    return test_ogr_osm_1(tmp_path, "data/osm/test.osm")
 
 
 ###############################################################################
 # Test reaching the max number of indexed keys
 
 
-def test_ogr_osm_limit_keys():
+def test_ogr_osm_limit_keys(tmp_path):
 
     if not ogrtest.osm_drv_parse_osm:
         pytest.skip("Expat support missing")
 
     with gdaltest.config_option("OSM_MAX_INDEXED_KEYS", "0"):
-        return test_ogr_osm_1("data/osm/test.osm")
+        return test_ogr_osm_1(tmp_path, "data/osm/test.osm")
 
 
 ###############################################################################
 # Test reaching the max number of indexed values per key
 
 
-def test_ogr_osm_limit_values_per_key():
+def test_ogr_osm_limit_values_per_key(tmp_path):
 
     if not ogrtest.osm_drv_parse_osm:
         pytest.skip("Expat support missing")
 
     with gdaltest.config_option("OSM_MAX_INDEXED_VALUES_PER_KEY", "0"):
-        return test_ogr_osm_1("data/osm/test.osm")
+        return test_ogr_osm_1(tmp_path, "data/osm/test.osm")
 
 
 ###############################################################################
 # Test ogr2ogr
 
 
-def test_ogr_osm_3(options=None, all_layers=False):
+def test_ogr_osm_3(tmp_path, options=None, all_layers=False):
 
-    filepath = "tmp/ogr_osm_3"
+    filepath = tmp_path / "ogr_osm_3"
     if os.path.exists(filepath):
         ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filepath)
 
@@ -280,11 +280,10 @@ def test_ogr_osm_3(options=None, all_layers=False):
     else:
         layers = "points lines multipolygons multilinestrings "
     with gdal.quiet_errors():
-        gdal.VectorTranslate(
-            "tmp/ogr_osm_3", "data/osm/test.pbf", options=layers + options
-        )
+        gdal.VectorTranslate(filepath, "data/osm/test.pbf", options=layers + options)
 
-    test_ogr_osm_1(filepath)
+    with gdal.config_option("SHAPE_PROMOTE_TO_MULTI", "NO"):
+        test_ogr_osm_1(tmp_path, filepath)
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filepath)
 
@@ -293,26 +292,26 @@ def test_ogr_osm_3(options=None, all_layers=False):
 # Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO and -skip
 
 
-def test_ogr_osm_3_sqlite_nodes():
+def test_ogr_osm_3_sqlite_nodes(tmp_path):
     with gdal.config_option("OSM_USE_CUSTOM_INDEXING", "NO"):
-        test_ogr_osm_3(options="-skip")
+        test_ogr_osm_3(tmp_path, options="-skip")
 
 
 ###############################################################################
 # Test ogr2ogr with --config OSM_COMPRESS_NODES YES
 
 
-def test_ogr_osm_3_custom_compress_nodes():
+def test_ogr_osm_3_custom_compress_nodes(tmp_path):
     with gdal.config_option("OSM_COMPRESS_NODES", "YES"):
-        test_ogr_osm_3()
+        test_ogr_osm_3(tmp_path)
 
 
 ###############################################################################
 # Test ogr2ogr with all layers
 
 
-def test_ogr_osm_3_all_layers():
-    return test_ogr_osm_3(options="-skip", all_layers=True)
+def test_ogr_osm_3_all_layers(tmp_path):
+    return test_ogr_osm_3(tmp_path, options="-skip", all_layers=True)
 
 
 ###############################################################################
@@ -409,7 +408,7 @@ def test_ogr_osm_5():
 # Test ogr2ogr -sql
 
 
-def test_ogr_osm_6():
+def test_ogr_osm_6(tmp_path):
 
     import test_cli_utilities
 
@@ -417,22 +416,24 @@ def test_ogr_osm_6():
         pytest.skip()
 
     try:
-        os.stat("tmp/ogr_osm_6")
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_osm_6")
+        os.stat(tmp_path / "ogr_osm_6")
+        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(tmp_path / "ogr_osm_6")
     except (OSError, AttributeError):
         pass
 
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path()
-        + ' tmp/ogr_osm_6 data/osm/test.pbf -sql "select * from multipolygons" -progress'
+        + " "
+        + str(tmp_path / "ogr_osm_6")
+        + ' data/osm/test.pbf -sql "select * from multipolygons" -progress'
     )
 
-    ds = ogr.Open("tmp/ogr_osm_6")
+    ds = ogr.Open(tmp_path / "ogr_osm_6")
     lyr = ds.GetLayer(0)
     count = lyr.GetFeatureCount()
     ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/ogr_osm_6")
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(tmp_path / "ogr_osm_6")
 
     assert count == 3
 
@@ -623,16 +624,18 @@ def test_ogr_osm_12():
 # Test test_uncompressed_dense_true_nometadata.pbf
 
 
-def test_ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
-    return test_ogr_osm_1("data/osm/test_uncompressed_dense_true_nometadata.pbf")
+def test_ogr_osm_test_uncompressed_dense_true_nometadata_pbf(tmp_path):
+    return test_ogr_osm_1(
+        tmp_path, "data/osm/test_uncompressed_dense_true_nometadata.pbf"
+    )
 
 
 ###############################################################################
 # Test test_uncompressed_dense_false.pbf
 
 
-def test_ogr_osm_test_uncompressed_dense_false_pbf():
-    return test_ogr_osm_1("data/osm/test_uncompressed_dense_false.pbf")
+def test_ogr_osm_test_uncompressed_dense_false_pbf(tmp_path):
+    return test_ogr_osm_1(tmp_path, "data/osm/test_uncompressed_dense_false.pbf")
 
 
 # Special case: if an object has a 'osm_id' key, then do not use it to override
@@ -730,7 +733,7 @@ def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
 
 def test_ogr_osm_15():
 
-    ds = gdal.OpenEx("data/osm/test.pbf")
+    ds = gdal.Open("data/osm/test.pbf")
 
     assert ds.TestCapability(ogr.ODsCRandomLayerRead) == 1
 
@@ -774,7 +777,7 @@ def test_ogr_osm_15():
     assert not (f is None or lyr is None)
     assert pct_array[0] == 1.0
 
-    # ds = gdal.OpenEx('/home/even/gdal/data/osm/france.osm.pbf')
+    # ds = gdal.Open('/home/even/gdal/data/osm/france.osm.pbf')
     # ds.ExecuteSQL('SET interest_layers = relations')
     # def test(pct, msg, unused):
     #    print(pct)
@@ -813,7 +816,7 @@ attributes=foo:baar,foo:bar
 """,
     )
 
-    ds = gdal.OpenEx(
+    ds = gdal.Open(
         "/vsimem/ogr_osm_16.osm",
         open_options=["CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini"],
     )
@@ -875,7 +878,7 @@ def test_ogr_osm_18():
 
 def test_ogr_osm_tags_json():
 
-    ds = gdal.OpenEx("data/osm/test.pbf", open_options=["TAGS_FORMAT=JSON"])
+    ds = gdal.Open("data/osm/test.pbf", open_options=["TAGS_FORMAT=JSON"])
 
     lyr = ds.GetLayerByName("points")
     lyr_defn = lyr.GetLayerDefn()
@@ -902,7 +905,7 @@ def test_ogr_osm_tags_json():
 
 def test_ogr_osm_tags_json_special_characters():
 
-    ds = gdal.OpenEx("data/osm/test_json.pbf", open_options=["TAGS_FORMAT=JSON"])
+    ds = gdal.Open("data/osm/test_json.pbf", open_options=["TAGS_FORMAT=JSON"])
 
     lyr = ds.GetLayerByName("points")
     lyr_defn = lyr.GetLayerDefn()
@@ -955,3 +958,15 @@ def test_ogr_osm_parse_complex_multipolygon():
         f,
         "MULTIPOLYGON (((0 10,0 11,1 11,1 10,0 10),(0.1 10.1,0.1 10.4,0.9 10.4,0.9 10.6,0.1 10.1),(0.1 10.6,0.1 10.9,0.9 10.9,0.9 10.6,0.1 10.6)))",
     )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14532
+
+
+def test_ogr_osm_parse_fix_gh14532():
+
+    ds = ogr.Open("data/osm/poc_14532.osm.pbf")
+    for lyr in ds:
+        for f in lyr:
+            pass

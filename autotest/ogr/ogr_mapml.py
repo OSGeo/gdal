@@ -113,7 +113,7 @@ def test_ogr_mapml_basic():
     assert lyr.GetDataset().GetDescription() == ds.GetDescription()
     srs = lyr.GetSpatialRef()
     assert srs
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     assert lyr.GetGeomType() == ogr.wkbUnknown
     assert lyr.GetName() == "test"
     assert lyr.TestCapability(ogr.OLCStringsAsUTF8)
@@ -241,9 +241,7 @@ def test_ogr_mapml_creation_options():
     xml = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert (
-        xml
-        == """<mapml- xmlns="http://www.w3.org/1999/xhtml">
+    assert xml == """<mapml- xmlns="http://www.w3.org/1999/xhtml">
   <map-head>
     <map-title>My title</map-title>
     <map-meta name="projection" content="OSMTILE"></map-meta>
@@ -262,7 +260,6 @@ def test_ogr_mapml_creation_options():
   </map-body>
 </mapml->
 """
-    )
 
     gdal.Unlink(filename)
 
@@ -282,11 +279,8 @@ def test_ogr_mapml_head_links_single():
     xml = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert (
-        """<map-link type="foo" href="bar"></map-link>
-  </map-head>"""
-        in xml
-    )
+    assert """<map-link type="foo" href="bar"></map-link>
+  </map-head>""" in xml
 
     gdal.Unlink(filename)
 
@@ -308,12 +302,9 @@ def test_ogr_mapml_head_links_multiple():
     xml = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    assert (
-        """<map-link type="foo" href="bar"></map-link>
+    assert """<map-link type="foo" href="bar"></map-link>
     <map-link type="baz" href="baw"></map-link>
-  </map-head>"""
-        in xml
-    )
+  </map-head>""" in xml
 
     gdal.Unlink(filename)
 
@@ -387,7 +378,7 @@ def test_ogr_mapml_reprojection_to_wgs84():
     assert lyr.GetGeomType() == ogr.wkbPoint
     srs = lyr.GetSpatialRef()
     assert srs
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (3 0)"
     ds = None
@@ -411,7 +402,7 @@ def test_ogr_mapml_layer_srs_is_known():
     lyr = ds.GetLayer(0)
     srs = lyr.GetSpatialRef()
     assert srs
-    assert srs.GetAuthorityCode(None) == "3857"
+    assert srs.GetAuthorityCode() == "3857"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
     ds = None

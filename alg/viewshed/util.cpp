@@ -78,7 +78,7 @@ int hIntersect(double angle, int nX, int nY, int y)
 }
 
 /// Compute the X intersect on one of the horizontal edges of a window
-/// with a ray extending from (nX, nY) along `angle`, clamped the the extent of a window.
+/// with a ray extending from (nX, nY) along `angle`, clamped the extent of a window.
 ///
 /// @param angle  Angle in radians, standard arrangement.
 /// @param nX  X coordinate of ray endpoint.
@@ -145,7 +145,7 @@ int vIntersect(double angle, int nX, int nY, int x)
 }
 
 /// Compute the Y intersect on one of the vertical edges of a window
-/// with a ray extending from (nX, nY) along `angle`, clamped the the extent
+/// with a ray extending from (nX, nY) along `angle`, clamped the extent
 /// of the window.
 ///
 /// @param angle  Angle in radians, standard arrangement.

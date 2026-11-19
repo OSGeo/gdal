@@ -73,7 +73,7 @@ def test_gdal_grid_1(gdal_grid_path, n43_shp, tmp_path):
     output_tif = str(tmp_path / "n43.tif")
 
     # Create a GDAL dataset from the previous generated OGR grid
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_grid_path
         + f" -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -a nearest:radius1=0.0:radius2=0.0:angle=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 {n43_shp} {output_tif}"
     )
@@ -269,7 +269,7 @@ def test_gdal_grid_4(gdal_grid_path, algorithm, threads, tmp_path):
         flags += " --config GDAL_NUM_THREADS {threads}"
 
     # Create a GDAL dataset from the values of "grid.csv".
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_grid_path
         + f" --debug on {flags} -txe 440720.0 441920.0 -tye 3751320.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdist:power=2.0:smoothing=0.0:radius1=0.0:radius2=0.0:angle=0.0:max_points=0:min_points=0:nodata=0.0 data/grid.vrt {output_tif}"
     )
@@ -880,7 +880,7 @@ def test_gdal_grid_18(gdal_grid_path, tmp_path, n43_shp):
     output_tif = str(tmp_path / "n43_linear.tif")
 
     # Create a GDAL dataset from the previous generated OGR grid
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_grid_path
         + f" -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 {n43_shp} {output_tif}"
     )
@@ -912,7 +912,7 @@ def test_gdal_grid_19(gdal_grid_path, tmp_path):
     # Test generic implementation (no AVX, no SSE)
 
     # Create a GDAL dataset from the values of "grid.csv".
-    (_, _) = gdaltest.runexternal_out_and_err(
+    _, _ = gdaltest.runexternal_out_and_err(
         gdal_grid_path
         + f" -txe 440721.0 441920.0 -tye 3751321.0 3750120.0 -outsize 20 20 -ot Float64 -l grid -a invdistnn:power=2.0:radius=1.0:max_points=12:min_points=0:nodata=0.0 data/grid.vrt {output_tif}"
     )

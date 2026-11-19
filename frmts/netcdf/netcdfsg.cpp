@@ -19,36 +19,6 @@
 
 namespace nccfdriver
 {
-/* Attribute Fetch
- * -
- * A function which makes it a bit easier to fetch single text attribute values
- * ncid: as used in netcdf.h
- * varID: variable id in which to look for the attribute
- * attrName: name of attribute to fine
- * alloc: a reference to a string that will be filled with the attribute (i.e.
- * truncated and filled with the return value) Returns: a reference to the
- * string to fill (a.k.a. string pointed to by alloc reference)
- */
-std::string &attrf(int ncid, int varId, const char *attrName,
-                   std::string &alloc)
-{
-    size_t len = 0;
-    nc_inq_attlen(ncid, varId, attrName, &len);
-
-    if (len < 1)
-    {
-        alloc.clear();
-        return alloc;
-    }
-
-    alloc.resize(len);
-    memset(&alloc[0], 0, len);
-
-    // Now look through this variable for the attribute
-    nc_get_att_text(ncid, varId, attrName, &alloc[0]);
-
-    return alloc;
-}
 
 /* SGeometry_Reader
  * (implementations)
@@ -82,11 +52,12 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
 
     // Get grid mapping variable, if it exists
     this->gm_varId = INVALID_VAR_ID;
-    if (attrf(ncId, geoVarId, CF_GRD_MAPPING, gm_name_s) != "")
+    if (NCDFGetAttr(ncId, geoVarId, CF_GRD_MAPPING, gm_name_s) == CE_None &&
+        !gm_name_s.empty())
     {
         const char *gm_name = gm_name_s.c_str();
-        int gmVID;
-        if (nc_inq_varid(ncId, gm_name, &gmVID) == NC_NOERR)
+        int gmGID, gmVID;
+        if (NCDFResolveVar(ncId, gm_name, &gmGID, &gmVID) == CE_None)
         {
             this->gm_varId = gmVID;
         }
@@ -103,7 +74,9 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
     size_t bound = 0;
     size_t total_node_count = 0;  // used in error checks later
     size_t total_part_node_count = 0;
-    if (attrf(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) != "")
+
+    if (NCDFGetAttr(ncId, geoVarId, CF_SG_NODE_COUNT, nc_name_s) == CE_None &&
+        !nc_name_s.empty())
     {
         const char *nc_name = nc_name_s.c_str();
         nc_inq_varid(ncId, nc_name, &nc_vid);
@@ -122,7 +95,9 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
         }
     }
 
-    if (attrf(ncId, geoVarId, CF_SG_PART_NODE_COUNT, pnc_name_s) != "")
+    if (NCDFGetAttr(ncId, geoVarId, CF_SG_PART_NODE_COUNT, pnc_name_s) ==
+            CE_None &&
+        !pnc_name_s.empty())
     {
         const char *pnc_name = pnc_name_s.c_str();
         bound = 0;
@@ -142,7 +117,9 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
         }
     }
 
-    if (attrf(ncId, geoVarId, CF_SG_INTERIOR_RING, ir_name_s) != "")
+    if (NCDFGetAttr(ncId, geoVarId, CF_SG_INTERIOR_RING, ir_name_s) ==
+            CE_None &&
+        !ir_name_s.empty())
     {
         const char *ir_name = ir_name_s.c_str();
         bound = 0;
@@ -216,11 +193,11 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
      */
 
     // Create bound list
-    size_t rc = 0;
     bound_list.push_back(0);  // start with 0
 
     if (node_counts.size() > 0)
     {
+        size_t rc = 0;
         for (size_t i = 0; i < node_counts.size() - 1; i++)
         {
             rc = rc + node_counts[i];
@@ -230,7 +207,9 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
 
     std::string cart_s;
     // Node Coordinates
-    if (attrf(ncId, geoVarId, CF_SG_NODE_COORDINATES, cart_s) == "")
+    if (NCDFGetAttr(ncId, geoVarId, CF_SG_NODE_COORDINATES, cart_s) !=
+            CE_None ||
+        cart_s.empty())
     {
         throw SG_Exception_Existential(container_name, CF_SG_NODE_COORDINATES);
     }
@@ -292,7 +271,7 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
 
             // Check axis signature
             std::string a_sig;
-            attrf(ncId, axis_id, CF_AXIS, a_sig);
+            CPL_IGNORE_RET_VAL(NCDFGetAttr(ncId, axis_id, CF_AXIS, a_sig));
 
             // If valid signify axis correctly
             if (a_sig == "X")
@@ -449,7 +428,7 @@ SGeometry_Reader::SGeometry_Reader(int ncId, int geoVarId)
     this->ncid = ncId;
 }
 
-Point &SGeometry_Reader::operator[](size_t index)
+Point &SGeometry_Reader::operator[](size_t index) const
 {
     for (int order = 0; order < touple_order; order++)
     {
@@ -472,7 +451,7 @@ Point &SGeometry_Reader::operator[](size_t index)
     return *(this->pt_buffer);
 }
 
-size_t SGeometry_Reader::get_geometry_count()
+size_t SGeometry_Reader::get_geometry_count() const
 {
     if (type == POINT)
     {
@@ -765,50 +744,37 @@ void SGeometry_PropertyScanner::open(int container_id)
         return;
     }
 
+    std::string buf;
     for (int curr = 0; curr < varCount; curr++)
     {
-        size_t contname2_len = 0;
-
-        // First find container length, and make buf that size in chars
-        if (nc_inq_attlen(this->nc, curr, CF_SG_GEOMETRY, &contname2_len) !=
-            NC_NOERR)
-        {
-            // not a geometry variable, continue
-            continue;
-        }
-
-        // Also if present but empty, go on
-        if (contname2_len == 0)
-            continue;
-
-        // Otherwise, geometry: see what container it has
-        char buf[NC_MAX_CHAR + 1];
-        memset(buf, 0, NC_MAX_CHAR + 1);
-
-        if (nc_get_att_text(this->nc, curr, CF_SG_GEOMETRY, buf) != NC_NOERR)
+        if (NCDFGetAttr(this->nc, curr, CF_SG_GEOMETRY, buf) != CE_None ||
+            buf.empty())
         {
             continue;
         }
 
         // If matches, then establish a reference by placing this variable's
         // data in both vectors
-        if (!strcmp(contname, buf))
+        if (!strcmp(contname, buf.c_str()))
         {
-            char property_name[NC_MAX_NAME + 1] = {0};
+            std::string property_name;
 
             // look for special OGR original name field
-            if (nc_get_att_text(this->nc, curr, OGR_SG_ORIGINAL_LAYERNAME,
-                                property_name) != NC_NOERR)
+            if (NCDFGetAttr(this->nc, curr, OGR_SG_ORIGINAL_LAYERNAME,
+                            property_name) != CE_None)
             {
-                // if doesn't exist, then just use the variable name
-                if (nc_inq_varname(this->nc, curr, property_name) != NC_NOERR)
+                // if it doesn't exist, then just use the variable name
+                property_name.resize(NC_MAX_NAME + 1, 0);
+
+                if (nc_inq_varname(this->nc, curr, property_name.data()) !=
+                    NC_NOERR)
                 {
                     throw SG_Exception_General_Malformed(contname);
                 }
             }
 
             v_ids.push_back(curr);
-            v_headers.push_back(property_name);
+            v_headers.push_back(std::move(property_name));
         }
     }
 }
@@ -875,39 +841,47 @@ SG_Exception::~SG_Exception()
 
 // Helpers
 // following is a short hand for a clean up and exit, since goto isn't allowed
-double getCFVersion(int ncid)
+bool getCFVersion(int ncid, int &major, int &minor)
 {
-    double ver = -1.0;
     std::string attrVal;
+    major = 0;
+    minor = 0;
 
     // Fetch the CF attribute
-    if (attrf(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal) == "")
+    if (NCDFGetAttr(ncid, NC_GLOBAL, NCDF_CONVENTIONS, attrVal) != CE_None ||
+        attrVal.empty())
     {
-        return ver;
+        return false;
     }
 
-    if (sscanf(attrVal.c_str(), "CF-%lf", &ver) != 1)
+    if (STARTS_WITH(attrVal.c_str(), "CF-"))
     {
-        return -1.0;
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(attrVal.c_str() + strlen("CF-"), ".", 0));
+        if (aosTokens.size() == 2)
+        {
+            major = atoi(aosTokens[0]);
+            minor = atoi(aosTokens[1]);
+            return true;
+        }
     }
 
-    return ver;
+    return false;
 }
 
 geom_t getGeometryType(int ncid, int varid)
 {
     geom_t ret = UNSUPPORTED;
     std::string gt_name_s;
-    const char *gt_name =
-        attrf(ncid, varid, CF_SG_GEOMETRY_TYPE, gt_name_s).c_str();
 
-    if (gt_name[0] == '\0')
+    if (NCDFGetAttr(ncid, varid, CF_SG_GEOMETRY_TYPE, gt_name_s) != CE_None ||
+        gt_name_s.empty())
     {
         return NONE;
     }
 
     // Points
-    if (!strcmp(gt_name, CF_SG_TYPE_POINT))
+    if (!strcmp(gt_name_s.c_str(), CF_SG_TYPE_POINT))
     {
         // Node Count not present? Assume that it is a multipoint.
         if (nc_inq_att(ncid, varid, CF_SG_NODE_COUNT, nullptr, nullptr) ==
@@ -920,7 +894,7 @@ geom_t getGeometryType(int ncid, int varid)
     }
 
     // Lines
-    else if (!strcmp(gt_name, CF_SG_TYPE_LINE))
+    else if (!strcmp(gt_name_s.c_str(), CF_SG_TYPE_LINE))
     {
         // Part Node Count present? Assume multiline
         if (nc_inq_att(ncid, varid, CF_SG_PART_NODE_COUNT, nullptr, nullptr) ==
@@ -933,7 +907,7 @@ geom_t getGeometryType(int ncid, int varid)
     }
 
     // Polygons
-    else if (!strcmp(gt_name, CF_SG_TYPE_POLY))
+    else if (!strcmp(gt_name_s.c_str(), CF_SG_TYPE_POLY))
     {
         /* Polygons versus MultiPolygons, slightly ambiguous
          * Part Node Count & no Interior Ring - MultiPolygon
@@ -992,7 +966,7 @@ void inPlaceSerialize_LineString(SGeometry_Reader *ge, int node_count,
 
     if (t == wkbNone)
         throw SG_Exception_BadFeature();
-    uint32_t nc = (uint32_t)node_count;
+    uint32_t nc = static_cast<uint32_t>(node_count);
 
     add_to_buffer(buffer, order);
     add_to_buffer(buffer, t);
@@ -1042,7 +1016,7 @@ void inPlaceSerialize_PolygonExtOnly(SGeometry_Reader *ge, int node_count,
     }
 }
 
-void inPlaceSerialize_Polygon(SGeometry_Reader *ge, std::vector<int> &pnc,
+void inPlaceSerialize_Polygon(SGeometry_Reader *ge, const std::vector<int> &pnc,
                               int ring_count, size_t seek_begin,
                               std::vector<unsigned char> &buffer)
 {
@@ -1091,20 +1065,18 @@ int scanForGeometryContainers(int ncid, std::set<int> &r_ids)
 
     r_ids.clear();
 
-    // For each variable check for geometry attribute
-    // If has geometry attribute, then check the associated variable ID
-
+    // For each variable check for a geometry attribute
+    // If it has geometry attribute, then check the associated variable ID
+    std::string buf;
     for (int itr = 0; itr < nvars; itr++)
     {
-        char c[NC_MAX_CHAR];
-        memset(c, 0, NC_MAX_CHAR);
-        if (nc_get_att_text(ncid, itr, CF_SG_GEOMETRY, c) != NC_NOERR)
+        if (NCDFGetAttr(ncid, itr, CF_SG_GEOMETRY, buf) != CE_None)
         {
             continue;
         }
 
         int varID;
-        if (nc_inq_varid(ncid, c, &varID) != NC_NOERR)
+        if (nc_inq_varid(ncid, buf.c_str(), &varID) != NC_NOERR)
         {
             continue;
         }

@@ -66,19 +66,30 @@ The following open options are supported:
       through results with a ArcGIS Feature Service endpoint. Has only effect
       for ArcGIS servers >= 10.3 and layers with supportsPagination=true capability.
 
-Example
--------
+-  .. oo:: HTTP_METHOD
+      :choices: AUTO, GET, POST
+      :default: AUTO
+      :since: 3.13
 
-Read the result of a FeatureService request against a GeoServices REST
-server (note that this server does not support paging):
+      Which HTTP request method to use to send requests to the server. In AUTO
+      mode (the default), GET will be used, unless the URL exceeds 256 characters.
+      When it does, the query parameters (the part of the URL after '?') will
+      be sent in the body of a POST request.
 
-::
+Examples
+--------
 
-   ogrinfo -ro -al "https://sampleserver6.arcgisonline.com/arcgis/rest/services/PoolPermits/FeatureServer/0/query?resultRecordCount=10&f=pjson"
+.. example::
+   :title: Read the result of a FeatureService request against a GeoServices REST server
+
+   Note that this server does not support paging.
+
+   .. code-block:: bash
+
+      ogrinfo -ro -al "https://sampleserver6.arcgisonline.com/arcgis/rest/services/PoolPermits/FeatureServer/0/query?resultRecordCount=10&f=pjson"
 
 See Also
 --------
 
 -  :ref:`GeoJSON driver <vector.geojson>`
--  `GeoServices REST
-   Specification <http://www.esri.com/industries/landing-pages/geoservices/geoservices.html>`__
+-  `GeoServices REST Specification <https://geoservices.github.io/>`__

@@ -29,7 +29,7 @@ def test_osr_epsg_1():
     with gdal.quiet_errors():
         srs.ImportFromEPSG(26591)
         assert "OSR_USE_NON_DEPRECATED" in gdal.GetLastErrorMsg()
-    assert srs.GetAuthorityCode(None) == "3003"
+    assert srs.GetAuthorityCode() == "3003"
 
 
 ###############################################################################
@@ -142,8 +142,7 @@ def test_osr_epsg_9():
 def test_osr_epsg_10():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """PROJCS["PS         WGS84",
+    srs.SetFromUserInput("""PROJCS["PS         WGS84",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -159,12 +158,11 @@ def test_osr_epsg_10():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]]]"""
-    )
+        AUTHORITY["EPSG","9001"]]]""")
 
     assert srs.AutoIdentifyEPSG() == 0
 
-    assert srs.GetAuthorityCode(None) == "3031", srs.ExportToWkt()
+    assert srs.GetAuthorityCode() == "3031", srs.ExportToWkt()
 
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(3031)
@@ -174,8 +172,7 @@ def test_osr_epsg_10():
     )
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """PROJCS["PS         WGS84",
+    srs.SetFromUserInput("""PROJCS["PS         WGS84",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -191,12 +188,11 @@ def test_osr_epsg_10():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]]]"""
-    )
+        AUTHORITY["EPSG","9001"]]]""")
 
     assert srs.AutoIdentifyEPSG() == 0
 
-    assert srs.GetAuthorityCode(None) == "3995", srs.ExportToWkt()
+    assert srs.GetAuthorityCode() == "3995", srs.ExportToWkt()
 
     srs_ref = osr.SpatialReference()
     srs_ref.ImportFromEPSG(3995)
@@ -241,8 +237,7 @@ def test_osr_epsg_13():
 
     # One exact match
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["ETRS89 / UTM zone 32N (N-E)",
+    sr.SetFromUserInput("""PROJCS["ETRS89 / UTM zone 32N (N-E)",
     GEOGCS["ETRS89",
         DATUM["European_Terrestrial_Reference_System_1989",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -263,8 +258,7 @@ def test_osr_epsg_13():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]],
     AXIS["Northing",NORTH],
-    AXIS["Easting",EAST]]"""
-    )
+    AXIS["Easting",EAST]]""")
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 100
     assert matches[0][0].IsSame(sr)
@@ -292,31 +286,28 @@ def test_osr_epsg_13():
     #    gdaltest.post_reason('fail')
     #    print(matches)
     #    return 'fail'
-    # if matches[0][0].GetAuthorityCode(None) != '4126' or matches[0][1] != 90:
+    # if matches[0][0].GetAuthorityCode() != '4126' or matches[0][1] != 90:
     #    gdaltest.post_reason('fail')
     #    print(matches)
     #    return 'fail'
-    # if matches[1][0].GetAuthorityCode(None) != '4669' or matches[1][1] != 90:
+    # if matches[1][0].GetAuthorityCode() != '4669' or matches[1][1] != 90:
     #    gdaltest.post_reason('fail')
     #    print(matches)
     #    return 'fail'
 
     # Very approximate matches
-    sr.SetFromUserInput(
-        """GEOGCS["myGEOGCS",
+    sr.SetFromUserInput("""GEOGCS["myGEOGCS",
     DATUM["my_datum",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]
-"""
-    )
+""")
     matches = sr.FindMatches()
     assert matches
 
     # One single match, but not similar according to IsSame()
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["WGS 84 / UTM zone 32N",
+    sr.SetFromUserInput("""PROJCS["WGS 84 / UTM zone 32N",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -335,8 +326,7 @@ def test_osr_epsg_13():
     PARAMETER["false_northing",0],
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]
-"""
-    )
+""")
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 25
     assert matches[0][0].IsSame(sr) != 1
@@ -345,8 +335,7 @@ def test_osr_epsg_13():
     # one (namely linear units are different)
     # https://github.com/OSGeo/gdal/issues/990
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["NAD83 / Ohio North",
+    sr.SetFromUserInput("""PROJCS["NAD83 / Ohio North",
     GEOGCS["NAD83",
         DATUM["North_American_Datum_1983",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -370,8 +359,7 @@ def test_osr_epsg_13():
     AXIS["X",EAST],
     AXIS["Y",NORTH],
     AUTHORITY["EPSG","32122"]]
-"""
-    )
+""")
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 25
     assert matches[0][0].IsSame(sr) != 1
@@ -380,14 +368,14 @@ def test_osr_epsg_13():
 ###############################################################################
 # Test FindMatches() when input SRS doesn't have expected axis order
 
+
 # Not sure about the minimum PROJ version, but 6.3 doesn't work
 @pytest.mark.require_proj(8, 0)
 def test_osr_epsg_find_matches_wrong_axis_order():
 
     sr = osr.SpatialReference()
     # NZTM2000 with implicit axis (thus east, north)
-    sr.SetFromUserInput(
-        """PROJCS["NZGD2000 / New Zealand Transverse Mercator 2000",
+    sr.SetFromUserInput("""PROJCS["NZGD2000 / New Zealand Transverse Mercator 2000",
     GEOGCS["NZGD2000",
         DATUM["New_Zealand_Geodetic_Datum_2000",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -408,11 +396,10 @@ def test_osr_epsg_find_matches_wrong_axis_order():
         AUTHORITY["EPSG","9001"]],
     AXIS["X",EAST],
     AXIS["Y",NORTH]]
-"""
-    )
+""")
     matches = sr.FindMatches()
     assert len(matches) == 1 and matches[0][1] == 90
-    assert matches[0][0].GetAuthorityCode(None) == "2193"
+    assert matches[0][0].GetAuthorityCode() == "2193"
     assert matches[0][0].GetDataAxisToSRSAxisMapping() == [2, 1]
 
 
@@ -494,8 +481,7 @@ def test_osr_GetCRSInfoListFromDatabase():
 def test_osr_epsg_auto_identify_epsg_nad83_cors96():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCRS["NAD83(CORS96)",
+    srs.SetFromUserInput("""GEOGCRS["NAD83(CORS96)",
     DATUM["NAD83 (Continuously Operating Reference Station 1996)",
         ELLIPSOID["GRS 1980",6378137,298.257222101,
             LENGTHUNIT["metre",1]]],
@@ -507,10 +493,9 @@ def test_osr_epsg_auto_identify_epsg_nad83_cors96():
             ANGLEUNIT["degree",0.0174532925199433]],
         AXIS["geodetic longitude (Lon)",east,
             ORDER[2],
-            ANGLEUNIT["degree",0.0174532925199433]]]"""
-    )
+            ANGLEUNIT["degree",0.0174532925199433]]]""")
     srs.AutoIdentifyEPSG()
-    assert srs.GetAuthorityCode(None) == "6783"
+    assert srs.GetAuthorityCode() == "6783"
 
 
 ###############################################################################
@@ -543,7 +528,7 @@ def test_osr_epsg_auto_identify_epsg_projcrs_with_geogcrs_without_axis_roder():
     )
     with pytest.raises(Exception):
         srs.AutoIdentifyEPSG()
-    assert srs.CloneGeogCS().GetAuthorityCode(None) is None
+    assert srs.CloneGeogCS().GetAuthorityCode() is None
 
 
 ###############################################################################
@@ -568,8 +553,8 @@ def test_osr_epsg_import_esri_code():
     with gdal.quiet_errors():
         srs.ImportFromEPSG(104905)
 
-    assert srs.GetAuthorityName(None) == "ESRI"
-    assert srs.GetAuthorityCode(None) == "104905"
+    assert srs.GetAuthorityName() == "ESRI"
+    assert srs.GetAuthorityCode() == "104905"
 
 
 ###############################################################################

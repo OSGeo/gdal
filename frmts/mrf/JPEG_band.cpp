@@ -708,12 +708,25 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, const buf_mgr &isrc)
     // Tolerate different input if we can do the conversion
     // Gray and RGB for example
     // This also means that a RGB MRF can be read as grayscale and vice versa
-    // If libJPEG can't convert it will throw an error
+    // If libJPEG can't convert it will throw an error later
     //
-    if (nbands == 3 && cinfo.num_components != nbands)
-        cinfo.out_color_space = JCS_RGB;
-    if (nbands == 1 && cinfo.num_components != nbands)
-        cinfo.out_color_space = JCS_GRAYSCALE;
+    if (nbands != cinfo.num_components)
+    {
+        switch (nbands)
+        {
+            case 1:
+                cinfo.out_color_space = JCS_GRAYSCALE;
+                break;
+            case 3:
+                cinfo.out_color_space = JCS_RGB;
+                break;
+            default:
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "MRF: Input JPEG type mismatch");
+                jpeg_destroy_decompress(&cinfo);
+                return CE_Failure;
+        }
+    }
 
     const int datasize = ((cinfo.data_precision == 8) ? 1 : 2);
     if (cinfo.image_width >
@@ -835,7 +848,7 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     if (!isbrunsli(src))
         return codec.DecompressJPEG(dst, src);
 
-        // Need conversion to JFIF first
+    // Need conversion to JFIF first
 #if !defined(BRUNSLI)
     CPLError(CE_Failure, CPLE_NotSupported,
              "MRF: JPEG-XL content, yet this GDAL was not compiled with "
@@ -868,7 +881,7 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 #if !defined(BRUNSLI)
     return codec.CompressJPEG(dst, src);
 #else
-    auto dst_size = dst.size;          // Save the original size
+    auto dst_size = dst.size;  // Save the original size
     auto err_code = codec.CompressJPEG(dst, src);
     if (codec.JFIF || err_code != CE_None)
         return err_code;

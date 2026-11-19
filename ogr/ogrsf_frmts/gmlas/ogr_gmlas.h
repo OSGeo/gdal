@@ -1167,8 +1167,8 @@ class GMLASSchemaAnalyzer final
         GMLASFeatureClass &oClass, int nRecursionCounter,
         std::set<XSModelGroup *> &oSetVisitedModelGroups, XSModel *poModel,
         const std::map<CPLString, int> &oMapCountOccurrencesOfSameName);
-    void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
-                                            GMLASField &oField);
+    static void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
+                                                   GMLASField &oField);
     CPLString GetPrefix(const CPLString &osNamespaceURI);
     CPLString MakeXPath(const CPLString &osNamespace, const CPLString &osName);
     bool LaunderFieldNames(GMLASFeatureClass &oClass);
@@ -1410,7 +1410,7 @@ class OGRGMLASDataSource final : public GDALDataset
                                        double *pdfProgressPct,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData) override;
-    int TestCapability(const char *) const override;
+    bool TestCapability(const char *) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
@@ -1569,7 +1569,7 @@ class OGRGMLASLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    int TestCapability(const char *) const override
+    bool TestCapability(const char *) const override
     {
         return FALSE;
     }

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -43,7 +44,7 @@ def test_gdalalg_raster_as_features_multiple_bands(alg, tmp_vsimem):
     assert alg.Finalize()
     assert tab_pct[0] == 1
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2500
@@ -68,12 +69,12 @@ def test_gdalalg_raster_as_features_specified_bands(alg, tmp_vsimem):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         lyr = ds.GetLayer(0)
 
         f = lyr.GetFeature(2317)
 
-        assert "BAND_1" not in f
+        assert f.keys() == ["BAND_3", "BAND_2"]
         assert f["BAND_2"] == 156
         assert f["BAND_3"] == 43
 
@@ -88,10 +89,33 @@ def test_gdalalg_raster_as_features_skip_nodata(alg, tmp_vsimem):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_vsimem / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 380
+
+
+def test_gdalalg_raster_as_features_skip_nodata_specified_band(alg):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+    src_ds.GetRasterBand(1).WriteArray(np.array([[1, 0]]))
+    src_ds.GetRasterBand(2).SetNoDataValue(0)
+    src_ds.GetRasterBand(2).WriteArray(np.array([[0, 2]]))
+
+    alg["input"] = src_ds
+    alg["output-format"] = "MEM"
+    alg["band"] = [2]
+    alg["skip-nodata"] = True
+
+    assert alg.Run()
+
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+    assert [f.items() for f in lyr] == [{"BAND_2": 2}]
 
 
 @pytest.mark.require_driver("GPKG")
@@ -105,7 +129,7 @@ def test_gdalalg_raster_as_features_geom_type(alg, tmp_path, geom_type):
     assert alg.Run()
     assert alg.Finalize()
 
-    with gdal.OpenEx(tmp_path / "out.gpkg", gdal.OF_VECTOR) as ds:
+    with gdal.Open(tmp_path / "out.gpkg", gdal.OF_VECTOR) as ds:
         assert ds.GetLayerCount() == 1
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 400
@@ -176,11 +200,10 @@ def test_gdalalg_raster_as_features_geom_type_invalid(alg):
         alg["geometry-type"] = "LineString"
 
 
-@pytest.mark.require_driver("GPKG")
 def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
 
     alg["input"] = "../gcore/data/byte.tif"
-    alg["output"] = tmp_vsimem / "out.gpkg"
+    alg["output-format"] = "stream"
     alg["output-layer"] = "layer123"
 
     assert alg.Run()
@@ -188,8 +211,19 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
     assert alg["output"]
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer("layer123")
-
     assert lyr is not None
+    assert lyr.GetLayerDefn().GetName() == "layer123"
+
+
+def test_gdalalg_raster_as_features_layer_name_pipeline(alg, tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! as-features --output-layer layer123"
+    ) as alg:
+        ds = alg["output"].GetDataset()
+        lyr = ds.GetLayer("layer123")
+        assert lyr is not None
+        assert lyr.GetLayerDefn().GetName() == "layer123"
 
 
 def test_gdalalg_raster_as_features_zero_bands(alg, tmp_vsimem):
@@ -248,3 +282,57 @@ def test_gdalalg_raster_as_features_zero_width(alg, tmp_vsimem):
     lyr = ds.GetLayer(0)
 
     assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_as_features_empty_row_at_end_of_block(alg, tmp_vsimem):
+    # See https://github.com/OSGeo/gdal/issues/14348
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    src_fname = tmp_vsimem / "src.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_fname,
+        64,
+        64,
+        1,
+        options={"TILED": True, "BLOCKXSIZE": 32, "BLOCKYSIZE": 32},
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(0)
+        data = np.zeros((64, 64))
+        data[63, 63] = 1
+        ds.WriteArray(data)
+
+    alg["input"] = src_fname
+    alg["output-format"] = "MEM"
+    alg["skip-nodata"] = True
+
+    assert alg.Run()
+
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 1
+
+
+def test_gdalalg_raster_as_features_ds_take_ref():
+
+    def build():
+        # src_ds and alg are both released when this returns; only the
+        # streamed output dataset survives.
+        src_ds = gdal.GetDriverByName("MEM").Create("", 2, 3)
+        src_ds.GetRasterBand(1).Fill(5)
+        return gdal.Run(
+            "raster",
+            "as-features",
+            input=src_ds,
+            output_format="stream",
+            output="",
+        ).Output()
+
+    ds = build()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 6
+    assert sum(1 for _ in lyr) == 6
+    assert lyr.GetNextFeature() is None

@@ -645,7 +645,7 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
     }
     papszLocalParameters = CSLSetNameValue(papszLocalParameters, "BLOCKYSIZE",
                                            CPLSPrintf("%u", nInMemImageHeight));
-    papszLocalParameters = CSLSetNameValue(papszLocalParameters, "NBITS",
+    papszLocalParameters = CSLSetNameValue(papszLocalParameters, GDALMD_NBITS,
                                            CPLSPrintf("%u", l_nBitsPerSample));
     papszLocalParameters = CSLSetNameValue(papszLocalParameters,
                                            "JPEGTABLESMODE", pszJPEGTablesMode);
@@ -939,9 +939,7 @@ static void GDALDeregister_GTiff(GDALDriver *)
 }
 
 #define COMPRESSION_ENTRY(x, bWriteSupported)                                  \
-    {                                                                          \
-        COMPRESSION_##x, STRINGIFY(x), bWriteSupported                         \
-    }
+    {COMPRESSION_##x, STRINGIFY(x), bWriteSupported}
 
 static const struct
 {

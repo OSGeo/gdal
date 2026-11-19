@@ -11,16 +11,16 @@ sphinx.locale.admonitionlabels["shortname"] = ""
 sphinx.locale.admonitionlabels["built_in_by_default"] = ""  # 'Built-in by default'
 sphinx.locale.admonitionlabels["supports_create"] = ""  # 'Supports Create()'
 sphinx.locale.admonitionlabels["supports_createcopy"] = ""  # 'Supports CreateCopy()'
-sphinx.locale.admonitionlabels[
-    "supports_georeferencing"
-] = ""  # 'Supports georeferencing'
+sphinx.locale.admonitionlabels["supports_georeferencing"] = (
+    ""  # 'Supports georeferencing'
+)
 sphinx.locale.admonitionlabels["supports_virtualio"] = ""  # 'Supports VirtualIO'
-sphinx.locale.admonitionlabels[
-    "supports_multidimensional"
-] = ""  # 'Supports multidimensional'
-sphinx.locale.admonitionlabels[
-    "deprecated_driver"
-] = ""  # 'Driver is deprecated and marked for removal'
+sphinx.locale.admonitionlabels["supports_multidimensional"] = (
+    ""  # 'Supports multidimensional'
+)
+sphinx.locale.admonitionlabels["deprecated_driver"] = (
+    ""  # 'Driver is deprecated and marked for removal'
+)
 
 
 def setup(app):

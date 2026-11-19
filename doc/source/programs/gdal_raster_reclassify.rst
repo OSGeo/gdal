@@ -1,5 +1,7 @@
 .. _gdal_raster_reclassify:
 
+.. program:: gdal_raster_reclassify
+
 ================================================================================
 ``gdal raster reclassify``
 ================================================================================
@@ -84,6 +86,12 @@ These pixels may be converted unto NoData (``DEFAULT = NO_DATA``), some other co
 Program-Specific Options
 ------------------------
 
+.. option:: --keep-color-table
+
+   .. versionadded:: 3.14
+
+   Preserve the color table of the input raster bands in the output.
+
 .. option:: -m, --mapping <MAPPING>
 
    A definition of mappings between input and output pixel values, as described above.
@@ -109,11 +117,34 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
+.. example:: 
+   :title: Reduce the number of terrain type categories
+
+       In this example, a categorical raster containing the values from 0 to 4 is reclassified
+       into the values 10, 20, or 40. Input value 0 is remapped to 10; input values 2, 3, and 4 
+       are remapped to 20, and input values of 1 are remapped to 40. If the input raster contains
+       any other value, an error will be raised.
+
+       .. code-block:: bash
+
+           gdal raster reclassify -m "0=10; [2,4]=20; 1=40" -i wbm.tif -o typ.tif
+
 .. example::
+   :title: Reassign values of 0 to NoData
 
-   .. code-block:: console
+      In this example, elevation values of zero are reassigned to the NoData value. By using the
+      ``NO_DATA`` placeholder, we do not need to actually the NoData value used by the dataset.
+      (If there is none, an error will be raised.) We use the construct ``DEFAULT`` to catch all
+      non-zero values, and ``PASS_THROUGH`` to indicate that they should be retained as-is.
+   
+       .. code-block:: bash
 
-       $ gdal raster reclassify -m "0=10; [2,4]=20; 1=40" -i wbm.tif -o typ.tif
+           gdal raster reclassify -m "0=NO_DATA; DEFAULT=PASS_THROUGH" dem.tif dem_land.tif

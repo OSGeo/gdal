@@ -706,7 +706,7 @@ class FileGDBTable
 
     /* Next call to SelectRow() or GetFieldValue() invalidates previously
      * returned values */
-    bool SelectRow(int64_t iRow);
+    bool SelectRow(int64_t iRow, bool bWarnOnlyOnDeletedRows = false);
     int64_t GetAndSelectNextNonEmptyRow(int64_t iRow);
 
     int HasGotError() const

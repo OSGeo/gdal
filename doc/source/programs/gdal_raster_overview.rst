@@ -1,5 +1,7 @@
 .. _gdal_raster_overview:
 
+.. program:: gdal_raster_overview
+
 ================================================================================
 ``gdal raster overview``
 ================================================================================
@@ -16,6 +18,11 @@ Synopsis
 --------
 
 .. program-output:: gdal raster overview --help-doc
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Available sub-commands
 ----------------------
