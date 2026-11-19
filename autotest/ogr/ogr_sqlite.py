@@ -816,6 +816,76 @@ def test_ogr_sqlite_15bis(sqlite_test_db):
 
 
 ###############################################################################
+# Test FORMAT=SPATIALITE with 3D/M/ZM geometries when SpatiaLite is not loaded
+# (m_bSpatialite2D=true)
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("compress_geom", [False, True])
+def test_ogr_sqlite_spatialite_2d_measured(tmp_vsimem, compress_geom):
+    wkts = [
+        "POINT Z (1 2 3)",
+        "POINT M (1 2 3)",
+        "POINT ZM (1 2 3 4)",
+        "LINESTRING M EMPTY",
+        "LINESTRING Z (1 2 3,4 5 6)",
+        "LINESTRING M (1 2 3,4 5 6)",
+        "LINESTRING M (1 2 3,4 5 6,7 8 9)",
+        "LINESTRING ZM (1 2 3 4,5 6 7 8,9 10 11 12)",
+        "POLYGON M EMPTY",
+        "POLYGON M ((0 0 1,1 0 2,1 1 3,0 1 4,0 0 1),"
+        "(0.25 0.25 5,0.25 0.75 6,0.75 0.75 7,0.75 0.25 8,0.25 0.25 5))",
+        "POLYGON ZM ((0 0 1 10,1 0 2 20,1 1 3 30,0 1 4 40,0 0 1 10))",
+        "MULTIPOINT M ((1 2 3),(4 5 6))",
+        "MULTILINESTRING M ((1 2 3,4 5 6),(7 8 9,10 11 12))",
+        "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8),(9 10 11 12,13 14 15 16))",
+        "MULTIPOLYGON M (((0 0 1,1 0 2,1 1 3,0 1 4,0 0 1)))",
+        "MULTIPOLYGON ZM (((0 0 1 10,1 0 2 20,1 1 3 30,0 1 4 40,0 0 1 10)))",
+        "GEOMETRYCOLLECTION M (POINT M (1 2 3),LINESTRING M (1 2 3,4 5 6),"
+        "POLYGON M ((0 0 1,1 0 2,1 1 3,0 1 4,0 0 1)))",
+        "GEOMETRYCOLLECTION ZM (POINT ZM (1 2 3 4),LINESTRING ZM (1 2 3 4,5 6 7 8))",
+        "CIRCULARSTRING M (0 0 1,1 1 2,2 0 3)",
+    ]
+    typed_update_wkt = "LINESTRING M (2 2 3,3 3 4,4 4 5)"
+
+    db_path = tmp_vsimem / "spatialite_2d.sqlite"
+    lco = ["FORMAT=SPATIALITE"]
+    if compress_geom:
+        lco.append("COMPRESS_GEOM=YES")
+
+    with gdal.config_option("SPATIALITE_LOAD", "NO"):
+        with gdal.GetDriverByName("SQLite").CreateVector(db_path) as ds:
+            lyr = ds.CreateLayer("geomspatialite", options=lco)
+            for wkt in wkts:
+                feat = ogr.Feature(lyr.GetLayerDefn())
+                feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+                lyr.CreateFeature(feat)
+
+            typed_lyr = ds.CreateLayer(
+                "typed_linestring_m", geom_type=ogr.wkbLineStringM, options=lco
+            )
+            feat = ogr.Feature(typed_lyr.GetLayerDefn())
+            feat.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING M (0 0 1,1 1 2)"))
+            typed_lyr.CreateFeature(feat)
+            feat.SetGeometry(ogr.CreateGeometryFromWkt(typed_update_wkt))
+            typed_lyr.SetFeature(feat)
+
+    with gdal.OpenEx(db_path) as ds:
+        lyr = ds.GetLayerByName("geomspatialite")
+        for wkt in wkts:
+            expected = ogr.CreateGeometryFromWkt(wkt).GetLinearGeometry()
+            expected.FlattenTo2D()
+            feat = lyr.GetNextFeature()
+            assert feat.GetGeometryRef().ExportToIsoWkt() == expected.ExportToIsoWkt()
+
+        expected_typed = ogr.CreateGeometryFromWkt(typed_update_wkt)
+        expected_typed.FlattenTo2D()
+        typed_lyr = ds.GetLayerByName("typed_linestring_m")
+        feat = typed_lyr.GetNextFeature()
+        assert feat.GetGeometryRef().ExportToIsoWkt() == expected_typed.ExportToIsoWkt()
+
+
+###############################################################################
 # Test reading geometries in FGF (FDO Geometry Format) binary representation.
 
 
