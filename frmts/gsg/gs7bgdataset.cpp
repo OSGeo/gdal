@@ -1153,7 +1153,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
-    const int nYSize = poSrcDS->GetRasterXSize();
+    const int nYSize = poSrcDS->GetRasterYSize();
     if (!GS7BGCreateCheckDims(nXSize, nYSize))
     {
         return nullptr;

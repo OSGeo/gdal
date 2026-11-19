@@ -115,3 +115,18 @@ def test_gsg_createcopy_wrong_dims(tmp_vsimem, drv_name, xsize, ysize):
     src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize)
     with pytest.raises(Exception):
         gdal.GetDriverByName(drv_name).CreateCopy(tmp_vsimem / "out", src_ds)
+
+
+@pytest.mark.require_driver("GS7BG")
+def test_gs7bg_createcopy_non_square(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 5)
+    src_ds.SetGeoTransform([0, 1, 0, 5, 0, -1])
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 5, bytes(range(15)))
+    gdal.GetDriverByName("GS7BG").CreateCopy(tmp_vsimem / "out.grd", src_ds)
+
+    with gdal.Open(tmp_vsimem / "out.grd") as ds:
+        assert ds.RasterYSize == 5
+        assert ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt8) == bytes(
+            range(15)
+        )
