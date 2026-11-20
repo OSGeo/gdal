@@ -1061,7 +1061,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         if (!pszKey)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid option specification: %s\n"
+                     "Invalid option specification: %s "
                      "must be in the form 'key=value'",
                      pszValue);
             return nullptr;
@@ -1125,8 +1125,30 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                          "Invalid transpose option: %s", pszValue);
                 return nullptr;
             }
-            int index_x = atoi(aosTransposeIndex[0]);
-            int index_y = atoi(aosTransposeIndex[1]);
+
+            int index_x;
+            if (const auto oVal = cpl::strict_parse<int>(aosTransposeIndex[0]))
+            {
+                index_x = oVal.value();
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid transpose index: %s", aosTransposeIndex[0]);
+                return nullptr;
+            }
+
+            int index_y;
+            if (const auto oVal = cpl::strict_parse<int>(aosTransposeIndex[1]))
+            {
+                index_y = oVal.value();
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid transpose index: %s", aosTransposeIndex[1]);
+                return nullptr;
+            }
 
             auto poMDimDS = std::unique_ptr<GDALDataset>(
                 GDALDataset::Open(osFilename, GDAL_OF_MULTIDIM_RASTER));
@@ -1522,9 +1544,20 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             }
 
             // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
-            if (aosScaleParams.size() == 1 && CPLTestBool(aosScaleParams[0]))
+            if (aosScaleParams.size() == 1)
             {
-                argv.AddString(CPLSPrintf("-%s", pszKey));
+                const auto oScaleVal =
+                    cpl::strict_parse<bool>(aosScaleParams[0]);
+                if (!oScaleVal)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid value of scale: %s", aosScaleParams[0]);
+                    return nullptr;
+                }
+                if (oScaleVal.value())
+                {
+                    argv.AddString(CPLSPrintf("-%s", pszKey));
+                }
             }
             // add remaining params (length 2 or 4)
             if (aosScaleParams.size() > 1)
@@ -1673,7 +1706,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         }
         else if (EQUAL(pszKey, "unscale"))
         {
-            if (CPLTestBool(pszValue))
+            const auto oVal = cpl::strict_parse<bool>(pszValue);
+            if (!oVal.has_value())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value for unscale: %s", pszValue);
+                return nullptr;
+            }
+            if (oVal.value())
             {
                 argv.AddString("-unscale");
             }
@@ -1685,21 +1725,42 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         }
         else if (EQUAL(pszKey, "nogcp"))
         {
-            if (CPLTestBool(pszValue))
+            const auto oVal = cpl::strict_parse<bool>(pszValue);
+            if (!oVal.has_value())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value for nogcp: %s", pszValue);
+                return nullptr;
+            }
+            if (oVal.value())
             {
                 argv.AddString("-nogcp");
             }
         }
         else if (EQUAL(pszKey, "epo"))
         {
-            if (CPLTestBool(pszValue))
+            const auto oVal = cpl::strict_parse<bool>(pszValue);
+            if (!oVal.has_value())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value for epo: %s", pszValue);
+                return nullptr;
+            }
+            if (oVal.value())
             {
                 argv.AddString("-epo");
             }
         }
         else if (EQUAL(pszKey, "eco"))
         {
-            if (CPLTestBool(pszValue))
+            const auto oVal = cpl::strict_parse<bool>(pszValue);
+            if (!oVal.has_value())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value for eco: %s", pszValue);
+                return nullptr;
+            }
+            if (oVal.value())
             {
                 argv.AddString("-eco");
             }
