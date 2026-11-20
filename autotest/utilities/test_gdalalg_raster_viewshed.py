@@ -11,8 +11,11 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
+
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal
 
@@ -335,3 +338,79 @@ def test_gdalalg_raster_wrong_sd(viewshed_input):
         Exception, match="The standard deviation dataset must have one raster band"
     ):
         alg.Run()
+
+
+@pytest.fixture()
+def truncated_dem(tmp_path):
+
+    fname = str(tmp_path / "truncated_dem.tif")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        fname, 200, 200, 1, gdal.GDT_Float32, options=["BLOCKYSIZE=1"]
+    )
+    ds.SetGeoTransform([0, 1, 0, 200, 0, -1])
+    ds.GetRasterBand(1).Fill(0)
+    ds.Close()
+
+    # Cut the file so that the bottom rows can no longer be read
+    with open(fname, "r+b") as f:
+        f.truncate(f.seek(0, 2) * 6 // 10)
+
+    return fname
+
+
+@pytest.mark.parametrize("mode", ["normal", "cumulative"])
+def test_gdalalg_raster_viewshed_read_error(truncated_dem, tmp_path, mode):
+
+    alg = get_alg()
+    alg["input"] = truncated_dem
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["height"] = 10
+    alg["mode"] = mode
+    if mode == "normal":
+        alg["position"] = [100, 100]
+    else:
+        alg["observer-spacing"] = 50
+    with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+        assert not alg.Run()
+
+
+@pytest.mark.skipif(not os.path.exists("/dev/full"), reason="/dev/full required")
+def test_gdal_viewshed_cumulative_write_error(viewshed_input):
+
+    gdal_viewshed_path = test_cli_utilities.get_gdal_viewshed_path()
+    if gdal_viewshed_path is None:
+        pytest.skip("gdal_viewshed not available")
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_viewshed_path} -q -om ACCUM -oz 100 {viewshed_input} /dev/full",
+        append_returncode_to_stderr=True,
+    )
+    assert "Return code = 0" not in err
+
+
+def test_viewshed_generate_interrupted(viewshed_input):
+
+    def my_progress(pct, msg, user_data):
+        return pct < 0.3
+
+    with gdal.Open(viewshed_input) as src_ds:
+        with gdal.ExceptionMgr(useExceptions=False), gdal.quiet_errors():
+            ds = gdal.ViewshedGenerate(
+                src_ds.GetRasterBand(1),
+                "MEM",
+                "",
+                [],
+                621528,
+                4817617,
+                100,
+                0,
+                255,
+                0,
+                0,
+                0,
+                0.85714,
+                gdal.GVM_Edge,
+                0,
+                callback=my_progress,
+            )
+    assert ds is None

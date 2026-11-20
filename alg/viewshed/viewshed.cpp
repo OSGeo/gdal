@@ -221,7 +221,8 @@ GDALDatasetH GDALViewshedGenerate(
 
     if (!pfnProgress)
         pfnProgress = GDALDummyProgress;
-    v.run(hBand, pfnProgress, pProgressArg);
+    if (!v.run(hBand, pfnProgress, pProgressArg))
+        return nullptr;
 
     return GDALDataset::FromHandle(v.output().release());
 }
@@ -487,20 +488,23 @@ bool Viewshed::run(GDALRasterBandH band, GDALRasterBandH sdBand,
 
     // Execute the viewshed algorithm.
     GDALRasterBand *pDstBand = poDstDS->GetRasterBand(1);
+    bool bOK;
     if (pSdBand)
     {
         ViewshedExecutor executor(*pSrcBand, *pSdBand, *pDstBand, nX, nY,
                                   oOutExtent, oCurExtent, oOpts, oProgress,
                                   /* emitWarningIfNoData = */ true);
-        executor.run();
+        bOK = executor.run();
     }
     else
     {
         ViewshedExecutor executor(*pSrcBand, *pDstBand, nX, nY, oOutExtent,
                                   oCurExtent, oOpts, oProgress,
                                   /* emitWarningIfNoData = */ true);
-        executor.run();
+        bOK = executor.run();
     }
+    if (!bOK)
+        return false;
     oProgress.emit(1);
     return static_cast<bool>(poDstDS);
 }
