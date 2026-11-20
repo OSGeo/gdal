@@ -3272,6 +3272,8 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
     const OGRGeometry *poGeometry, OGRwkbByteOrder eByteOrder,
     bool bSpatialite2D, bool bUseComprGeom, GByte *pabyData)
 {
+    if (bSpatialite2D)
+        bUseComprGeom = false;
     const auto eFGeomType = wkbFlatten(poGeometry->getGeometryType());
     switch (eFGeomType)
     {
@@ -3340,6 +3342,9 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                 return nTotalSize;
             }
 
+            const bool bHasZ = !bSpatialite2D && poGeometry->Is3D();
+            const bool bHasM = !bSpatialite2D && poGeometry->IsMeasured();
+
             for (int i = 0; i < nPointCount; i++)
             {
                 double x = poLineString->getX(i);
@@ -3354,13 +3359,13 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                         CPL_SWAP64PTR(pabyData + nTotalSize);
                         CPL_SWAP64PTR(pabyData + nTotalSize + 8);
                     }
-                    if (!bSpatialite2D && poGeometry->Is3D())
+                    if (bHasZ)
                     {
                         double z = poLineString->getZ(i);
                         memcpy(pabyData + nTotalSize + 16, &z, 8);
                         if (NEED_SWAP_SPATIALITE())
                             CPL_SWAP64PTR(pabyData + nTotalSize + 16);
-                        if (poGeometry->IsMeasured())
+                        if (bHasM)
                         {
                             double m = poLineString->getM(i);
                             memcpy(pabyData + nTotalSize + 24, &m, 8);
@@ -3373,7 +3378,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                     }
                     else
                     {
-                        if (poGeometry->IsMeasured())
+                        if (bHasM)
                         {
                             double m = poLineString->getM(i);
                             memcpy(pabyData + nTotalSize + 16, &m, 8);
@@ -3398,7 +3403,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                         CPL_SWAP32PTR(pabyData + nTotalSize);
                         CPL_SWAP32PTR(pabyData + nTotalSize + 4);
                     }
-                    if (poGeometry->Is3D())
+                    if (bHasZ)
                     {
                         double z = poLineString->getZ(i);
                         float deltaz =
@@ -3406,7 +3411,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                         memcpy(pabyData + nTotalSize + 8, &deltaz, 4);
                         if (NEED_SWAP_SPATIALITE())
                             CPL_SWAP32PTR(pabyData + nTotalSize + 8);
-                        if (poGeometry->IsMeasured())
+                        if (bHasM)
                         {
                             double m = poLineString->getM(i);
                             memcpy(pabyData + nTotalSize + 12, &m, 8);
@@ -3419,7 +3424,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
                     }
                     else
                     {
-                        if (poGeometry->IsMeasured())
+                        if (bHasM)
                         {
                             double m = poLineString->getM(i);
                             memcpy(pabyData + nTotalSize + 8, &m, 8);
@@ -3576,6 +3581,7 @@ OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry(
         return OGRERR_FAILURE;
     }
 
+    CPLAssert(nWritten == nGeomSize);
     (*ppabyData)[nDataLen - 1] = 0xFE;
 
     if (NEED_SWAP_SPATIALITE())
