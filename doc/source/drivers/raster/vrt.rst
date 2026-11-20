@@ -15,7 +15,7 @@ GDAL Virtual Format is a raster driver that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
-extension .vrt.  The :ref:`gdal_raster_mosaic` or :ref:`gdal_raster_stack` programs can build a VRT from a list of datasets.
+extension .vrt.  The :ref:`gdal_raster_mosaic` and :ref:`gdal_raster_stack` programs can build a VRT from a list of datasets.
 
 
 
@@ -93,10 +93,6 @@ The following creation options are supported:
 
 A `XML schema of the GDAL VRT format <https://raw.githubusercontent.com/OSGeo/gdal/master/frmts/vrt/data/gdalvrt.xsd>`_
 is available.
-
-Note, .vrt files starting with
-- <OGRVRTDataSource> open with ogrinfo, etc.
-- <VRTDataset> open with gdalinfo, etc.
 
 Virtual files stored on disk are kept in an XML format with the following
 elements.
@@ -188,8 +184,8 @@ VRTRasterBand
 The attributes for VRTRasterBand are:
 
 - **dataType** (optional): type of the pixel data associated with this band (use
-  names Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64).
-  If not specified, defaults to 1
+  names Byte, Int8, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float16, Float32, Float64, CInt16, CInt32, CFloat16, CFloat32 or CFloat64).
+  If not specified, defaults to Byte.
 
 - **band** (optional): band number this element represents (1 based).
 
@@ -451,8 +447,10 @@ scaling using a power function can be used by specifying the Exponent,
 SrcMin, SrcMax, DstMin and DstMax elements. If SrcMin and SrcMax are
 not specified, they are computed from the source minimum and maximum
 value (which might require analyzing the whole source dataset). Exponent
-must be positive. (Those 5 values can be set with the -exponent and -scale
-options of gdal_translate.)
+must be positive. These five values can be set with the
+:option:`-scale <gdal_translate -scale>` and
+:option:`-exponent <gdal_translate -exponent>`
+options of :program:`gdal_translate`.
 
 The ComplexSource supports adding a custom lookup table to transform
 the source values to the destination. The LUT can be specified using
@@ -1208,7 +1206,8 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
 
 .. list-table::
-   :widths: 15 10 10 65
+   :class: top-aligned-table
+   :widths: 15 10 25 50
    :header-rows: 1
 
    * - PixelFunctionType
@@ -1233,21 +1232,21 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - (GDAL >= 3.12) Index (1-based, contrary to ``numpy.argmin``) of band with the minimum value
    * - **cmul**
      - 2
-     - -
+     -
      - Multiply the first band for the complex conjugate of the second
    * - **complex**
      - 2
-     - -
+     -
      - Make a complex band merging two bands used as real and imag values
    * - **conj**
      - 1
-     - -
+     -
      - Computes the complex conjugate of a single raster band
 
        (just a copy if the input is non-complex)
    * - **count**
      - >= 1
-     - -
+     -
      - (GDAL >= 3.14) Number of sources with defined (non-NoData) values
    * - **dB**
      - 1
@@ -1261,7 +1260,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        to get the alternative formula: ``10. * log10( abs( x ) )``
    * - **dB2amp**
      - 1
-     - -
+     -
      - Perform scale conversion from logarithmic to linear (amplitude) (i.e. ``10 ^ ( x / 20 )`` )
        of a single raster band (real only).
 
@@ -1269,7 +1268,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        ``base = 10.`` and ``fact = 0.05`` i.e. ``1./20``
    * - **dB2pow**
      - 1
-     - -
+     -
      - Perform scale conversion from logarithmic to linear (power) (i.e. ``10 ^ ( x / 10 )`` )
        of a single raster band (real only).
 
@@ -1277,7 +1276,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        ``base = 10.`` and ``fact = 0.1`` i.e. ``1./10``
    * - **diff**
      - 2
-     - -
+     -
      - Computes the difference between 2 raster bands (``b1 - b2``).
 
        Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
@@ -1287,7 +1286,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        will be the NoData value.
    * - **div**
      - 2
-     - -
+     -
      - Divide one raster band by another (``b1 / b2``).
 
        Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
@@ -1391,11 +1390,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
 
    * - **imag**
      - 1
-     - -
+     -
      - Extract imaginary part from a single raster band (0 for non-complex)
    * - **intensity**
      - 1
-     - -
+     -
      - Computes the intensity ``Re( x * conj(x) )`` of a single raster band (real or complex)
    * - **interpolate_exp**
      - >= 2
@@ -1433,7 +1432,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **log10**
      - 1
-     - -
+     -
      - Compute the logarithm (base 10) of the abs of a single raster band
 
        (real or complex): ``log10( abs( x ) )``
@@ -1487,7 +1486,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        the output value. Otherwise, NoData pixels will be ignored.
    * - **mod**
      - 1
-     - -
+     -
      - Extract module from a single raster band (real or complex). Starting with GDAL 3.14, NoData
        values in real input bands will be preserved.
    * - **mode**
@@ -1520,7 +1519,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        false, input NoData values will be ignored.
    * - **norm_diff**
      - 2
-     - -
+     -
      - Computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
 
        Starting with GDAL 3.12, if either ``b1`` or ``b2`` is equal to the
@@ -1530,7 +1529,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        will be the NoData value.
    * - **phase**
      - 1
-     - -
+     -
      - Extract phase from a single raster band [-PI,PI] (0 or PI for non-complex)
    * - **polar**
      - 2
@@ -1564,7 +1563,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
-     - -
+     -
      - Extract real part from a single raster band (just a copy if the input is non-complex)
    * - **reclassify**
      - = 1
@@ -1597,11 +1596,11 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
    * - **round**
      - = 1
-     - - ``digits`` (optional)
+     - ``digits`` (optional)
      - (GDAL >= 3.13) Round the input to the specified number of digits to the right of the decimal point.
    * - **scale**
      - = 1
-     - -
+     -
      - Perform scaling according to the ``offset`` and ``scale`` values of the raster band
 
        Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
@@ -1609,7 +1608,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
        (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **sqrt**
      - 1
-     - -
+     -
      - Perform the square root of a single raster band (real only).
 
        Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
@@ -2449,7 +2448,8 @@ The following conventions apply to option values:
   ``srcwin=0,0,256,256`` for ``-srcwin 0 0 256 256``.
 - Options that are flags in :program:`gdal_translate` (``unscale``,
   ``nogcp``, ``epo``, ``eco``) take ``true`` or ``false``. They default to
-  ``false``.
+  ``false``. A value that is not a recognized boolean is not reported as an
+  error, and enables the option.
 - An unknown option is an error.
 - Several options are combined with ``&``. On a command line the whole
   string must be quoted to protect the ampersand from the shell:
@@ -2491,11 +2491,15 @@ Examples
 
       vrt://my.tif?projwin=140,-40,150,-45&projwin_srs=EPSG:4326
 
+.. _raster_vrt_connection_string_options:
+
 Options
 +++++++
 
-Unless stated otherwise, each option behaves like the
-:program:`gdal_translate` option of the same name.
+These are the options accepted in a ``vrt://`` connection string. Each one
+has the same name and behavior as the corresponding :program:`gdal_translate`
+option, unless stated otherwise. The newer :program:`gdal raster` commands
+use different option names.
 
 .. list-table:: Summary of options
    :header-rows: 1
@@ -2638,10 +2642,10 @@ Unless stated otherwise, each option behaves like the
   control point. Repeat the option to add several GCPs, e.g.
   ``gcp=0,0,140,-40&gcp=100,100,150,-45``.
 - ``if=<driver>[,<driver>]...``: driver name(s) to try when opening the
-  source. The option may be given only once.
+  source. Repeating the option is an error.
 - ``nogcp=true|false``: do not copy the GCPs of the source.
 - ``oo=<key>=<value>[,<key>=<value>]...``: dataset open options passed to
-  the source driver. The option may be given only once. As commas separate
+  the source driver. Repeating the option is an error. As commas separate
   the key/value pairs, an open option value cannot itself contain a comma.
 - ``ot=<type>``: output band data type.
 - ``outsize=<xsize>[%],<ysize>[%]``: output size in pixels and lines, or as
@@ -2664,21 +2668,24 @@ Unless stated otherwise, each option behaves like the
 - ``sd=<n>``: select a subdataset by number, between 1 and the number of
   subdatasets. The order of subdatasets is not guaranteed to stay the same
   between GDAL versions, or between files in a series, so this option is for
-  convenience only. Use ``sd_name`` to select a subdataset reliably. If the
-  source has no subdatasets, the option is ignored.
+  convenience only. Use ``sd_name`` to select a subdataset reliably. A
+  number outside that range is an error. If the source has no subdatasets,
+  the option is ignored.
 - ``sd_name=<name>``: select a subdataset by name. For example
   ``vrt://myfile.nc?sd_name=somearray`` can be used instead of
-  ``NETCDF:myfile.nc:somearray``. If the source has no subdatasets, the
-  option is ignored.
+  ``NETCDF:myfile.nc:somearray``. A name that matches no subdataset is an
+  error. If the source has no subdatasets, the option is ignored.
 - ``srcwin=<xoff>,<yoff>,<xsize>,<ysize>``: subwindow in pixel/line
   coordinates.
 - ``tr=<xres>,<yres>``: target resolution in georeferenced units.
 - ``transpose=<array_name>:<iXDim>,<iYDim>``: open one array of a
   multidimensional dataset as a 2D raster, using the dimensions at the given
   indices as the X and Y axes, via :cpp:func:`GDALMDArray::AsClassicDataset`.
-  ``<array_name>`` is the full name of the array, e.g. ``/temp``. For an
-  array with dimensions (y, x), ``transpose=/temp:1,0`` gives the usual
-  orientation and ``transpose=/temp:0,1`` swaps the axes. Apart from
+  ``<array_name>`` is the full name of the array, including the leading
+  ``/``, e.g. ``/temp``. For an array with dimensions (y, x),
+  ``transpose=/temp:1,0`` uses x as the X axis and y as the Y axis, and
+  ``transpose=/temp:0,1`` swaps them. Rows are not reordered, so an array
+  stored south-up is returned south-up. Apart from
   reorienting arrays stored in X,Y (or other) order, this can produce a valid
   geotransform where the classic raster model does not infer one.
 - ``unscale=true|false``: apply the band scale and offset metadata to
@@ -2701,6 +2708,82 @@ Incompatible options
      - ``sd_name``, ``sd``
    * - ``block``
      - ``srcwin``, ``projwin``, ``outsize``, ``tr``, ``r``, ``ovr``
+
+Command-line examples
++++++++++++++++++++++
+
+The following examples use the :program:`gdal` command-line interface and
+datasets from the ``autotest/gdrivers/data`` folder of the GDAL source tree.
+See :ref:`connection string options <raster_vrt_connection_string_options>`
+for the meaning of each option. The connection string is quoted to protect
+``&`` and ``?`` from the shell.
+
+.. example::
+   :title: Extracting a window of one band and converting it to GeoTIFF
+
+   A ``vrt://`` connection string can be used wherever a dataset name is
+   accepted.
+
+   .. code-block:: bash
+
+      gdal raster convert "vrt://small_world.tif?bands=1&projwin=-10,60,30,35" europe.tif
+
+.. example::
+   :title: Opening a netCDF variable by name and applying its scale and offset
+
+   .. code-block:: bash
+
+      # Stored values, with scale and offset reported as metadata
+      gdal raster info --min-max "vrt://netcdf/two_vars_scale_offset.nc?sd_name=z"
+      #   Computed Min/Max=-100.000,100.000
+      #   Offset: 1.5,   Scale:0.01
+
+      # Unscaled values: stored value * 0.01 + 1.5
+      gdal raster info --min-max "vrt://netcdf/two_vars_scale_offset.nc?sd_name=z&unscale=true"
+      #   Computed Min/Max=0.500,2.500
+
+.. example::
+   :title: Expanding a dataset with a color table to RGB
+
+   .. code-block:: bash
+
+      gdal raster info --no-ct "vrt://small_world_pct.tif?expand=rgb"
+      # Band 1 Block=400x20 Type=Byte, ColorInterp=Red
+      # Band 2 Block=400x20 Type=Byte, ColorInterp=Green
+      # Band 3 Block=400x20 Type=Byte, ColorInterp=Blue
+
+.. example::
+   :title: Reading an overview level
+
+   .. code-block:: bash
+
+      # Make a copy with two overview levels (200x100 and 100x50)
+      gdal raster convert small_world.tif sw_ovr.tif
+      gdal raster overview add --levels 2,4 sw_ovr.tif
+
+      # ovr=0 is the first overview level
+      gdal raster info "vrt://sw_ovr.tif?ovr=0"
+      # Size is 200, 100
+      gdal raster info "vrt://sw_ovr.tif?ovr=1"
+      # Size is 100, 50
+
+.. example::
+   :title: Choosing the X and Y dimensions of a multidimensional array
+
+   .. code-block:: bash
+
+      # Create a netCDF file whose arrays have dimensions (lat, lon)
+      gdal raster convert small_world.tif sw.nc
+      gdal mdim info sw.nc
+      # "Band1": { "full_name": "/Band1", "dimensions": ["/lat", "/lon"], "dimension_size": [200, 400] }
+
+      # Dimension 1 (lon) as X and dimension 0 (lat) as Y
+      gdal raster info "vrt://sw.nc?transpose=/Band1:1,0"
+      # Size is 400, 200
+
+      # Swapped axes
+      gdal raster info "vrt://sw.nc?transpose=/Band1:0,1"
+      # Size is 200, 400
 
 .. spelling:word-list::
     nXBlockOff
