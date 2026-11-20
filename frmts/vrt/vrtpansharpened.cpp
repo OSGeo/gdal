@@ -978,6 +978,15 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         }
     }
 
+    // Set nodata to 0 if not already set (explicitly or inherited)
+    if ((m_eGTAdjustment == GTAdjust_None ||
+         m_eGTAdjustment == GTAdjust_NoneWithoutWarning) &&
+        !bHasNoData && !m_bNoDataDisabled)
+    {
+        bHasNoData = TRUE;
+        dfNoData = 0;
+    }
+
     if (GetRasterCount() == 0)
     {
         for (int i = 0; i < static_cast<int>(aMapDstBandToSpectralBand.size());
@@ -1145,6 +1154,9 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     psPanOptions->bHasNoData = bHasNoData;
     psPanOptions->dfNoData = dfNoData;
     psPanOptions->nThreads = nThreads;
+    psPanOptions->bNoDataOutsideSpectralExtent =
+        (m_eGTAdjustment == GTAdjust_None ||
+         m_eGTAdjustment == GTAdjust_NoneWithoutWarning);
 
     if (nBands == psPanOptions->nOutPansharpenedBands)
         SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
