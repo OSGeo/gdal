@@ -630,3 +630,17 @@ NODATA_value 5
 
     val = struct.unpack("B" * 6, val)
     assert val == (1, 1, 5, 10, 10, 25)
+
+
+###############################################################################
+# Test that a failure when closing the output dataset is reflected in the exit
+# code
+
+
+@pytest.mark.skipif(not os.path.exists("/dev/full"), reason="requires /dev/full")
+def test_gdaldem_close_error(gdaldem_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdaldem_path} hillshade -of GTiff ../gdrivers/data/n43.tif /dev/full"
+    )
+    assert "ERROR ret code" in err
