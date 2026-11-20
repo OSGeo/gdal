@@ -5373,7 +5373,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         nTargetSwathSize = static_cast<int>(
             std::min(GIntBig(INT_MAX), GDALGetCacheMax64() / 4));
 
-        // but if the minimum idal swath buf size is less, then go for it to
+        // but if the minimum ideal swath buf size is less, then go for it to
         // avoid unnecessarily abusing RAM usage.
         // but try to use 10 MB at least.
         GIntBig nIdealSwathBufSize =
