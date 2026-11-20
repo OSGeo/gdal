@@ -303,8 +303,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "Axis directions of panchromatic and multispectral geotransforms "
-            "must be equal when using ofbNoDataOutsideSpectralExtent / UsePAN "
-            "SpatialExtentAdjustment");
+            "must be equal when using ofbNoDataOutsideSpectralExtent.");
         return CE_Failure;
     }
 

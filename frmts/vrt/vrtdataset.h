@@ -553,8 +553,7 @@ typedef enum
     GTAdjust_Union,
     GTAdjust_Intersection,
     GTAdjust_None,
-    GTAdjust_NoneWithoutWarning,
-    GTAdjust_UsePAN
+    GTAdjust_NoneWithoutWarning
 } GTAdjustment;
 
 class VRTPansharpenedDataset final : public VRTDataset

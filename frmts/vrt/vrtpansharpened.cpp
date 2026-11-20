@@ -377,8 +377,6 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         m_eGTAdjustment = GTAdjust_None;
     else if (EQUAL(pszGTAdjustment, "NoneWithoutWarning"))
         m_eGTAdjustment = GTAdjust_NoneWithoutWarning;
-    else if (EQUAL(pszGTAdjustment, "UsePAN"))
-        m_eGTAdjustment = GTAdjust_UsePAN;
     else
     {
         m_eGTAdjustment = GTAdjust_Union;
@@ -980,8 +978,10 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         }
     }
 
-    // with UsePAN, set nodata to 0 if not already set (explicitly or inherited)
-    if (m_eGTAdjustment == GTAdjust_UsePAN && !bHasNoData && !m_bNoDataDisabled)
+    // Set nodata to 0 if not already set (explicitly or inherited)
+    if ((m_eGTAdjustment == GTAdjust_None ||
+         m_eGTAdjustment == GTAdjust_NoneWithoutWarning) &&
+        !bHasNoData && !m_bNoDataDisabled)
     {
         bHasNoData = TRUE;
         dfNoData = 0;
@@ -1155,7 +1155,8 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     psPanOptions->dfNoData = dfNoData;
     psPanOptions->nThreads = nThreads;
     psPanOptions->bNoDataOutsideSpectralExtent =
-        (m_eGTAdjustment == GTAdjust_UsePAN);
+        (m_eGTAdjustment == GTAdjust_None ||
+         m_eGTAdjustment == GTAdjust_NoneWithoutWarning);
 
     if (nBands == psPanOptions->nOutPansharpenedBands)
         SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
@@ -1282,9 +1283,6 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML(const char *pszVRTPathIn)
             break;
         case GTAdjust_NoneWithoutWarning:
             pszAdjust = "NoneWithoutWarning";
-            break;
-        case GTAdjust_UsePAN:
-            pszAdjust = "UsePAN";
             break;
         default:
             break;

@@ -2507,7 +2507,7 @@ def test_vrtpansharpen_small_slice_at_edge(tmp_vsimem):
         (-2, 98),
     ],
 )
-def test_vrtpansharpen_use_pan(
+def test_vrtpansharpen_nodata_outside_of_spectral(
     tmp_vsimem, num_threads, resampling, nodata, ms_origin, ms_size
 ):
 
@@ -2534,7 +2534,7 @@ def test_vrtpansharpen_use_pan(
             <NumThreads>{num_threads}</NumThreads>
             <Resampling>{resampling}</Resampling>
             {nodata_xml}
-            <SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>
+            <SpatialExtentAdjustment>NoneWithoutWarning</SpatialExtentAdjustment>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
@@ -2595,10 +2595,6 @@ def test_vrtpansharpen_use_pan(
             ysize,
         )
 
-    xml = vrt_ds.GetMetadata("xml:VRT")[0]
-    assert "<SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>" in xml
-    assert f"<NoData>{expected_nodata}</NoData>" in xml
-
 
 ###############################################################################
 # Test SpatialExtentAdjustment=UsePAN with NoData=None: spectral pixels must
@@ -2628,7 +2624,7 @@ def test_vrtpansharpen_use_pan_nodata_none(tmp_vsimem, pan_gt, covered):
     xml = f"""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <NoData>None</NoData>
-            <SpatialExtentAdjustment>UsePAN</SpatialExtentAdjustment>
+            <SpatialExtentAdjustment>NoneWithoutWarning</SpatialExtentAdjustment>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">{tmp_vsimem}/pan.tif</SourceFilename>
                     <SourceBand>1</SourceBand>
