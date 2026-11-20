@@ -445,6 +445,39 @@ def test_gdalalg_set_field_type_src_field_type():
     assert f["real"] == 1.25
 
 
+@pytest.mark.parametrize(
+    "kwargs", [{"field_name": "date"}, {"input_field_type": "Date"}]
+)
+def test_gdalalg_set_field_type_unconvertible_value(kwargs):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateDataSource("")
+    lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    lyr.CreateField(ogr.FieldDefn("date", ogr.OFTDate))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["name"] = "foo"
+    f["date"] = "2024/06/01"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    with gdaltest.error_raised(gdal.CE_Warning, "setting it to NULL"):
+        alg = gdal.Run(
+            "vector",
+            "set-field-type",
+            input=src_ds,
+            output_field_type="Integer",
+            output_format="MEM",
+            **kwargs,
+        )
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["name"] == "foo"
+    assert f["date"] is None
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (1 2)"
+
+
 @pytest.mark.require_driver("CSV")
 def test_gdalalg_set_field_type_pipeline_fuse_in_open(tmp_vsimem):
 
