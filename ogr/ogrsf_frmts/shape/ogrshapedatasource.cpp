@@ -94,6 +94,7 @@ std::vector<CPLString> OGRShapeDataSource::GetLayerNames() const
 {
     std::vector<CPLString> res;
     const_cast<OGRShapeDataSource *>(this)->GetLayerCount();
+    res.reserve(m_apoLayers.size());
     for (const auto &poLayer : m_apoLayers)
     {
         res.emplace_back(poLayer->GetName());
@@ -1608,6 +1609,7 @@ bool OGRShapeDataSource::RecompressIfNeeded(
         oMapLayerOrder[layerNames[i]] = static_cast<int>(i);
 
     std::vector<CPLString> sortedFiles;
+    sortedFiles.reserve(aosFiles.size());
     vsi_l_offset nTotalUncompressedSize = 0;
     for (int i = 0; i < aosFiles.size(); i++)
     {

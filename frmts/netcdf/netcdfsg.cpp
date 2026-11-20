@@ -594,6 +594,8 @@ std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
                 pnc_bl[featureInd];  // initialize with first part count, list
                                      // of part counts is contiguous
             std::vector<int> pnc;
+            if (lc > 0)
+                pnc.reserve(lc);
 
             // Build sub vector for part_node_counts
             // + Calculate wkbSize
@@ -635,6 +637,8 @@ std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
                 pnc_bl[featureInd];  // initialize with first part count, list
                                      // of part counts is contiguous
             std::vector<int> pnc;
+            if (rc > 0)
+                pnc.reserve(rc);
 
             // Build sub vector for part_node_counts
             for (int itr = 0; itr < rc; itr++)
@@ -687,6 +691,8 @@ std::vector<unsigned char> SGeometry_Reader::serializeToWKB(size_t featureInd)
                         ir_base++;  // single ring case
 
                     std::vector<int> poly_parts;
+                    if (rc_m > 0)
+                        poly_parts.reserve(rc_m);
 
                     // Make part node count sub vector
                     for (int itr_2 = 0; itr_2 < rc_m; itr_2++)

@@ -423,6 +423,7 @@ bool OGRS101Reader::ProcessUpdatePointList(const DDFRecord *poUpdateRecord,
     };
 
     std::vector<Coord> asTarget;
+    asTarget.reserve(nTargetRepeatCount);
     // Ingest the existing/target record
     for (int i = 0; i < nTargetRepeatCount; ++i)
     {
@@ -435,6 +436,7 @@ bool OGRS101Reader::ProcessUpdatePointList(const DDFRecord *poUpdateRecord,
     std::vector<Coord> asUpdate;
     if (poUpdateField)
     {
+        asUpdate.reserve(nUpdateRepeatCount);
         for (int i = 0; i < nUpdateRepeatCount; ++i)
         {
             Coord c;

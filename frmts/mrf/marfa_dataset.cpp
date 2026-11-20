@@ -508,7 +508,9 @@ static void list2vec(std::vector<double> &v, const char *pszList)
     char **papszTokens = CSLTokenizeString2(
         pszList, " \t\n\r", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
     v.clear();
-    for (int i = 0; i < CSLCount(papszTokens); i++)
+    const int nTokens = CSLCount(papszTokens);
+    v.reserve(nTokens);
+    for (int i = 0; i < nTokens; i++)
         v.push_back(CPLStrtod(papszTokens[i], nullptr));
     CSLDestroy(papszTokens);
 }
