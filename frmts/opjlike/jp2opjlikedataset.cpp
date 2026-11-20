@@ -1894,10 +1894,12 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         poODS->nAlphaIndex = poDS->nAlphaIndex;
         if (BASE::canPerformDirectIO())
         {
-            // DirectRasterIO bypasses block-based I/O, so block size
-            // is irrelevant; set to full overview dimensions.
-            nBlockXSize = nW;
-            nBlockYSize = nH;
+            // whole-overview blocks make readers allocate the whole overview
+            const int ovLevel = poODS->iLevel;
+            poODS->m_nTileWidth = (nTileW + (1 << ovLevel) - 1) >> ovLevel;
+            poODS->m_nTileHeight = (nTileH + (1 << ovLevel) - 1) >> ovLevel;
+            nBlockXSize = std::min(nW, static_cast<int>(poODS->m_nTileWidth));
+            nBlockYSize = std::min(nH, static_cast<int>(poODS->m_nTileHeight));
         }
         else if (!poDS->bUseSetDecodeArea)
         {
@@ -1930,16 +1932,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 
         poODS->m_nX0 = poDS->m_nX0;
         poODS->m_nY0 = poDS->m_nY0;
-
-        // For Grok's DirectRasterIO path, overview datasets need tile
-        // dimensions scaled to the reduced resolution level so that
-        // tile range and row-iteration computations work correctly.
-        if (BASE::canPerformDirectIO())
-        {
-            const int ovLevel = poODS->iLevel;
-            poODS->m_nTileWidth = (nTileW + (1 << ovLevel) - 1) >> ovLevel;
-            poODS->m_nTileHeight = (nTileH + (1 << ovLevel) - 1) >> ovLevel;
-        }
 
         for (iBand = 1; iBand <= poDS->nBands; iBand++)
         {

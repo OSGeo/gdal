@@ -328,7 +328,8 @@ struct GRKCodecWrapper
     explicit GRKCodecWrapper(GRKCodecWrapper *rhs)
         : pCodec(rhs->pCodec), psImage(rhs->psImage),
           bImageOwned(rhs->bImageOwned), pasBandParams(rhs->pasBandParams),
-          psJP2File(rhs->psJP2File), irreversible(rhs->irreversible)
+          psJP2File(rhs->psJP2File), fpCodec(std::move(rhs->fpCodec)),
+          irreversible(rhs->irreversible)
     {
         rhs->pCodec = nullptr;
         rhs->psImage = nullptr;
@@ -402,6 +403,7 @@ struct GRKCodecWrapper
         rhs->psImage = nullptr;
         psJP2File = rhs->psJP2File;
         rhs->psJP2File = nullptr;
+        fpCodec = std::move(rhs->fpCodec);
         irreversible = rhs->irreversible;
         bImageOwned = rhs->bImageOwned;
         rhs->bImageOwned = false;
@@ -496,6 +498,7 @@ struct GRKCodecWrapper
         if (pCodec)
             grk_object_unref(pCodec);
         pCodec = nullptr;
+        fpCodec.reset();
         if (psImage && bImageOwned)
             grk_object_unref(&psImage->obj);
         psImage = nullptr;
@@ -595,6 +598,16 @@ struct GRKCodecWrapper
         else
         {
             CPLDebug("GROK", "VSILFILE callback I/O for: %s", pszFilename);
+            // the dataset also reads through fp_
+            fpCodec.reset(VSIFOpenL(pszFilename, "rb"));
+            if (!fpCodec)
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed, "Cannot open %s",
+                         pszFilename);
+                free();
+                return false;
+            }
+            psJP2File->fp_ = fpCodec.get();
             streamParams.read_fn = JP2Dataset_Read;
             streamParams.seek_fn = JP2Dataset_Seek;
             streamParams.user_data = psJP2File;
@@ -1876,6 +1889,7 @@ struct GRKCodecWrapper
         false;  ///< True when psImage was created by grk_image_new
     grk_image_comp *pasBandParams = nullptr;  ///< Band params for compression
     JP2File *psJP2File = nullptr;  ///< VSILFILE wrapper for stream callbacks
+    VSIVirtualHandleUniquePtr fpCodec{};
     std::string osComment;  ///< COM marker text; must outlive compressParams
 
     // Tile grid dimensions stored by initCompress for use in compressTile
@@ -1950,7 +1964,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     bool bSyncFallback_ = false;         ///< True when sync fallback taken
     bool bDecodeConsumed_ = false;   ///< grk_decompress() has run; codec spent
     bool bCachePersistent_ = false;  ///< cached decode kept tiles (CACHE_IMAGE)
-    int cacheServedY1_ = 0;          ///< bottom row drained from cached decode
+    int cacheFirstResidentY_ = 0;    ///< top row of first unreleased tile row
     int decWinX0_ = 0;  ///< cached decode window (this level coords)
     int decWinY0_ = 0;
     int decWinX1_ = 0;
@@ -2730,8 +2744,19 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         hasCachedPostPreload_ = false;
         bSyncFallback_ = false;
         bDecodeConsumed_ = false;
-        cacheServedY1_ = 0;
+        cacheFirstResidentY_ = 0;
         return true;
+    }
+
+    // a wait releases the tile rows above the one containing swath.y0
+    void waitForSwath(grk_wait_swath &swath)
+    {
+        grk_decompress_wait(m_codec->pCodec, &swath);
+        const int tileRowTop =
+            m_nTileHeight
+                ? static_cast<int>(swath.y0 / m_nTileHeight * m_nTileHeight)
+                : 0;
+        cacheFirstResidentY_ = std::max(cacheFirstResidentY_, tileRowTop);
     }
 
     /**
@@ -2814,8 +2839,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             const bool within =
                 swath_x0 >= decWinX0_ && swath_y0 >= decWinY0_ &&
                 swath_x0 + swath_width <= decWinX1_ && reqY1 <= decWinY1_;
-            const bool reusable =
-                within && (bCachePersistent_ || swath_y0 >= cacheServedY1_);
+            const bool reusable = within && (bCachePersistent_ ||
+                                             swath_y0 >= cacheFirstResidentY_);
             if (!reusable && !reinitCodec())
                 return rc;
         }
@@ -2858,11 +2883,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 sw.y0 = cached.y0;
                 sw.x1 = cached.x1;
                 sw.y1 = cached.y1;
-                grk_decompress_wait(m_codec->pCodec, &sw);
+                waitForSwath(sw);
             }
-
-            cacheServedY1_ =
-                std::max(cacheServedY1_, static_cast<int>(cached.y1));
             return cached;
         }
 
@@ -3020,7 +3042,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
             // Record decoded window + tile strategy for cache-reuse checks.
             bCachePersistent_ = needPersistentTiles;
-            cacheServedY1_ = 0;
+            cacheFirstResidentY_ = 0;
             if (this->fullDecompress_)
             {
                 decWinX0_ = 0;
@@ -3076,7 +3098,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                 swath.x1 = fullX1;
                 swath.y1 =
                     std::min(rowY + static_cast<int>(m_nTileHeight), fullY1);
-                grk_decompress_wait(m_codec->pCodec, &swath);
+                waitForSwath(swath);
 
                 // Copy this row's tiles before the next wait releases them
                 if (rowCopy)
@@ -3113,7 +3135,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             swath.y0 = swath_y0;
             swath.x1 = swath_x0 + swath_width;
             swath.y1 = swath_y0 + swath_height;
-            grk_decompress_wait(m_codec->pCodec, &swath);
+            waitForSwath(swath);
         }
 
         rc.asynch_ = true;
@@ -3130,7 +3152,6 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
         cachedPostPreload_ = rc;
         hasCachedPostPreload_ = true;
-        cacheServedY1_ = std::max(cacheServedY1_, static_cast<int>(rc.y1));
 
         return rc;
     }
@@ -3295,9 +3316,6 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     {
         if (m_codec)
         {
-            // Ensure the decompress worker thread and all futures
-            // are joined/waited before destroying the codec.
-            grk_decompress_wait(m_codec->pCodec, nullptr);
             m_codec->free();
             delete m_codec;
             m_codec = nullptr;

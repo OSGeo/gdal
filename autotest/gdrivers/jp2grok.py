@@ -1555,6 +1555,31 @@ def test_jp2grok_multitile_overview_decode():
 
 
 ###############################################################################
+# Overviews expose the tile size at their level as block size
+
+
+def test_jp2grok_overview_block_size(tmp_vsimem):
+    src_ds = gdal.Open("data/byte.tif")
+    src_ds = gdal.Translate("", src_ds, format="MEM", width=300, height=300)
+    fname = str(tmp_vsimem / "overview_block_size.jp2")
+    gdaltest.jp2grok_drv.CreateCopy(
+        fname,
+        src_ds,
+        options=["REVERSIBLE=YES", "BLOCKXSIZE=128", "BLOCKYSIZE=128", "RESOLUTIONS=3"],
+    )
+
+    ds = gdal.Open(fname)
+    band = ds.GetRasterBand(1)
+    assert band.GetOverviewCount() == 2
+    for ov_idx, block_size in enumerate([64, 32]):
+        ov = band.GetOverview(ov_idx)
+        assert ov.GetBlockSize() == [block_size, block_size]
+        whole = gdal.GetDriverByName("MEM").Create("", ov.XSize, ov.YSize)
+        whole.WriteRaster(0, 0, ov.XSize, ov.YSize, ov.ReadRaster())
+        assert ov.Checksum() == whole.GetRasterBand(1).Checksum()
+
+
+###############################################################################
 # Test driver metadata
 
 
