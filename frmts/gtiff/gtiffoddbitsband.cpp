@@ -176,14 +176,22 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         {
             GInt64 iBitOffset = iY * nBitsPerLine;
 
-            if (m_poGDS->m_nBitsPerSample == 12)
+            if (m_poGDS->m_nBitsPerSample == 12 && eDataType == GDT_UInt16)
             {
-                for (int iX = 0; iX < nBlockXSize; ++iX)
+                // 2 pixels -> 3 bytes
+                const GUInt16 *pSrc =
+                    static_cast<const GUInt16 *>(pImage) + iPixel;
+                GByte *pDst = m_poGDS->m_pabyBlockBuf + (iBitOffset >> 3);
+                int iX = 0;
+                const int nFastLimit = nBlockXSize - 1;  // may be <= 0
+                for (; iX < nFastLimit; iX += 2)
                 {
-                    GUInt32 nInWord = static_cast<GUInt16 *>(pImage)[iPixel++];
-                    if (nInWord > nMaxVal)
+                    GUInt32 v0 = pSrc[0];
+                    GUInt32 v1 = pSrc[1];
+                    if ((v0 | v1) > nMaxVal)
                     {
-                        nInWord = nMaxVal;
+                        v0 = std::min(v0, nMaxVal);
+                        v1 = std::min(v1, nMaxVal);
                         if (!m_poGDS->m_bClipWarn)
                         {
                             m_poGDS->m_bClipWarn = true;
@@ -194,28 +202,33 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                                 m_poGDS->m_nBitsPerSample);
                         }
                     }
-
-                    if ((iBitOffset % 8) == 0)
-                    {
-                        m_poGDS->m_pabyBlockBuf[iBitOffset >> 3] =
-                            static_cast<GByte>(nInWord >> 4);
-                        // Let 4 lower bits to zero as they're going to be
-                        // overridden by the next word.
-                        m_poGDS->m_pabyBlockBuf[(iBitOffset >> 3) + 1] =
-                            static_cast<GByte>((nInWord & 0xf) << 4);
-                    }
-                    else
-                    {
-                        // Must or to preserve the 4 upper bits written
-                        // for the previous word.
-                        m_poGDS->m_pabyBlockBuf[iBitOffset >> 3] |=
-                            static_cast<GByte>(nInWord >> 8);
-                        m_poGDS->m_pabyBlockBuf[(iBitOffset >> 3) + 1] =
-                            static_cast<GByte>(nInWord & 0xff);
-                    }
-
-                    iBitOffset += m_poGDS->m_nBitsPerSample;
+                    pDst[0] = static_cast<GByte>(v0 >> 4);
+                    pDst[1] = static_cast<GByte>((v0 << 4) | (v1 >> 8));
+                    pDst[2] = static_cast<GByte>(v1);
+                    pSrc += 2;
+                    pDst += 3;
                 }
+                // odd width
+                if (iX < nBlockXSize)
+                {
+                    GUInt32 v0 = pSrc[0];
+                    if (v0 > nMaxVal)
+                    {
+                        v0 = nMaxVal;
+                        if (!m_poGDS->m_bClipWarn)
+                        {
+                            m_poGDS->m_bClipWarn = true;
+                            ReportError(
+                                CE_Warning, CPLE_AppDefined,
+                                "One or more pixels clipped to fit %d bit "
+                                "domain.",
+                                m_poGDS->m_nBitsPerSample);
+                        }
+                    }
+                    pDst[0] = static_cast<GByte>(v0 >> 4);
+                    pDst[1] = static_cast<GByte>(v0 << 4);
+                }
+                iPixel += nBlockXSize;
                 continue;
             }
 
