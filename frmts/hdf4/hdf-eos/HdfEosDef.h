@@ -18,6 +18,8 @@ this permission notice appear in supporting documentation.
 #ifndef HDFEOSDEF_H_
 #define HDFEOSDEF_H_
 
+#include <stdint.h>
+
 /* include header file for EASE grid */
 #include "ease.h"
 
@@ -128,68 +130,68 @@ extern "C" {
 #endif
 
 /* Swath Prototype */
-int32 SWopen(const char *, intn);
-int32 SWattach(int32, const char *);
-int32 SWdiminfo(int32, const char *);
-intn SWfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *, size_t);
-intn SWreadattr(int32, const char *, VOIDP);
-intn SWattrinfo(int32, const char *, int32 *, int32 *);
-int32 SWinqdims(int32, char *, int32 []);
-int32 SWinqmaps(int32, char *, int32 [], int32 []);
-int32 SWinqgeofields(int32, char *, int32 [], int32 []);
-int32 SWinqdatafields(int32, char *, int32 [],int32 []);
-int32 SWinqattrs(int32, char *, int32 *);
-int32 SWnentries(int32, int32, int32 *);
-int32 SWinqswath(const char *, char *, int32 *);
-intn SWreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
-intn SWgetfillvalue(int32, const char *, VOIDP);
-intn SWdetach(int32);
-intn SWclose(int32);
-intn SWsdid(int32, const char *, int32 *);
+int32_t SWopen(const char *, int);
+int32_t SWattach(int32_t, const char *);
+int32_t SWdiminfo(int32_t, const char *);
+int SWfieldinfo(int32_t, const char *, int32_t *, int32_t [], int32_t *, char *, size_t);
+int SWreadattr(int32_t, const char *, VOIDP);
+int SWattrinfo(int32_t, const char *, int32_t *, int32_t *);
+int32_t SWinqdims(int32_t, char *, int32_t []);
+int32_t SWinqmaps(int32_t, char *, int32_t [], int32_t []);
+int32_t SWinqgeofields(int32_t, char *, int32_t [], int32_t []);
+int32_t SWinqdatafields(int32_t, char *, int32_t [],int32_t []);
+int32_t SWinqattrs(int32_t, char *, int32_t *);
+int32_t SWnentries(int32_t, int32_t, int32_t *);
+int32_t SWinqswath(const char *, char *, int32_t *);
+int SWreadfield(int32_t, const char *, int32_t [], int32_t [], int32_t [], VOIDP);
+int SWgetfillvalue(int32_t, const char *, VOIDP);
+int SWdetach(int32_t);
+int SWclose(int32_t);
+int SWsdid(int32_t, const char *, int32_t *);
 
 /* Grid Prototypes */
-int32 GDopen(const char *, intn);
-int32 GDattach(int32, const char *);
-int32 GDdiminfo(int32, const char *);
-intn GDgridinfo(int32, int32 *, int32 *, float64 [], float64 []);
-intn GDprojinfo(int32, int32 *, int32 *, int32 *, float64 []);
-intn GDfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char dimlist[HDFE_DIMBUFSIZE+1]);
-intn GDtileinfo(int32, const char *, int32 *, int32 *, int32 []);
-intn GDreadtile(int32, const char *, int32 [],  VOIDP);
-intn GDreadfield(int32, const char *, int32 [], int32 [], int32 [], VOIDP);
-intn GDreadattr(int32, const char *, VOIDP);
-intn GDattrinfo(int32, const char *, int32 *, int32 *);
-int32 GDinqfields(int32, char *, int32 [], int32 []);
-int32 GDinqattrs(int32, char *, int32 *);
-int32 GDnentries(int32, int32, int32 *);
-int32 GDinqgrid(const char *, char *, int32 *);
-intn GDgetfillvalue(int32, const char *, VOIDP);
-intn GDdetach(int32);
-intn GDclose(int32);
-intn GDsdid(int32, const char *, int32 *);
+int32_t GDopen(const char *, int);
+int32_t GDattach(int32_t, const char *);
+int32_t GDdiminfo(int32_t, const char *);
+int GDgridinfo(int32_t, int32_t *, int32_t *, float64 [], float64 []);
+int GDprojinfo(int32_t, int32_t *, int32_t *, int32_t *, float64 []);
+int GDfieldinfo(int32_t, const char *, int32_t *, int32_t [], int32_t *, char dimlist[HDFE_DIMBUFSIZE+1]);
+int GDtileinfo(int32_t, const char *, int32_t *, int32_t *, int32_t []);
+int GDreadtile(int32_t, const char *, int32_t [],  VOIDP);
+int GDreadfield(int32_t, const char *, int32_t [], int32_t [], int32_t [], VOIDP);
+int GDreadattr(int32_t, const char *, VOIDP);
+int GDattrinfo(int32_t, const char *, int32_t *, int32_t *);
+int32_t GDinqfields(int32_t, char *, int32_t [], int32_t []);
+int32_t GDinqattrs(int32_t, char *, int32_t *);
+int32_t GDnentries(int32_t, int32_t, int32_t *);
+int32_t GDinqgrid(const char *, char *, int32_t *);
+int GDgetfillvalue(int32_t, const char *, VOIDP);
+int GDdetach(int32_t);
+int GDclose(int32_t);
+int GDsdid(int32_t, const char *, int32_t *);
 
 
 /* EH Utility Prototypes */
-int32 EHnumstr(const char *);
-int32 EHparsestr(const char *, const char, char *[], size_t, int32 [], size_t);
-int32 EHstrwithin(const char *, const char *, const char);
-intn EHchkODL(const char *);
-int32 EHopen(const char *, intn);
-intn EHchkfid(int32, const char *, int32 *, int32 *, uint8 *);
-intn EHidinfo(int32, int32 *, int32 *);
-int32 EHgetid(int32, int32, const char *, intn, const char *);
-intn EHgetmetavalue(char *[], const char *, char *);
-char * EHmetagroup(int32, const char *, const char *, const char *, char *[]);
-intn EHattr(int32, int32, const char *, int32, int32, const char *, VOIDP);
-intn EHattrinfo(int32, int32, const char *, int32 *, int32 *);
-int32 EHattrcat(int32, int32, char *, int32 *);
+int32_t EHnumstr(const char *);
+int32_t EHparsestr(const char *, const char, char *[], size_t, int32_t [], size_t);
+int32_t EHstrwithin(const char *, const char *, const char);
+int EHchkODL(const char *);
+int32_t EHopen(const char *, int);
+int EHchkfid(int32_t, const char *, int32_t *, int32_t *, uint8_t *);
+int EHidinfo(int32_t, int32_t *, int32_t *);
+int32_t EHgetid(int32_t, int32_t, const char *, int, const char *);
+int EHgetmetavalue(char *[], const char *, char *);
+char * EHmetagroup(int32_t, const char *, const char *, const char *, char *[]);
+int EHattr(int32_t, int32_t, const char *, int32_t, int32_t, const char *, VOIDP);
+int EHattrinfo(int32_t, int32_t, const char *, int32_t *, int32_t *);
+int32_t EHattrcat(int32_t, int32_t, char *, int32_t *);
 /* 9/3/97 Abe changed the first argument from
    float64 (float64 []) to float64 (*) (float64 [])  for SunOS
    float64 () (float64 []) to float64 (*) (float64 [])  for all other OSs */
-int32 EHinquire(const char *, const char *, char *, int32 *);
-intn EHclose(int32);
+int32_t EHinquire(const char *, const char *, char *, int32_t *);
+int EHclose(int32_t);
 
-int32 VgetnameSafe(int32 vkey, char *vgname, size_t vgnamesize);
+int32_t VgetnameSafe(int32_t vkey, char *vgname, size_t vgnamesize);
 
 #ifdef __cplusplus
 }

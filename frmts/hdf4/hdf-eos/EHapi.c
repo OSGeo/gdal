@@ -18,17 +18,18 @@ this permission notice appear in supporting documentation.
 #include "cpl_port.h"
 #include <errno.h>
 #include <limits.h>
+#include <stdint.h>
 #include "mfhdf.h"
 #include "HdfEosDef.h"
 #include "hfile.h"
 
 /* Set maximum number of HDF-EOS files to HDF limit (MAX_FILE) */
 #define NEOSHDF MAX_FILE
-static intn  EHXmaxfilecount = 0;
-static uint8 *EHXtypeTable = NULL;
-static uint8 *EHXacsTable = NULL;
-static int32 *EHXfidTable = NULL;
-static int32 *EHXsdTable = NULL;
+static int EHXmaxfilecount = 0;
+static uint8_t *EHXtypeTable = NULL;
+static uint8_t *EHXacsTable = NULL;
+static int32_t *EHXfidTable = NULL;
+static int32_t *EHXsdTable = NULL;
 
 /* define a macro for the string size of the utility strings and some dimension
    list strings. The value in previous versions of this code may not be
@@ -47,9 +48,9 @@ static int32 *EHXsdTable = NULL;
 #define MAX_RETRIES 10
 
 /* Function Prototypes */
-static intn EHreset_maxopenfiles(intn);
-static intn EHget_maxopenfiles(intn *, intn *);
-static intn EHget_numfiles(void);
+static int EHreset_maxopenfiles(int);
+static int EHget_maxopenfiles(int *, int *);
+static int EHget_numfiles(void);
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -61,11 +62,11 @@ static intn EHget_numfiles(void);
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                Filename                                |
-|  access         intn                HDF access code                         |
+|  access         int                 HDF access code                         |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -87,29 +88,29 @@ static intn EHget_numfiles(void);
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-EHopen(const char *filename, intn access)
+int32_t
+EHopen(const char *filename, int access)
 
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-    intn            dum;	/* Dummy variable */
-    intn            curr_max = 0;	/* maximum # of HDF files to open */
-    intn            sys_limit = 0;	/* OS limit for maximum # of opened files */
+    int             i;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
+    int             dum;	/* Dummy variable */
+    int             curr_max = 0;	/* maximum # of HDF files to open */
+    int             sys_limit = 0;	/* OS limit for maximum # of opened files */
 
-    int32           HDFfid = 0;	/* HDF file ID */
-    int32           fid = -1;	/* HDF-EOS file ID */
-    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
-    int32           attrIndex;	/* Structural Metadata attribute index */
+    int32_t         HDFfid = 0;	/* HDF file ID */
+    int32_t         fid = -1;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID = 0;	/* HDF SDS interface ID */
+    int32_t         attrIndex;	/* Structural Metadata attribute index */
 
-    uint8           acs = 0;	/* Read (0) / Write (1) access code */
+    uint8_t         acs = 0;	/* Read (0) / Write (1) access code */
 
     char           *testname;	/* Test filename */
     char            errbuf[256];/* Error report buffer */
     char           *metabuf;	/* Pointer to structural metadata buffer */
     char            hdfeosVersion[32];	/* HDFEOS version string */
 
-    intn            retryCount;
+    int             retryCount;
 
     /* Request the system allowed number of opened files */
     /* and increase HDFEOS file tables to the same size  */
@@ -466,16 +467,16 @@ EHopen(const char *filename, intn access)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |  name           char                Structure name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  HDFfid         int32               HDF File ID                             |
-|  sdInterfaceID  int32               SDS interface ID                        |
-|  access         uint8               access code                             |
+|  HDFfid         int32_t             HDF File ID                             |
+|  sdInterfaceID  int32_t             SDS interface ID                        |
+|  access         uint8_t             access code                             |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -488,13 +489,13 @@ EHopen(const char *filename, intn access)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-EHchkfid(int32 fid, const char *name, int32 * HDFfid, int32 * sdInterfaceID,
-	 uint8 * access)
+int
+EHchkfid(int32_t fid, const char *name, int32_t * HDFfid, int32_t * sdInterfaceID,
+	 uint8_t * access)
 
 {
-    intn            status = 0;	/* routine return status variable */
-    intn            fid0;	/* HDFEOS file ID - Offset */
+    int             status = 0;	/* routine return status variable */
+    int             fid0;	/* HDFEOS file ID - Offset */
 
 
     /* Check for valid HDFEOS file ID range */
@@ -547,14 +548,14 @@ EHchkfid(int32 fid, const char *name, int32 * HDFfid, int32 * sdInterfaceID,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  HDFfid         int32               HDF File ID                             |
-|  sdInterfaceID  int32               SDS interface ID                        |
+|  HDFfid         int32_t             HDF File ID                             |
+|  sdInterfaceID  int32_t             SDS interface ID                        |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -565,12 +566,12 @@ EHchkfid(int32 fid, const char *name, int32 * HDFfid, int32 * sdInterfaceID,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
+int
+EHidinfo(int32_t fid, int32_t * HDFfid, int32_t * sdInterfaceID)
 
 {
-    intn            status = 0;	/* routine return status variable */
-    uint8           dum;	/* Dummy variable */
+    int             status = 0;	/* routine return status variable */
+    uint8_t         dum;	/* Dummy variable */
 
     /* Call EHchkfid to get HDF and SD interface IDs */
     /* --------------------------------------------- */
@@ -589,7 +590,7 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  count          int32               Number of string entries                |
+|  count          int32_t             Number of string entries                |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  instring       const char          Input string                            |
@@ -598,7 +599,7 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 |  OUTPUTS:                                                                   |
 |  pntr           char *              Pointer array to beginning of each      |
 |                                     string entry                            |
-|  len            int32               Array of string entry lengths           |
+|  len            int32_t             Array of string entry lengths           |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -610,10 +611,10 @@ EHidinfo(int32 fid, int32 * HDFfid, int32 * sdInterfaceID)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
+int32_t
 EHparsestr(const char *instring, const char delim,
            char *pntr[], size_t pntrsize,
-           int32 len[], size_t lensize)
+           int32_t len[], size_t lensize)
 {
     size_t           i;		/* Loop index */
     size_t           prevDelimPos = 0;	/* Previous delimiter position */
@@ -647,7 +648,7 @@ EHparsestr(const char *instring, const char delim,
 	/* ---------------------------------------------------------- */
 	if (len != NULL && lensize)
 	{
-	    len[0] = (int32)slen;
+	    len[0] = (int32_t)slen;
 	}
     } else
 	/* Delimiters Found */
@@ -672,7 +673,7 @@ EHparsestr(const char *instring, const char delim,
                 {
                     if (count - 1 >= lensize)
                         return -1;
-                    len[count - 1] = (int32)(i - prevDelimPos);
+                    len[count - 1] = (int32_t)(i - prevDelimPos);
                 }
                 /* Point to beginning of string entry */
                 /* ---------------------------------- */
@@ -693,11 +694,11 @@ EHparsestr(const char *instring, const char delim,
         {
             if (count == 0 || (size_t)(count - 1) >= lensize)
                 return -1;
-            len[count - 1] = (int32)(i - prevDelimPos);
+            len[count - 1] = (int32_t)(i - prevDelimPos);
         }
     }
 
-    return (int32)(count);
+    return (int32_t)(count);
 }
 
 
@@ -713,7 +714,7 @@ EHparsestr(const char *instring, const char delim,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  indx           int32               Element index (0 - based)               |
+|  indx           int32_t             Element index (0 - based)               |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  target         const char          Target string                           |
@@ -733,14 +734,14 @@ EHparsestr(const char *instring, const char delim,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
+int32_t
 EHstrwithin(const char *target, const char *search, const char delim)
 {
-    intn            found = 0;	/* Target string found flag */
+    int             found = 0;	/* Target string found flag */
 
-    int32           indx;	/* Loop index */
-    int32           nentries;	/* Number of entries in search string */
-    int32          *slen;	/* Pointer to string length array */
+    int32_t         indx;	/* Loop index */
+    int32_t         nentries;	/* Number of entries in search string */
+    int32_t        *slen;	/* Pointer to string length array */
 
     char          **ptr;	/* Pointer to string pointer array */
     char            buffer[128];/* Buffer to hold "test" string entry */
@@ -761,7 +762,7 @@ EHstrwithin(const char *target, const char *search, const char delim)
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
 	return(-1);
     }
-    slen = (int32 *) calloc(nentries, sizeof(int32));
+    slen = (int32_t *) calloc(nentries, sizeof(int32_t));
     if(slen == NULL)
     {
 	HEpush(DFE_NOSPACE,"EHstrwithin", __FILE__, __LINE__);
@@ -826,13 +827,13 @@ EHstrwithin(const char *target, const char *search, const char delim)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  outID          int32               Output ID                               |
+|  outID          int32_t             Output ID                               |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
-|  vgid           int32               Vgroup ID                               |
+|  fid            int32_t             HDF-EOS file ID                         |
+|  vgid           int32_t             Vgroup ID                               |
 |  objectname     const char          object name                             |
-|  code           intn                object code (0 - Vgroup, 1 - Vdata)     |
+|  code           int                 object code (0 - Vgroup, 1 - Vdata)     |
 |  access         const char          access ("w/r")                          |
 |                                                                             |
 |                                                                             |
@@ -848,17 +849,17 @@ EHstrwithin(const char *target, const char *search, const char delim)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
+int32_t
+EHgetid(int32_t fid, int32_t vgid, const char *objectname, int code,
         const char *access)
 {
-    intn            i;		/* Loop index */
+    int             i;		/* Loop index */
 
-    int32           nObjects;	/* # of objects in Vgroup */
-    int32          *tags;	/* Pnt to Vgroup object tags array */
-    int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           id;		/* Object ID */
-    int32           outID = -1;	/* Desired object ID */
+    int32_t         nObjects;	/* # of objects in Vgroup */
+    int32_t        *tags;	/* Pnt to Vgroup object tags array */
+    int32_t        *refs;	/* Pnt to Vgroup object refs array */
+    int32_t         id;		/* Object ID */
+    int32_t         outID = -1;	/* Desired object ID */
 
     char            name[128];	/* Object name */
 
@@ -874,13 +875,13 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 
 	/* Get tags and references of objects */
 	/* ---------------------------------- */
-	tags = (int32 *) malloc(sizeof(int32) * nObjects);
+	tags = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 	if(tags == NULL)
 	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
 	    return(-1);
 	}
-	refs = (int32 *) malloc(sizeof(int32) * nObjects);
+	refs = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 	if(refs == NULL)
 	{
 	    HEpush(DFE_NOSPACE,"EHgetid", __FILE__, __LINE__);
@@ -972,7 +973,7 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  metaptrs        char               Begin and end of metadata section       |
@@ -992,12 +993,12 @@ EHgetid(int32 fid, int32 vgid, const char *objectname, intn code,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
+int
 EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
-    int32           slen;	/* String length */
+    int32_t         slen;	/* String length */
     char           *newline;	/* Position of new line character */
     char           *sptr;	/* string pointer within metadata */
 
@@ -1071,7 +1072,7 @@ EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 |  metabuf        char                Pointer to HDF-EOS object in metadata   |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  sdInterfaceID  int32               SDS interface ID                        |
+|  sdInterfaceID  int32_t             SDS interface ID                        |
 |  structname     char                HDF-EOS structure name                  |
 |  structcode     char                Structure code ("s/g/p")                |
 |  groupname      char                Metadata group name                     |
@@ -1090,13 +1091,13 @@ EHgetmetavalue(char *metaptrs[], const char *parameter, char *retstr)
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
 char           *
-EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
+EHmetagroup(int32_t sdInterfaceID, const char *structname, const char *structcode,
 	    const char *groupname, char *metaptrs[])
 {
-    intn            i;		/* Loop index */
+    int             i;		/* Loop index */
 
-    int32           attrIndex;	/* Structural metadata attribute index */
-    int32           nmeta;	/* Number of UTLSTRSIZE byte metadata sections */
+    int32_t         attrIndex;	/* Structural metadata attribute index */
+    int32_t         nmeta;	/* Number of UTLSTRSIZE byte metadata sections */
 
     char           *metabuf;	/* Pointer (handle) to structural metadata */
     char           *endptr = NULL;	/* Pointer to end of metadata section */
@@ -1261,14 +1262,14 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
-|  attrVgrpID     int32               Attribute Vgroup ID                     |
+|  fid            int32_t             HDF-EOS file ID                         |
+|  attrVgrpID     int32_t             Attribute Vgroup ID                     |
 |  attrname       char                attribute name                          |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |  wrcode         char                Read/Write Code "w/r"                   |
 |  datbuf         void                I/O buffer                              |
 |                                                                             |
@@ -1287,13 +1288,13 @@ EHmetagroup(int32 sdInterfaceID, const char *structname, const char *structcode,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-EHattr(int32 fid, int32 attrVgrpID, const char *attrname, int32 numbertype,
-       int32 count, const char *wrcode, VOIDP datbuf)
+int
+EHattr(int32_t fid, int32_t attrVgrpID, const char *attrname, int32_t numbertype,
+       int32_t count, const char *wrcode, VOIDP datbuf)
 
 {
-    intn            status = 0;	/* routine return status variable */
-    int32           vdataID;	/* Attribute Vdata ID */
+    int             status = 0;	/* routine return status variable */
+    int32_t         vdataID;	/* Attribute Vdata ID */
 
     /*
      * Attributes are stored as Vdatas with name given by the user, class:
@@ -1363,16 +1364,16 @@ EHattr(int32 fid, int32 attrVgrpID, const char *attrname, int32 numbertype,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
-|  attrVgrpID     int32               Attribute Vgroup ID                     |
+|  fid            int32_t             HDF-EOS file ID                         |
+|  attrVgrpID     int32_t             Attribute Vgroup ID                     |
 |  attrname       char                attribute name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1385,13 +1386,13 @@ EHattr(int32 fid, int32 attrVgrpID, const char *attrname, int32 numbertype,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-EHattrinfo(int32 fid, int32 attrVgrpID, const char *attrname, int32 * numbertype,
-	   int32 * count)
+int
+EHattrinfo(int32_t fid, int32_t attrVgrpID, const char *attrname, int32_t * numbertype,
+	   int32_t * count)
 
 {
-    intn            status = 0;	/* routine return status variable */
-    int32           vdataID;	/* Attribute Vdata ID */
+    int             status = 0;	/* routine return status variable */
+    int32_t         vdataID;	/* Attribute Vdata ID */
 
     /* Get Attribute Vdata ID */
     /* ---------------------- */
@@ -1431,17 +1432,17 @@ EHattrinfo(int32 fid, int32 attrVgrpID, const char *attrname, int32 * numbertype
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nattr          int32               Number of attributes in swath struct    |
+|  nattr          int32_t             Number of attributes in swath struct    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
-|  attrVgrpID     int32               Attribute Vgroup ID                     |
+|  fid            int32_t             HDF-EOS file ID                         |
+|  attrVgrpID     int32_t             Attribute Vgroup ID                     |
 |  structcode     char                Structure Code ("s/g/p")                |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  attrnames      char                Attribute names in swath struct         |
 |                                     (Comma-separated list)                  |
-|  strbufsize     int32               Attributes name list string length      |
+|  strbufsize     int32_t             Attributes name list string length      |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1454,18 +1455,18 @@ EHattrinfo(int32 fid, int32 attrVgrpID, const char *attrname, int32 * numbertype
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
+int32_t
+EHattrcat(int32_t fid, int32_t attrVgrpID, char *attrnames, int32_t * strbufsize)
 {
-    intn            i;		        /* Loop index */
+    int             i;		        /* Loop index */
 
-    int32           nObjects;	        /* # of objects in Vgroup */
-    int32          *tags;	        /* Pnt to Vgroup object tags array */
-    int32          *refs;	        /* Pnt to Vgroup object refs array */
-    int32           vdataID;	        /* Attribute Vdata ID */
+    int32_t         nObjects;	        /* # of objects in Vgroup */
+    int32_t        *tags;	        /* Pnt to Vgroup object tags array */
+    int32_t        *refs;	        /* Pnt to Vgroup object refs array */
+    int32_t         vdataID;	        /* Attribute Vdata ID */
 
-    int32           nattr = 0;	        /* Number of attributes */
-    int32           slen;	        /* String length */
+    int32_t         nattr = 0;	        /* Number of attributes */
+    int32_t         slen;	        /* String length */
 
     char            name[80];	        /* Attribute name */
     static const char indxstr[] = "INDXMAP:"; /* Index Mapping reserved
@@ -1490,13 +1491,13 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
     {
 	/* Get tags and references of attribute Vdatas */
 	/* ------------------------------------------- */
-	tags = (int32 *) malloc(sizeof(int32) * nObjects);
+	tags = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 	if(tags == NULL)
 	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
 	    return(-1);
 	}
-	refs = (int32 *) malloc(sizeof(int32) * nObjects);
+	refs = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 	if(refs == NULL)
 	{
 	    HEpush(DFE_NOSPACE,"EHattrcat", __FILE__, __LINE__);
@@ -1559,7 +1560,7 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nobj           int32               Number of HDF-EOS structures in file    |
+|  nobj           int32_t             Number of HDF-EOS structures in file    |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                HDF-EOS filename                        |
@@ -1567,7 +1568,7 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  objectlist     char                List of object names (comma-separated)  |
-|  strbufsize     int32               Length of objectlist                    |
+|  strbufsize     int32_t             Length of objectlist                    |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1578,14 +1579,14 @@ EHattrcat(int32 fid, int32 attrVgrpID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-EHinquire(const char *filename, const char *type, char *objectlist, int32 * strbufsize)
+int32_t
+EHinquire(const char *filename, const char *type, char *objectlist, int32_t * strbufsize)
 {
-    int32           HDFfid;	/* HDF file ID */
-    int32           vgRef;	/* Vgroup reference number */
-    int32           vGrpID;	/* Vgroup ID */
-    int32           nobj = 0;	/* Number of HDFEOS objects in file */
-    int32           slen;	/* String length */
+    int32_t         HDFfid;	/* HDF file ID */
+    int32_t         vgRef;	/* Vgroup reference number */
+    int32_t         vGrpID;	/* Vgroup ID */
+    int32_t         nobj = 0;	/* Number of HDFEOS objects in file */
+    int32_t         slen;	/* String length */
 
     char            name[512];	/* Object name */
     char            class[80];	/* Object class */
@@ -1696,10 +1697,10 @@ EHinquire(const char *filename, const char *type, char *objectlist, int32 * strb
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS File ID                         |
+|  fid            int32_t             HDF-EOS File ID                         |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -1716,14 +1717,14 @@ EHinquire(const char *filename, const char *type, char *objectlist, int32 * strb
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-EHclose(int32 fid)
+int
+EHclose(int32_t fid)
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
-    int32           HDFfid;	/* HDF file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           fid0;	/* HDF EOS file id - offset */
+    int32_t         HDFfid;	/* HDF file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         fid0;	/* HDF EOS file id - offset */
 
 
     /* Check for valid HDFEOS file ID range */
@@ -1788,7 +1789,7 @@ EHclose(int32 fid)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  numbertype     int32               numerical type code                     |
+|  numbertype     int32_t             numerical type code                     |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  strcode        const char          string representation of the type code  |
@@ -1806,7 +1807,7 @@ EHclose(int32 fid)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
+int32_t
 EHnumstr(const char *strcode)
 {
     if (strcmp(strcode, "DFNT_UCHAR8") == 0)
@@ -1843,12 +1844,12 @@ EHnumstr(const char *strcode)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  numbertype     intn                The current maximum number of opened    |
+|  numbertype     int                 The current maximum number of opened    |
 |                                     files allowed, or -1, if unable         |
 |                                     to reset it.                            |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  strcode        intn                Requested number of opened files.       |
+|  strcode        int                 Requested number of opened files.       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1863,10 +1864,10 @@ EHnumstr(const char *strcode)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-EHreset_maxopenfiles(intn req_max)
+static int
+EHreset_maxopenfiles(int req_max)
 {
-    intn    ret_value;
+    int     ret_value;
 
     if (req_max <= EHXmaxfilecount)
         return EHXmaxfilecount;
@@ -1911,15 +1912,15 @@ EHreset_maxopenfiles(intn req_max)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
 |             None                                                            |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  curr_max       intn                Current number of open files allowed.   |
-|  sys_limit      intn                Maximum number of open files allowed    |
+|  curr_max       int                 Current number of open files allowed.   |
+|  sys_limit      int                 Maximum number of open files allowed    |
 |                                     in the system.                          |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -1931,11 +1932,11 @@ EHreset_maxopenfiles(intn req_max)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-EHget_maxopenfiles(intn *curr_max,
-		   intn *sys_limit)
+static int
+EHget_maxopenfiles(int *curr_max,
+		   int *sys_limit)
 {
-    intn ret_value = 0;
+    int ret_value = 0;
 
 #ifdef HDF4_HAS_MAXOPENFILES
     ret_value = SDget_maxopenfiles(curr_max, sys_limit);
@@ -1958,7 +1959,7 @@ EHget_maxopenfiles(intn *curr_max,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nfileopen      intn                Number of HDFEOS files already opened.  |
+|  nfileopen      int                 Number of HDFEOS files already opened.  |
 |                                                                             |
 |  INPUTS:                                                                    |
 |             None                                                            |
@@ -1977,11 +1978,11 @@ EHget_maxopenfiles(intn *curr_max,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
+static int
 EHget_numfiles()
 {
-    intn            i;		    /* Loop index */
-    intn            nfileopen = 0;  /* # of HDF files open */
+    int             i;		    /* Loop index */
+    int             nfileopen = 0;  /* # of HDF files open */
 
     if (EHXtypeTable)
     {
