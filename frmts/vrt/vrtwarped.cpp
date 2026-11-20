@@ -2152,7 +2152,7 @@ CPLErr VRTWarpedDataset::IRasterIO(
     const CPLErr eErr = m_poWarper->WarpRegionToBuffer(
         nXOff, nYOff, nXSize, nYSize, pabyWarpBuffer, psWO->eWorkingDataType,
         nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize, dfSrcXExtraSize,
-        dfSrcYExtraSize);
+        dfSrcYExtraSize, 0, 1);
 
     if (pabyWarpBuffer != pData)
     {

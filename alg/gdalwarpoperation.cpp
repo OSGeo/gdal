@@ -1898,26 +1898,17 @@ CPLErr GDALWarpRegion(GDALWarpOperationH hOperation, int nDstXOff, int nDstYOff,
  * @param pDataBuf the data buffer to place result in, of type eBufDataType.
  * @param eBufDataType the type of the output data buffer.  For now this
  * must match GDALWarpOptions::eWorkingDataType.
- * @param nSrcXOff source window X offset (computed if window all zero)
- * @param nSrcYOff source window Y offset (computed if window all zero)
- * @param nSrcXSize source window X size (computed if window all zero)
- * @param nSrcYSize source window Y size (computed if window all zero)
- * @param dfProgressBase minimum progress value reported
- * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
- *                        maximum progress value reported
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
 
-CPLErr GDALWarpOperation::WarpRegionToBuffer(
-    int nDstXOff, int nDstYOff, int nDstXSize, int nDstYSize, void *pDataBuf,
-    GDALDataType eBufDataType, int nSrcXOff, int nSrcYOff, int nSrcXSize,
-    int nSrcYSize, double dfProgressBase, double dfProgressScale)
+CPLErr GDALWarpOperation::WarpRegionToBuffer(int nDstXOff, int nDstYOff,
+                                             int nDstXSize, int nDstYSize,
+                                             void *pDataBuf,
+                                             GDALDataType eBufDataType)
 {
     return WarpRegionToBuffer(nDstXOff, nDstYOff, nDstXSize, nDstYSize,
-                              pDataBuf, eBufDataType, nSrcXOff, nSrcYOff,
-                              nSrcXSize, nSrcYSize, 0, 0, dfProgressBase,
-                              dfProgressScale);
+                              pDataBuf, eBufDataType, 0, 0, 0, 0, 0, 0, 0, 1);
 }
 
 /**
@@ -1943,11 +1934,14 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
  * @param nSrcYSize source window Y size (computed if window all zero)
  * @param dfSrcXExtraSize Extra pixels (included in nSrcXSize) reserved
  * for filter window. Should be ignored in scale computation
+ * (Set to zero if unused)
  * @param dfSrcYExtraSize Extra pixels (included in nSrcYSize) reserved
  * for filter window. Should be ignored in scale computation
+ * (Set to zero if unused)
  * @param dfProgressBase minimum progress value reported
+ * (Set to zero as default)
  * @param dfProgressScale value such as dfProgressBase + dfProgressScale is the
- *                        maximum progress value reported
+ * maximum progress value reported (Set to 1 as default)
  *
  * @return CE_None on success or CE_Failure if an error occurs.
  */
@@ -2515,7 +2509,7 @@ CPLErr GDALWarpRegionToBuffer(GDALWarpOperationH hOperation, int nDstXOff,
     return reinterpret_cast<GDALWarpOperation *>(hOperation)
         ->WarpRegionToBuffer(nDstXOff, nDstYOff, nDstXSize, nDstYSize, pDataBuf,
                              eBufDataType, nSrcXOff, nSrcYOff, nSrcXSize,
-                             nSrcYSize);
+                             nSrcYSize, 0, 0, 0, 1);
 }
 
 /************************************************************************/
