@@ -98,6 +98,10 @@ class PNGDataset final : public GDALPamDataset
     int bGeoTransformValid{};
     GDALGeoTransform m_gt{};
 
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
+    mutable OGRSpatialReference m_oSRS{};
+
     void CollectMetadata();
 
     int bHasReadXMPMetadata{};
@@ -140,6 +144,10 @@ class PNGDataset final : public GDALPamDataset
     char **GetFileList(void) override;
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
+    int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+    const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
     CPLErr FlushCache(bool bAtClosing) override;
 
     char **GetMetadataDomainList() override;

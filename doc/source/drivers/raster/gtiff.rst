@@ -55,7 +55,7 @@ pixel size, a transformation matrix, or a list of GCPs.
 If no georeferencing information is available in the TIFF file itself,
 GDAL will also check for, and use an ESRI :ref:`world
 file <raster.wld>` with the extension .tfw, .tifw/.tiffw or
-.wld, as well as a MapInfo .tab file.
+.wld, as well as a MapInfo :ref:`.tab file <raster.tab>`.
 
 By default, information is fetched in following order (first listed is
 the highest priority): PAM (Persistent Auxiliary metadata) .aux.xml
@@ -1381,13 +1381,6 @@ the default behavior of the GTiff driver.
       have false easting/northing improperly set in meters when it ought to
       be in coordinate system linear units. (`Ticket
       #3901 <http://trac.osgeo.org/gdal/ticket/3901>`__).
-
--  .. config:: TAB_APPROX_GEOTRANSFORM
-      :choices: YES, NO
-      :default: NO
-
-      To decide if an approximate geotransform is acceptable when reading a .tab
-      file.
 
 -  .. config:: GTIFF_DIRECT_IO
       :choices: YES, NO

@@ -1287,6 +1287,62 @@ CPLErr PNGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int PNGDataset::GetGCPCount()
+
+{
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
+    if (nGCPCount > 0)
+        return nGCPCount;
+
+    return GDALPamDataset::GetGCPCount();
+}
+
+/************************************************************************/
+/*                          GetGCPSpatialRef()                          */
+/************************************************************************/
+
+const OGRSpatialReference *PNGDataset::GetGCPSpatialRef() const
+
+{
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
+    if (!m_oSRS.IsEmpty() && nGCPCount > 0)
+        return &m_oSRS;
+
+    return GDALPamDataset::GetGCPSpatialRef();
+}
+
+/************************************************************************/
+/*                              GetGCPs()                               */
+/************************************************************************/
+
+const GDAL_GCP *PNGDataset::GetGCPs()
+
+{
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
+    if (nGCPCount > 0)
+        return pasGCPList;
+
+    return GDALPamDataset::GetGCPs();
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+const OGRSpatialReference *PNGDataset::GetSpatialRef() const
+
+{
+    const_cast<PNGDataset *>(this)->LoadWorldFile();
+    if (!m_oSRS.IsEmpty())
+        return &m_oSRS;
+
+    return GDALPamDataset::GetSpatialRef();
+}
+
+/************************************************************************/
 /*                             FlushCache()                             */
 /*                                                                      */
 /*      We override this so we can also flush out local TIFF strip      */
@@ -2101,6 +2157,20 @@ void PNGDataset::LoadWorldFile()
         bGeoTransformValid =
             GDALReadWorldFile2(GetDescription(), ".wld", m_gt,
                                oOvManager.GetSiblingFiles(), &pszWldFilename);
+
+    if (!bGeoTransformValid)
+    {
+        char *pszProjection = nullptr;
+        const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
+            GetDescription(), m_gt.data(), &pszProjection, &nGCPCount,
+            &pasGCPList, oOvManager.GetSiblingFiles(), &pszWldFilename));
+        if (pszProjection)
+            m_oSRS.importFromWkt(pszProjection);
+        CPLFree(pszProjection);
+
+        if (bTabFileOK && nGCPCount == 0)
+            bGeoTransformValid = true;
+    }
 
     if (pszWldFilename)
     {

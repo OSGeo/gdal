@@ -227,6 +227,9 @@ class BMPDataset final : public GDALPamDataset
     GDALColorTable *poColorTable;
     GDALGeoTransform m_gt{};
     int bGeoTransformValid;
+    int nGCPCount = 0;
+    GDAL_GCP *pasGCPList = nullptr;
+    mutable OGRSpatialReference m_oSRS{};
     bool m_bNewFile = false;
     vsi_l_offset m_nFileSize = 0;
 
@@ -251,6 +254,11 @@ class BMPDataset final : public GDALPamDataset
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
+
+    int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+    const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 };
 
 /************************************************************************/
@@ -1046,6 +1054,58 @@ CPLErr BMPDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
+/*                            GetGCPCount()                             */
+/************************************************************************/
+
+int BMPDataset::GetGCPCount()
+
+{
+    if (nGCPCount > 0)
+        return nGCPCount;
+
+    return GDALPamDataset::GetGCPCount();
+}
+
+/************************************************************************/
+/*                          GetGCPSpatialRef()                          */
+/************************************************************************/
+
+const OGRSpatialReference *BMPDataset::GetGCPSpatialRef() const
+
+{
+    if (!m_oSRS.IsEmpty() && nGCPCount > 0)
+        return &m_oSRS;
+
+    return GDALPamDataset::GetGCPSpatialRef();
+}
+
+/************************************************************************/
+/*                              GetGCPs()                               */
+/************************************************************************/
+
+const GDAL_GCP *BMPDataset::GetGCPs()
+
+{
+    if (nGCPCount > 0)
+        return pasGCPList;
+
+    return GDALPamDataset::GetGCPs();
+}
+
+/************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+const OGRSpatialReference *BMPDataset::GetSpatialRef() const
+
+{
+    if (!m_oSRS.IsEmpty())
+        return &m_oSRS;
+
+    return GDALPamDataset::GetSpatialRef();
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /*                                                                      */
 /*      Multi-band raster io handler.  We will use  block based         */
@@ -1401,7 +1461,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Check for world file.                                           */
+    /*      Check for world file or Tab file.                               */
     /* -------------------------------------------------------------------- */
     poDS->bGeoTransformValid =
         GDALReadWorldFile(poOpenInfo->pszFilename, nullptr, poDS->m_gt.data());
@@ -1409,6 +1469,24 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!poDS->bGeoTransformValid)
         poDS->bGeoTransformValid = GDALReadWorldFile(poOpenInfo->pszFilename,
                                                      ".wld", poDS->m_gt.data());
+
+    if (!poDS->bGeoTransformValid)
+    {
+        char *pszProjection = nullptr;
+        char *pszWldFilename = nullptr;
+
+        const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
+            poOpenInfo->pszFilename, poDS->m_gt.data(), &pszProjection,
+            &poDS->nGCPCount, &poDS->pasGCPList, poOpenInfo->GetSiblingFiles(),
+            &pszWldFilename));
+        if (pszProjection)
+            poDS->m_oSRS.importFromWkt(pszProjection);
+        CPLFree(pszProjection);
+        CPLFree(pszWldFilename);
+
+        if (bTabFileOK && poDS->nGCPCount == 0)
+            poDS->bGeoTransformValid = true;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

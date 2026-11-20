@@ -232,6 +232,19 @@ int GIFAbstractDataset::GetGCPCount()
 }
 
 /************************************************************************/
+/*                          GetGCPSpatialRef()                          */
+/************************************************************************/
+
+const OGRSpatialReference *GIFAbstractDataset::GetGCPSpatialRef() const
+
+{
+    if (!m_oSRS.IsEmpty() && nGCPCount > 0)
+        return &m_oSRS;
+
+    return GDALPamDataset::GetGCPSpatialRef();
+}
+
+/************************************************************************/
 /*                              GetGCPs()                               */
 /************************************************************************/
 
@@ -263,6 +276,19 @@ char **GIFAbstractDataset::GetFileList()
 }
 
 /************************************************************************/
+/*                           GetSpatialRef()                            */
+/************************************************************************/
+
+const OGRSpatialReference *GIFAbstractDataset::GetSpatialRef() const
+
+{
+    if (!m_oSRS.IsEmpty())
+        return &m_oSRS;
+
+    return GDALPamDataset::GetSpatialRef();
+}
+
+/************************************************************************/
 /*                        DetectGeoreferencing()                        */
 /************************************************************************/
 
@@ -278,6 +304,20 @@ void GIFAbstractDataset::DetectGeoreferencing(GDALOpenInfo *poOpenInfo)
         bGeoTransformValid =
             GDALReadWorldFile2(poOpenInfo->pszFilename, ".wld", m_gt,
                                poOpenInfo->GetSiblingFiles(), &pszWldFilename);
+    }
+
+    if (!bGeoTransformValid)
+    {
+        char *pszProjection = nullptr;
+        const bool bTabFileOK = CPL_TO_BOOL(GDALReadTabFile2(
+            poOpenInfo->pszFilename, m_gt.data(), &pszProjection, &nGCPCount,
+            &pasGCPList, poOpenInfo->GetSiblingFiles(), &pszWldFilename));
+        if (pszProjection)
+            m_oSRS.importFromWkt(pszProjection);
+        CPLFree(pszProjection);
+
+        if (bTabFileOK && nGCPCount == 0)
+            bGeoTransformValid = true;
     }
 
     if (pszWldFilename)
