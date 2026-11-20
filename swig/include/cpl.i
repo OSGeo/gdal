@@ -895,23 +895,41 @@ int wrapper_VSIStatL( const char * path, StatBuf *psStatBufOut, int nFlags = 0 )
 
 #endif
 
-%rename (GetFileMetadata) VSIGetFileMetadata;
-#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 %apply (char **dictAndCSLDestroy) { char ** };
-#else
-%apply (char **) { char ** };
-#endif
 %apply (char **options) { char ** options };
+#if defined(SWIGPYTHON)
+%rename (GetFileMetadata) VSIGetFileMetadata;
 char** VSIGetFileMetadata( const char *path, const char* domain,
                            char** options = NULL );
+#elif defined(SWIGCSHARP)
+%rename (GetFileMetadata) wrapper_VSIGetFileMetadata;
+%inline {
+  char** wrapper_VSIGetFileMetadata( const char *path, const char* domain,
+                                     char** options = NULL ) {
+    return VSIGetFileMetadata(path, domain, options);
+  }
+}
+#endif
 %clear char **;
 
-%rename (SetFileMetadata) VSISetFileMetadata;
 %apply (char **dict) { char ** metadata };
+#if defined(SWIGPYTHON)
+%rename (SetFileMetadata) VSISetFileMetadata;
 bool VSISetFileMetadata( const char * path,
                          char** metadata,
                          const char* domain,
                          char** options = NULL );
+#elif defined(SWIGCSHARP)
+%rename (SetFileMetadata) wrapper_VSISetFileMetadata;
+%inline {
+  bool wrapper_VSISetFileMetadata( const char * path,
+                                   char** metadata,
+                                   const char* domain,
+                                   char** options = NULL ) {
+    return VSISetFileMetadata(path, metadata, domain, options);
+  }
+}
+#endif
 %clear char **;
 
 %apply Pointer NONNULL {VSILFILE* fp};
@@ -952,8 +970,6 @@ VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 int wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
 #elif defined(SWIGCSHARP)
 VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
-#else
-VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, long offset, int whence) {
 #endif
 if (offset < 0) {
     switch (whence) {
@@ -1002,9 +1018,6 @@ int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
 #elif defined(SWIGCSHARP)
 GIntBig VSIFTellL( VSILFILE* fp );
 VSI_RETVAL VSIFTruncateL( VSILFILE* fp, GIntBig length );
-#else
-long    VSIFTellL( VSILFILE* fp );
-VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 #endif
 
 #if defined(SWIGPYTHON)
@@ -1026,8 +1039,6 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
 size_t VSIFReadL (       void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
 %clear (void *pBuffer), (size_t nSize), (size_t nCount), (size_t VSIFWriteL), (size_t VSIFReadL);
-#else
-int     VSIFWriteL( const char *pBuffer, int nSize, int nCount, VSILFILE *fp );
 #endif
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
@@ -1035,7 +1046,16 @@ int     VSIFWriteL( const char *pBuffer, int nSize, int nCount, VSILFILE *fp );
 const char* CPLReadLineL(VSILFILE* fp);
 
 void VSINetworkStatsReset();
+#if defined(SWIGPYTHON)
 retStringAndCPLFree* VSINetworkStatsGetAsSerializedJSON( char** options = NULL );
+#elif defined(SWIGCSHARP)
+%rename (NetworkStatsGetAsSerializedJSON) wrapper_VSINetworkStatsGetAsSerializedJSON;
+%inline {
+retStringAndCPLFree* wrapper_VSINetworkStatsGetAsSerializedJSON( char** options = NULL ) {
+    return VSINetworkStatsGetAsSerializedJSON(options);
+  }
+}
+#endif
 
 #endif /* !defined(SWIGJAVA) */
 

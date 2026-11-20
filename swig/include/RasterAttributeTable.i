@@ -61,10 +61,14 @@ typedef enum {
 } GDALRATTableType;
 #endif /* CSHARP */
 
+%{
+#include "gdal.h"
+%}
 %rename (RATDateTime) GDALRATDateTime;
 
-typedef struct
-{
+struct GDALRATDateTime {
+
+%mutable;
     /*! Year */ int nYear;
     /*! Month [1, 12] */ int nMonth;
     /*! Day [1, 31] */ int nDay;
@@ -75,7 +79,34 @@ typedef struct
     /*! Time zone minute: 0, 15, 30, 45 */ int nTimeZoneMinute;
     /*! Whether time zone is positive (or null) */ bool bPositiveTimeZone;
     /*! Whether this object is valid */ bool bIsValid;
-} GDALRATDateTime;
+
+#if defined(SWIGCSHARP)
+%extend {
+  GDALRATDateTime( int year, int month, int day, int hour = 0, int minute = 0, float second = 0.0, int timeZoneHour = 0, int timeZoneMinute = 0, bool positiveTimeZone = TRUE ) {
+    /* GDALRATDateTime is a c++ class. SWIG automaticaly creates a destructor. */
+    GDALRATDateTime *self = new GDALRATDateTime();
+    self->nYear = year;
+    self->nMonth = month;
+    self->nDay = day;
+    self->nHour = hour;
+    self->nMinute = minute;
+    self->fSecond = second;
+    self->nTimeZoneHour = timeZoneHour;
+    self->nTimeZoneMinute = timeZoneMinute;
+    self->bPositiveTimeZone = positiveTimeZone;
+    self->bIsValid = TRUE;
+    return self;
+  }
+  GDALRATDateTime() {
+    GDALRATDateTime *self = new GDALRATDateTime();
+    self->nYear = self->nMonth = self->nDay = self->nHour = self->nMinute = self->nTimeZoneHour = self->nTimeZoneMinute = 0;
+    self->fSecond = 0.0;
+    self->bPositiveTimeZone = self->bIsValid = FALSE;
+    return self;
+  }
+} //%extend
+#endif //defined(SWIGCSHARP)
+};
 
 %rename (RasterAttributeTable) GDALRasterAttributeTableShadow;
 
@@ -88,7 +119,7 @@ public:
 
     GDALRasterAttributeTableShadow() {
         return (GDALRasterAttributeTableShadow*)
-		GDALCreateRasterAttributeTable();
+        GDALCreateRasterAttributeTable();
     }
 
     ~GDALRasterAttributeTableShadow() {
@@ -214,7 +245,7 @@ public:
     }
     %clear double *pdfRow0Min, double *pdfBinSize;
 
-    int	SetLinearBinning (double dfRow0Min, double dfBinSize)
+    int SetLinearBinning (double dfRow0Min, double dfBinSize)
     {
         return GDALRATSetLinearBinning(self, dfRow0Min, dfBinSize);
     }

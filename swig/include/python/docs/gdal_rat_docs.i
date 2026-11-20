@@ -78,7 +78,7 @@ Examples
 
 %feature("docstring")  GetColumnCount "
 
-Return the number of columns in the RAT. 
+Return the number of columns in the RAT.
 
 See :cpp:func:`GDALRasterAttributeTable::GetColumnCount`.
 
@@ -91,7 +91,7 @@ Examples
 --------
 >>> with gdal.Open('testrat.tif') as ds:
 ...     ds.GetRasterBand(1).GetDefaultRAT().GetColumnCount()
-... 
+...
 9
 
 ";
@@ -138,7 +138,7 @@ Examples
 
 %feature("docstring")  GetRowCount "
 
-Return the number of rows in the RAT. 
+Return the number of rows in the RAT.
 
 See :cpp:func:`GDALRasterAttributeTable::GetRowCount`.
 
@@ -151,7 +151,7 @@ Examples
 --------
 >>> with gdal.Open('testrat.tif') as ds:
 ...     ds.GetRasterBand(1).GetDefaultRAT().GetRowCount()
-... 
+...
 2
 
 ";
@@ -301,7 +301,7 @@ iField : int
 iStartRow : int, default = 0
     The index of the first row to read (starting at 0)
 iLength : int, default = None
-    The number of rows to read 
+    The number of rows to read
 
 Returns
 -------
@@ -331,7 +331,7 @@ iField : int
 iStartRow : int, default = 0
     The index of the first row to read (starting at 0)
 iLength : int, default = None
-    The number of rows to read 
+    The number of rows to read
 
 Returns
 -------
@@ -361,7 +361,7 @@ iField : int
 iStartRow : int, default = 0
     The index of the first row to read (starting at 0)
 iLength : int, default = None
-    The number of rows to read 
+    The number of rows to read
 
 Returns
 -------
@@ -394,9 +394,9 @@ Set linear binning information.
 
 This can be used to provide optimized table look-ups (via
 :py:meth:`GetRowOfValue`) when the rows of the table represent
-uniformly sized bins. 
+uniformly sized bins.
 
-It is the responsibility of the user to actually define the 
+It is the responsibility of the user to actually define the
 appropriate bins. If the bins do not correspond to the provided
 binning information, lookup values will be incorrect.
 
@@ -405,7 +405,7 @@ See :cpp:func:`GDALRasterAttributeTable::SetLinearBinning`.
 Parameters
 ----------
 dfRow0Min : float
-    Minimum value associated with the smallest bin   
+    Minimum value associated with the smallest bin
 dfBinSize : float
     Size of each bin
 ";
@@ -431,7 +431,7 @@ Set the type of the RAT (thematic or athematic).
 Parameters
 ----------
 eTableType : int
-   Table type (:py:const:`GRTT_THEMATIC` or :py:const:`GRTT_ATHEMATIC`)    
+   Table type (:py:const:`GRTT_THEMATIC` or :py:const:`GRTT_ATHEMATIC`)
 ";
 
 %feature("docstring")  SetValueAsDouble "

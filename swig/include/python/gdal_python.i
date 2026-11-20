@@ -1030,9 +1030,9 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
       """
       Low-level function that reads data from the band into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
       Used as an alternative to :py:meth:`ReadAsArray` in specialized situations where NumPy is not available.
-      
+
       The bytearray can be converted into a list of standard Python numeric types using `struct.unpack <https://docs.python.org/3/library/struct.html#struct.unpack>`_ or `memoryview.tolist <https://docs.python.org/3/builtins/stdtypes.html#memoryview.tolist>`_.
-      
+
       Parameters
       ----------
       xoff : float, default=0
@@ -1061,7 +1061,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
          Number of bytes between successive pixel values written to the buffer.
          Defaults to the size of ``buf_type``.
       buf_line_space : int, optional
-         Number of bytes between the start of successive scanlines written to the buffer. 
+         Number of bytes between the start of successive scanlines written to the buffer.
          Defaults to the size of ``buf_type`` times ``buf_xsize``.
       resample_alg : int, default = :py:const:`gdal.GRIORA_NearestNeighbour`
          Specifies the resampling algorithm to use when the size of
@@ -1077,11 +1077,11 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
       buf_obj : bytearray or memoryview, optional
          Optional buffer into which data should be read. If not provided,
          a new buffer of appropriate size will be allocated.
-      
+
       Returns
       -------
       bytearray, or ``buf_obj`` if provided
-          
+
       Examples
       --------
       >>> import array
@@ -1103,7 +1103,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_string, GByte **out, vsi_l_off
       <memory at 0x7eab25326800>
       >>> buf.cast('h').tolist()
       [1, 5, 2, 6, 3, 7, 4, 8]
-      
+
       """
 
       if xsize is None:
@@ -2007,9 +2007,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 
         """
         Low-level function that reads data from all bands into an existing or newly-created Python `bytearray <https://docs.python.org/3/builtins/stdtypes.html#bytearray>`_.
-        
+
         See :py:meth:`Band.ReadRaster` for more usage information and a description of the parameters.
-        
+
         """
 
         if xsize is None:
