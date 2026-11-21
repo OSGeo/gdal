@@ -447,7 +447,7 @@ GDattach(int32_t fid, const char *gridname)
 				nSDS++;
 			    }
 			}
-			GDXGrid[i].sdsID = (int32_t *) calloc(nSDS, 4);
+			GDXGrid[i].sdsID = (int32_t *) calloc(nSDS, sizeof(*GDXGrid[i].sdsID));
 			if(GDXGrid[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);

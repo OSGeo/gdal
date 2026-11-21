@@ -408,7 +408,7 @@ SWattach(int32_t fid, const char *swathname)
 				nSDS++;
 			    }
 			}
-			SWXSwath[i].sdsID = (int32_t *) calloc(nSDS, 4);
+			SWXSwath[i].sdsID = (int32_t *) calloc(nSDS, sizeof(*SWXSwath[i].sdsID));
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -477,7 +477,7 @@ SWattach(int32_t fid, const char *swathname)
 			}
 			SWXSwath[i].sdsID = (int32_t *)
 			    realloc((void *) SWXSwath[i].sdsID,
-				    (SWXSwath[i].nSDS + nSDS) * 4);
+				    (SWXSwath[i].nSDS + nSDS) * sizeof(*SWXSwath[i].sdsID));
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
