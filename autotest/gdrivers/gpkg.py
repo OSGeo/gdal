@@ -4445,20 +4445,20 @@ def test_gpkg_multiband_band_metadata(tmp_vsimem):
 
 @pytest.mark.parametrize("w,h", [(50, 513), (1025, 50)])
 def test_gpkg_15442(tmp_path, w, h):
-    
+
     gdaltest.importorskip_gdal_array()
-    np = pytest.importorskip("numpy")		
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(32750)
+    np = pytest.importorskip("numpy")
+
     a = (np.arange(w * h).reshape(h, w) % 200 + 1).astype("uint8")
     src = gdal.GetDriverByName("MEM").Create("", w, h, 1, gdal.GDT_Byte)
     src.SetGeoTransform((500000, 30, 0, 9500000, 0, -30))
-    src.SetProjection(srs.ExportToWkt())
     src.GetRasterBand(1).WriteArray(a)
+
     path = str(tmp_path / f"edge_{w}x{h}.gpkg")
     gdal.Translate(path, src, format="GPKG")
     ds = gdal.Open(path)
+
     b = ds.GetRasterBand(1).ReadAsArray()
-    ds = None
+
     bad = np.argwhere(a != b)
     assert not len(bad), f"{len(bad)} pixels wrong, e.g. row/col {bad[0].tolist()}"
