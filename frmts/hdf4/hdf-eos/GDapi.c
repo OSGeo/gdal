@@ -89,6 +89,7 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 #include "mfhdf.h"
 #include "hcomp.h"
 #include <math.h>
+#include <stdint.h>
 #include "HdfEosDef.h"
 #include "hfile.h"
 
@@ -102,17 +103,17 @@ Jun  05, 2003 Bruce Beaumont / Abe Taaheri
 /* Grid Structure External Arrays */
 struct gridStructure
 {
-    int32 active;
-    int32 IDTable;
-    int32 VIDTable[2];
-    int32 fid;
-    int32 nSDS;
-    int32 *sdsID;
-    int32 compcode;
-    intn  compparm[5];
-    int32 tilecode;
-    int32 tilerank;
-    int32 tiledims[8];
+    int32_t active;
+    int32_t IDTable;
+    int32_t VIDTable[2];
+    int32_t fid;
+    int32_t nSDS;
+    int32_t *sdsID;
+    int32_t compcode;
+    int compparm[5];
+    int32_t tilecode;
+    int32_t tilerank;
+    int32_t tiledims[8];
 };
 static struct gridStructure GDXGrid[NGRID];
 
@@ -121,18 +122,18 @@ static struct gridStructure GDXGrid[NGRID];
 #define NGRIDREGN 256
 struct gridRegion
 {
-    int32 fid;
-    int32 gridID;
-    int32 xStart;
-    int32 xCount;
-    int32 yStart;
-    int32 yCount;
-    int32 somStart;
-    int32 somCount;
+    int32_t fid;
+    int32_t gridID;
+    int32_t xStart;
+    int32_t xCount;
+    int32_t yStart;
+    int32_t yCount;
+    int32_t somStart;
+    int32_t somCount;
     float64 upleftpt[2];
     float64 lowrightpt[2];
-    int32 StartVertical[8];
-    int32 StopVertical[8];
+    int32_t StartVertical[8];
+    int32_t StopVertical[8];
     char *DimNamePtr[8];
 };
 static struct gridRegion *GDXRegion[NGRIDREGN];
@@ -146,7 +147,7 @@ static struct gridRegion *GDXRegion[NGRIDREGN];
 
 /* Static projection table */
 static const struct {
-    int32 projcode;
+    int32_t projcode;
     const char *projname;
 } Projections[] = {
     {GCTP_GEO,	   "GCTP_GEO"},
@@ -188,13 +189,13 @@ static const struct {
 };
 
 /* Grid Function Prototypes (internal routines) */
-static intn GDchkgdid(int32, const char *, int32 *, int32 *, int32 *);
-static intn GDSDfldsrch(int32, int32, const char *, int32 *, int32 *,
-                        int32 *, int32 *, int32 [], int32 *);
-static intn GDwrrdfield(int32, const char *, const char *,
-                        int32 [], int32 [], int32 [], VOIDP datbuf);
-static intn GDwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
-static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
+static int GDchkgdid(int32_t, const char *, int32_t *, int32_t *, int32_t *);
+static int GDSDfldsrch(int32_t, int32_t, const char *, int32_t *, int32_t *,
+                        int32_t *, int32_t *, int32_t [], int32_t *);
+static int GDwrrdfield(int32_t, const char *, const char *,
+                        int32_t [], int32_t [], int32_t [], VOIDP datbuf);
+static int GDwrrdattr(int32_t, const char *, int32_t, int32_t, const char *, VOIDP);
+static int GDwrrdtile(int32_t, const char *, const char *, int32_t [], VOIDP);
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -207,11 +208,11 @@ static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                Filename                                |
-|  l_access         intn                HDF l_access code                         |
+|  l_access         int                 HDF l_access code                         |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -226,11 +227,11 @@ static intn GDwrrdtile(int32, const char *, const char *, int32 [], VOIDP);
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDopen(const char *filename, intn l_access)
+int32_t
+GDopen(const char *filename, int l_access)
 
 {
-    int32           fid /* HDF-EOS file ID */ ;
+    int32_t         fid /* HDF-EOS file ID */ ;
 
     /* Call EHopen to perform file l_access */
     /* ---------------------------------- */
@@ -251,10 +252,10 @@ GDopen(const char *filename, intn l_access)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file id                         |
+|  fid            int32_t             HDF-EOS file id                         |
 |  gridname       char                grid structure name                     |
 |                                                                             |
 |                                                                             |
@@ -272,30 +273,30 @@ GDopen(const char *filename, intn l_access)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDattach(int32 fid, const char *gridname)
+int32_t
+GDattach(int32_t fid, const char *gridname)
 
 {
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            ngridopen = 0;	/* # of grid structures open */
-    intn            status;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             j;		/* Loop index */
+    int             ngridopen = 0;	/* # of grid structures open */
+    int             status;	/* routine return status variable */
 
-    uint8           acs;	/* Read/Write file l_access code */
+    uint8_t         acs;	/* Read/Write file l_access code */
 
-    int32           HDFfid;	/* HDF file id */
-    int32           vgRef;	/* Vgroup reference number */
-    int32           vgid[3];	/* Vgroup ID array */
-    int32           gridID = -1;/* HDF-EOS grid ID */
-    int32          *tags;	/* Pnt to Vgroup object tags array */
-    int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           dum;	/* dummy variable */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           nObjects;	/* # of objects in Vgroup */
-    int32           nSDS;	/* SDS counter */
-    int32           l_index;	/* SDS l_index */
-    int32           sdid;	/* SDS object ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         HDFfid;	/* HDF file id */
+    int32_t         vgRef;	/* Vgroup reference number */
+    int32_t         vgid[3];	/* Vgroup ID array */
+    int32_t         gridID = -1;/* HDF-EOS grid ID */
+    int32_t        *tags;	/* Pnt to Vgroup object tags array */
+    int32_t        *refs;	/* Pnt to Vgroup object refs array */
+    int32_t         dum;	/* dummy variable */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         nObjects;	/* # of objects in Vgroup */
+    int32_t         nSDS;	/* SDS counter */
+    int32_t         l_index;	/* SDS l_index */
+    int32_t         sdid;	/* SDS object ID */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
     char            name[80];	/* Vgroup name */
     char            class[80];	/* Vgroup class */
@@ -363,13 +364,13 @@ GDattach(int32 fid, const char *gridname)
 		{
 		    /* Attach to "Data Fields" and "Grid Attributes" Vgroups */
 		    /* ----------------------------------------------------- */
-		    tags = (int32 *) malloc(sizeof(int32) * 2);
+		    tags = (int32_t *) malloc(sizeof(int32_t) * 2);
 		    if(tags == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			return(-1);
 		    }
-		    refs = (int32 *) malloc(sizeof(int32) * 2);
+		    refs = (int32_t *) malloc(sizeof(int32_t) * 2);
 		    if(refs == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
@@ -421,13 +422,13 @@ GDattach(int32 fid, const char *gridname)
 		    {
 			/* Get tag and ref # for Data Vgroup objects */
 			/* ----------------------------------------- */
-			tags = (int32 *) malloc(sizeof(int32) * nObjects);
+			tags = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(tags == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
 			    return(-1);
 			}
-			refs = (int32 *) malloc(sizeof(int32) * nObjects);
+			refs = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(refs == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
@@ -446,7 +447,7 @@ GDattach(int32 fid, const char *gridname)
 				nSDS++;
 			    }
 			}
-			GDXGrid[i].sdsID = (int32 *) calloc(nSDS, 4);
+			GDXGrid[i].sdsID = (int32_t *) calloc(nSDS, sizeof(*GDXGrid[i].sdsID));
 			if(GDXGrid[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"GDattach", __FILE__, __LINE__);
@@ -520,16 +521,16 @@ GDattach(int32 fid, const char *gridname)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  routname       char                Name of routine calling GDchkgdid       |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  fid            int32               File ID                                 |
-|  sdInterfaceID  int32               SDS interface ID                        |
-|  gdVgrpID       int32               grid Vgroup ID                          |
+|  fid            int32_t             File ID                                 |
+|  sdInterfaceID  int32_t             SDS interface ID                        |
+|  gdVgrpID       int32_t             grid Vgroup ID                          |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -544,15 +545,15 @@ GDattach(int32 fid, const char *gridname)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-GDchkgdid(int32 gridID, const char *routname,
-	  int32 * fid, int32 * sdInterfaceID, int32 * gdVgrpID)
+static int
+GDchkgdid(int32_t gridID, const char *routname,
+	  int32_t * fid, int32_t * sdInterfaceID, int32_t * gdVgrpID)
 {
-    intn            status = 0;	/* routine return status variable */
-    uint8           l_access;	/* Read/Write l_access code */
-    int32           gID;	/* Grid ID - offset */
+    int             status = 0;	/* routine return status variable */
+    uint8_t         l_access;	/* Read/Write l_access code */
+    int32_t         gID;	/* Grid ID - offset */
 
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
     static const char message1[] =
         "Invalid grid id: %d in routine \"%s\".  ID must be >= %d and < %d.\n";
@@ -609,10 +610,10 @@ GDchkgdid(int32 gridID, const char *routname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  size           int32               Size of dimension                       |
+|  size           int32_t             Size of dimension                       |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure id                       |
+|  gridID         int32_t             grid structure id                       |
 |  dimname        char                Dimension name                          |
 |                                                                             |
 |                                                                             |
@@ -630,17 +631,17 @@ GDchkgdid(int32 gridID, const char *routname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDdiminfo(int32 gridID, const char *dimname)
+int32_t
+GDdiminfo(int32_t gridID, const char *dimname)
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           size;	/* Dimension size */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         gdVgrpID;	/* Grid root Vgroup ID */
+    int32_t         size;	/* Dimension size */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
@@ -743,15 +744,15 @@ GDdiminfo(int32 gridID, const char *dimname)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               File ID                                 |
+|  fid            int32_t             File ID                                 |
 |  gridname       char                Grid structure name                     |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  xdimsize       int32               Number of columns in grid               |
-|  ydimsize       int32               Number of rows in grid                  |
+|  xdimsize       int32_t             Number of columns in grid               |
+|  ydimsize       int32_t             Number of rows in grid                  |
 |  upleftpt       float64             Location (m/deg) of upper left corner   |
 |  lowrightpt     float64             Location (m/deg) of lower right corner  |
 |                                                                             |
@@ -765,18 +766,18 @@ GDdiminfo(int32 gridID, const char *dimname)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
+int
+GDgridinfo(int32_t gridID, int32_t * xdimsize, int32_t * ydimsize,
 	   float64 upleftpt[], float64 lowrightpt[])
 
 {
-    intn            status = 0;	/* routine return status variable */
-    intn            statmeta = 0;	/* EHgetmetavalue return status */
+    int             status = 0;	/* routine return status variable */
+    int             statmeta = 0;	/* EHgetmetavalue return status */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         gdVgrpID;	/* Grid root Vgroup ID */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
@@ -938,15 +939,15 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               Grid structure ID                       |
+|  gridID         int32_t             Grid structure ID                       |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  projcode       int32               GCTP projection code                    |
-|  zonecode       int32               UTM zone code                           |
-|  spherecode     int32               GCTP spheroid code                      |
+|  projcode       int32_t             GCTP projection code                    |
+|  zonecode       int32_t             UTM zone code                           |
+|  spherecode     int32_t             GCTP spheroid code                      |
 |  projparm       float64             Projection parameters                   |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -961,20 +962,20 @@ GDgridinfo(int32 gridID, int32 * xdimsize, int32 * ydimsize,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
-	   int32 * spherecode, float64 projparm[])
+int
+GDprojinfo(int32_t gridID, int32_t * projcode, int32_t * zonecode,
+	   int32_t * spherecode, float64 projparm[])
 
 {
-    intn            i;		/* Loop index */
-    intn            projx;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
-    intn            statmeta = 0;	/* EHgetmetavalue return status */
+    int             i;		/* Loop index */
+    int             projx;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
+    int             statmeta = 0;	/* EHgetmetavalue return status */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         gdVgrpID;	/* Grid root Vgroup ID */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
@@ -1176,17 +1177,17 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure id                       |
+|  gridID         int32_t             grid structure id                       |
 |  fieldname      char                name of field                           |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  rank           int32               rank of field (# of dims)               |
-|  dims           int32               field dimensions                        |
-|  numbertype     int32               field number type                       |
+|  rank           int32_t             rank of field (# of dims)               |
+|  dims           int32_t             field dimensions                        |
+|  numbertype     int32_t             field number type                       |
 |  dimlist        char                field dimension list                    |
 |                                                                             |
 |                                                                             |
@@ -1206,24 +1207,24 @@ GDprojinfo(int32 gridID, int32 * projcode, int32 * zonecode,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
-	    int32 * numbertype, char dimlist[HDFE_DIMBUFSIZE+1])
+int
+GDfieldinfo(int32_t gridID, const char *fieldname, int32_t * rank, int32_t dims[],
+	    int32_t * numbertype, char dimlist[HDFE_DIMBUFSIZE+1])
 
 {
-    intn            i;		    /* Loop index */
-    intn            status;	    /* routine return status variable */
-    intn            statmeta = 0;   /* EHgetmetavalue return status */
+    int             i;		    /* Loop index */
+    int             status;	    /* routine return status variable */
+    int             statmeta = 0;   /* EHgetmetavalue return status */
 
-    int32           fid;	    /* HDF-EOS file ID */
-    int32           sdInterfaceID;  /* HDF SDS interface ID */
-    int32           idOffset = GDIDOFFSET;  /* Grid ID offset */
-    int32           ndims = 0;	    /* Number of dimensions */
-    int32           slen[8];	    /* Length of each entry in parsed string */
-    int32           dum;	    /* Dummy variable */
-    int32           xdim = 0;	    /* X dim size */
-    int32           ydim = 0;	    /* Y dim size */
-    int32           sdid;	    /* SDS id */
+    int32_t         fid;	    /* HDF-EOS file ID */
+    int32_t         sdInterfaceID;  /* HDF SDS interface ID */
+    int32_t         idOffset = GDIDOFFSET;  /* Grid ID offset */
+    int32_t         ndims = 0;	    /* Number of dimensions */
+    int32_t         slen[8];	    /* Length of each entry in parsed string */
+    int32_t         dum;	    /* Dummy variable */
+    int32_t         xdim = 0;	    /* X dim size */
+    int32_t         ydim = 0;	    /* Y dim size */
+    int32_t         sdid;	    /* SDS id */
 
     char           *metabuf;	    /* Pointer to structural metadata (SM) */
     char           *metaptrs[2];    /* Pointers to begin and end of SM section */
@@ -1414,21 +1415,21 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  sdInterfaceID  int32               SD interface ID                         |
+|  gridID         int32_t             grid structure ID                       |
+|  sdInterfaceID  int32_t             SD interface ID                         |
 |  fieldname      char                field name                              |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  sdid           int32               SD element ID                           |
-|  rankSDS        int32               Rank of SDS                             |
-|  rankFld        int32               True rank of field (merging)            |
-|  offset         int32               Offset of field within merged field     |
-|  dims           int32               Dimensions of field                     |
-|  solo           int32               Solo field flag                         |
+|  sdid           int32_t             SD element ID                           |
+|  rankSDS        int32_t             Rank of SDS                             |
+|  rankFld        int32_t             True rank of field (merging)            |
+|  offset         int32_t             Offset of field within merged field     |
+|  dims           int32_t             Dimensions of field                     |
+|  solo           int32_t             Solo field flag                         |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1440,19 +1441,19 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
-            int32 * sdid, int32 * rankSDS, int32 * rankFld, int32 * offset,
-            int32 dims[], int32 * solo)
+static int
+GDSDfldsrch(int32_t gridID, int32_t sdInterfaceID, const char *fieldname,
+            int32_t * sdid, int32_t * rankSDS, int32_t * rankFld, int32_t * offset,
+            int32_t dims[], int32_t * solo)
 {
-    intn            i;		/* Loop index */
-    intn            status = -1;/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = -1;/* routine return status variable */
 
-    int32           gID;	/* GridID - offset */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
-    int32           dum;	/* Dummy variable */
-    int32           dums[128];	/* Dummy array */
-    int32           attrIndex;	/* Attribute l_index */
+    int32_t         gID;	/* GridID - offset */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         dums[128];	/* Dummy array */
+    int32_t         attrIndex;	/* Attribute l_index */
 
     char            name[2048];	/* Merged-Field Names */
     char            gridname[80];	/* Grid Name */
@@ -1661,15 +1662,15 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  fieldname      char                fieldname                               |
 |  code           char                Write/Read code (w/r)                   |
-|  start          int32               start array                             |
-|  stride         int32               stride array                            |
-|  edge           int32               edge array                              |
+|  start          int32_t             start array                             |
+|  stride         int32_t             stride array                            |
+|  edge           int32_t             edge array                              |
 |  datbuf         void                data buffer for read                    |
 |                                                                             |
 |                                                                             |
@@ -1687,27 +1688,27 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
-	    int32 start[], int32 stride[], int32 edge[], VOIDP datbuf)
+static int
+GDwrrdfield(int32_t gridID, const char *fieldname, const char *code,
+	    int32_t start[], int32_t stride[], int32_t edge[], VOIDP datbuf)
 
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           sdid;	/* SDS ID */
-    int32           dum;	/* Dummy variable */
-    int32           rankSDS;	/* Rank of SDS */
-    int32           rankFld;	/* Rank of field */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         sdid;	/* SDS ID */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         rankSDS;	/* Rank of SDS */
+    int32_t         rankFld;	/* Rank of field */
 
-    int32           offset[8] = {0};	/* I/O offset (start) */
-    int32           incr[8];	/* I/O increment (stride) */
-    int32           count[8];	/* I/O count (edge) */
-    int32           dims[8];	/* Field/SDS dimensions */
-    int32           mrgOffset = 0;	/* Merged field offset */
-    int32           strideOne;	/* Strides = 1 flag */
+    int32_t         offset[8] = {0};	/* I/O offset (start) */
+    int32_t         incr[8];	/* I/O increment (stride) */
+    int32_t         count[8];	/* I/O count (edge) */
+    int32_t         dims[8];	/* Field/SDS dimensions */
+    int32_t         mrgOffset = 0;	/* Merged field offset */
+    int32_t         strideOne;	/* Strides = 1 flag */
 
     for (i = 0; i < 8; ++i)
         incr[i] = 1;
@@ -1929,14 +1930,14 @@ GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  fieldname      char                fieldname                               |
-|  start          int32               start array                             |
-|  stride         int32               stride array                            |
-|  edge           int32               edge array                              |
+|  start          int32_t             start array                             |
+|  stride         int32_t             stride array                            |
+|  edge           int32_t             edge array                              |
 |  buffer         void                data buffer for read                    |
 |                                                                             |
 |                                                                             |
@@ -1952,12 +1953,12 @@ GDwrrdfield(int32 gridID, const char *fieldname, const char *code,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDreadfield(int32 gridID, const char *fieldname,
-	    int32 start[], int32 stride[], int32 edge[], VOIDP buffer)
+int
+GDreadfield(int32_t gridID, const char *fieldname,
+	    int32_t start[], int32_t stride[], int32_t edge[], VOIDP buffer)
 
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
     status = GDwrrdfield(gridID, fieldname, "r", start, stride, edge,
 			 buffer);
@@ -1977,13 +1978,13 @@ GDreadfield(int32 gridID, const char *fieldname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  attrname       char                attribute name                          |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |  wrcode         char                Read/Write Code "w/r"                   |
 |  datbuf         void                I/O buffer                              |
 |                                                                             |
@@ -2000,17 +2001,17 @@ GDreadfield(int32 gridID, const char *fieldname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
+static int
+GDwrrdattr(int32_t gridID, const char *attrname, int32_t numbertype, int32_t count,
 	   const char *wrcode, VOIDP datbuf)
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Grid attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Grid attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
 
     /* Check Grid id */
@@ -2042,10 +2043,10 @@ GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  attrname       char                attribute name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -2060,11 +2061,11 @@ GDwrrdattr(int32 gridID, const char *attrname, int32 numbertype, int32 count,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDreadattr(int32 gridID, const char *attrname, VOIDP datbuf)
+int
+GDreadattr(int32_t gridID, const char *attrname, VOIDP datbuf)
 {
-    intn            status = 0;	/* routine return status variable */
-    int32           dum = 0;	/* dummy variable */
+    int             status = 0;	/* routine return status variable */
+    int32_t         dum = 0;	/* dummy variable */
 
     /* Call GDwrrdattr routine to read attribute */
     /* ----------------------------------------- */
@@ -2087,15 +2088,15 @@ GDreadattr(int32 gridID, const char *attrname, VOIDP datbuf)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  attrname       char                attribute name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -2111,15 +2112,15 @@ GDreadattr(int32 gridID, const char *attrname, VOIDP datbuf)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDattrinfo(int32 gridID, const char *attrname, int32 * numbertype, int32 * count)
+int
+GDattrinfo(int32_t gridID, const char *attrname, int32_t * numbertype, int32_t * count)
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid = 0;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Grid attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid = 0;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Grid attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
     status = GDchkgdid(gridID, "GDattrinfo", &fid, &dum, &dum);
     if (status < 0)
@@ -2153,15 +2154,15 @@ GDattrinfo(int32 gridID, const char *attrname, int32 * numbertype, int32 * count
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nattr          int32               Number of attributes in swath struct    |
+|  nattr          int32_t             Number of attributes in swath struct    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  grid ID        int32               grid structure ID                       |
+|  grid ID        int32_t             grid structure ID                       |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  attrnames      char                Attribute names in swath struct         |
 |                                     (Comma-separated list)                  |
-|  strbufsize     int32               Attributes name list string length      |
+|  strbufsize     int32_t             Attributes name list string length      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -2177,16 +2178,16 @@ GDattrinfo(int32 gridID, const char *attrname, int32 * numbertype, int32 * count
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDinqattrs(int32 gridID, char *attrnames, int32 * strbufsize)
+int32_t
+GDinqattrs(int32_t gridID, char *attrnames, int32_t * strbufsize)
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Grid attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           nattr = 0;	/* Number of attributes */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Grid attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         nattr = 0;	/* Number of attributes */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
 
 
     /* Check Grid id */
@@ -2231,16 +2232,16 @@ GDinqattrs(int32 gridID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nFld           int32               Number of fields in swath               |
+|  nFld           int32_t             Number of fields in swath               |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  fieldlist      char                Field names (comma-separated)           |
-|  rank           int32               Array of ranks                          |
-|  numbertype     int32               Array of HDF number types               |
+|  rank           int32_t             Array of ranks                          |
+|  numbertype     int32_t             Array of HDF number types               |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2253,18 +2254,18 @@ GDinqattrs(int32 gridID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
-	    int32 numbertype[])
+int32_t
+GDinqfields(int32_t gridID, char *fieldlist, int32_t rank[],
+	    int32_t numbertype[])
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
-    int32           nFld = 0;	/* Number of mappings */
-    int32           slen[8];	/* String length array */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         gdVgrpID;	/* Grid root Vgroup ID */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         nFld = 0;	/* Number of mappings */
+    int32_t         slen[8];	/* String length array */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -2428,17 +2429,17 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nEntries       int32               Number of entries                       |
+|  nEntries       int32_t             Number of entries                       |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
-|  entrycode      int32               Entry code                              |
+|  gridID         int32_t             grid structure ID                       |
+|  entrycode      int32_t             Entry code                              |
 |	                              HDFE_NENTDIM  (0)                       |
 |	                              HDFE_NENTDFLD (4)                       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  strbufsize     int32               Length of comma-separated list          |
+|  strbufsize     int32_t             Length of comma-separated list          |
 |                                     (Does not include null-terminator       |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -2452,20 +2453,20 @@ GDinqfields(int32 gridID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
+int32_t
+GDnentries(int32_t gridID, int32_t entrycode, int32_t * strbufsize)
 
 {
-    intn            status;	/* routine return status variable */
-    intn            i;		/* Loop index */
+    int             status;	/* routine return status variable */
+    int             i;		/* Loop index */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           gdVgrpID;	/* Grid root Vgroup ID */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
-    int32           nEntries = 0;	/* Number of entries */
-    int32           metaflag;	/* Old (0), New (1) metadata flag) */
-    int32           nVal = 0;	/* Number of strings to search for */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         gdVgrpID;	/* Grid root Vgroup ID */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         nEntries = 0;	/* Number of entries */
+    int32_t         metaflag;	/* Old (0), New (1) metadata flag) */
+    int32_t         nVal = 0;	/* Number of strings to search for */
 
     char           *metabuf = NULL;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2] = {NULL, NULL};/* Pointers to begin and end of SM section */
@@ -2576,9 +2577,9 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 		     */
 		    EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
 		    if( utlstr[0] == '"' && utlstr[strlen(utlstr)-1] == '"' )
-		        *strbufsize += (int32)strlen(utlstr) - 2;
+		        *strbufsize += (int32_t)strlen(utlstr) - 2;
 		    else
-		        *strbufsize += (int32)strlen(utlstr);
+		        *strbufsize += (int32_t)strlen(utlstr);
 		}
 		/* Increment number of entries */
 		nEntries++;
@@ -2630,14 +2631,14 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nGrid          int32               Number of grid structures in file       |
+|  nGrid          int32_t             Number of grid structures in file       |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                HDF-EOS filename                        |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  gridlist       char                List of grid names (comma-separated)    |
-|  strbufsize     int32               Length of gridlist                      |
+|  strbufsize     int32_t             Length of gridlist                      |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2648,10 +2649,10 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
+int32_t
+GDinqgrid(const char *filename, char *gridlist, int32_t * strbufsize)
 {
-    int32           nGrid;	/* Number of grid structures in file */
+    int32_t         nGrid;	/* Number of grid structures in file */
 
     /* Call "EHinquire" routine */
     /* ------------------------ */
@@ -2672,10 +2673,10 @@ GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  fieldname      char                field name                              |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -2690,14 +2691,14 @@ GDinqgrid(const char *filename, char *gridlist, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
+int
+GDgetfillvalue(int32_t gridID, const char *fieldname, VOIDP fillval)
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           nt;		/* Number type */
-    int32           dims[8];	/* Dimensions array */
-    int32           dum;	/* Dummy variable */
+    int32_t         nt;		/* Number type */
+    int32_t         dims[8];	/* Dimensions array */
+    int32_t         dum;	/* Dummy variable */
 
     char            name[84];	/* Fill value "attribute" name */
 
@@ -2747,10 +2748,10 @@ GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -2776,18 +2777,18 @@ GDgetfillvalue(int32 gridID, const char *fieldname, VOIDP fillval)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDdetach(int32 gridID)
+int
+GDdetach(int32_t gridID)
 
 {
-    intn            i;		/* Loop index */
-    intn            k;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             k;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    int32           sdInterfaceID;	/* SDS interface ID */
-    int32           gID;	/* Grid ID - offset */
-    int32           idOffset = GDIDOFFSET;	/* Grid ID offset */
-    int32           dum;	/* Dummy variable */
+    int32_t         sdInterfaceID;	/* SDS interface ID */
+    int32_t         gID;	/* Grid ID - offset */
+    int32_t         idOffset = GDIDOFFSET;	/* Grid ID offset */
+    int32_t         dum;	/* Dummy variable */
 
     char            gridname[VGNAMELENMAX + 1];	/* Grid name */
 
@@ -2866,10 +2867,10 @@ GDdetach(int32 gridID)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               File ID                                 |
+|  fid            int32_t             File ID                                 |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -2884,11 +2885,11 @@ GDdetach(int32 gridID)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDclose(int32 fid)
+int
+GDclose(int32_t fid)
 
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
     /* Call EHclose to perform file close */
     /* ---------------------------------- */
@@ -2908,23 +2909,23 @@ Alexis Zubrow
 
 ********************************************************/
 
-static intn
-GDwrrdtile(int32 gridID, const char *fieldname, const char *code, int32 start[],
+static int
+GDwrrdtile(int32_t gridID, const char *fieldname, const char *code, int32_t start[],
 	   VOIDP datbuf)
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           sdid;	/* SDS ID */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         sdid;	/* SDS ID */
 
-    int32           dum;	/* Dummy variable */
-    int32           rankSDS;	/* Rank of SDS/Field */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         rankSDS;	/* Rank of SDS/Field */
 
-    int32           dims[8];	/* Field/SDS dimensions */
-    int32           tileFlags;	/* flag to determine if field is tiled */
-    int32           numTileDims;/* number of tiles spanning a dimension */
+    int32_t         dims[8];	/* Field/SDS dimensions */
+    int32_t         tileFlags;	/* flag to determine if field is tiled */
+    int32_t         numTileDims;/* number of tiles spanning a dimension */
     HDF_CHUNK_DEF   tileDef;	/* union holding tiling info. */
 
 
@@ -3030,23 +3031,23 @@ Author--  Alexis Zubrow
 ********************************************************/
 
 
-intn
-GDtileinfo(int32 gridID, const char *fieldname, int32 * tilecode, int32 * tilerank,
-	   int32 tiledims[])
+int
+GDtileinfo(int32_t gridID, const char *fieldname, int32_t * tilecode, int32_t * tilerank,
+	   int32_t tiledims[])
 
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           sdid;	/* SDS ID */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         sdid;	/* SDS ID */
 
-    int32           dum;	/* Dummy variable */
-    int32           rankSDS;	/* Rank of SDS/Field/tile */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         rankSDS;	/* Rank of SDS/Field/tile */
 
-    int32           dims[8];	/* Field/SDS dimensions */
-    int32           tileFlags;	/* flag to determine if field is tiled */
+    int32_t         dims[8];	/* Field/SDS dimensions */
+    int32_t         tileFlags;	/* flag to determine if field is tiled */
     HDF_CHUNK_DEF   tileDef;	/* union holding tiling info. */
 
 
@@ -3123,12 +3124,12 @@ Alexis Zubrow
 
 ********************************************************/
 
-intn
-GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
+int
+GDreadtile(int32_t gridID, const char *fieldname, int32_t tilecoords[],
 	   VOIDP tileData)
 {
     char            code[] = "r";	/* read tile code */
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
     status = GDwrrdtile(gridID, fieldname, code, tilecoords, tileData);
 
@@ -3145,15 +3146,15 @@ GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  gridID         int32               grid structure ID                       |
+|  gridID         int32_t             grid structure ID                       |
 |  fieldname      const char          field name                              |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  sdid           int32               SD element ID                           |
+|  sdid           int32_t             SD element ID                           |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -3164,14 +3165,14 @@ GDreadtile(int32 gridID, const char *fieldname, int32 tilecoords[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-GDsdid(int32 gridID, const char *fieldname, int32 *sdid)
+int
+GDsdid(int32_t gridID, const char *fieldname, int32_t *sdid)
 {
-    intn            status;	        /* routine return status variable */
-    int32           fid;	        /* HDF-EOS file ID */
-    int32           sdInterfaceID;      /* HDF SDS interface ID */
-    int32           dum;	        /* Dummy variable */
-    int32           dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
+    int             status;	        /* routine return status variable */
+    int32_t         fid;	        /* HDF-EOS file ID */
+    int32_t         sdInterfaceID;      /* HDF SDS interface ID */
+    int32_t         dum;	        /* Dummy variable */
+    int32_t         dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
 
     status = GDchkgdid(gridID, "GDsdid", &fid, &sdInterfaceID, &dum);
     if (status != -1)

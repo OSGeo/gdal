@@ -81,13 +81,14 @@ June 05, 2003 Abe Taaheri / Bruce Beaumont
 #include "HdfEosDef.h"
 #include "hfile.h"
 #include <math.h>
+#include <stdint.h>
 
 #include "hdf4compat.h"
 
 #define SWIDOFFSET 1048576
 
 
-static int32 SWX1dcomb[512*3];
+static int32_t SWX1dcomb[512*3];
 
 /* Added for routine that converts scanline to Lat/long
 ** for floating scene subsetting
@@ -99,17 +100,17 @@ static int32 SWX1dcomb[512*3];
 /* Swath Structure External Arrays */
 struct swathStructure
 {
-    int32 active;
-    int32 IDTable;
-    int32 VIDTable[3];
-    int32 fid;
-    int32 nSDS;
-    int32 *sdsID;
-    int32 compcode;
-    intn  compparm[5];
-    int32 tilecode;
-    int32 tilerank;
-    int32 tiledims[8];
+    int32_t active;
+    int32_t IDTable;
+    int32_t VIDTable[3];
+    int32_t fid;
+    int32_t nSDS;
+    int32_t *sdsID;
+    int32_t compcode;
+    int compparm[5];
+    int32_t tilecode;
+    int32_t tilerank;
+    int32_t tiledims[8];
 };
 static struct swathStructure SWXSwath[NSWATH];
 
@@ -119,18 +120,18 @@ static struct swathStructure SWXSwath[NSWATH];
 #define MAXNREGIONS 1024
 struct swathRegion
 {
-    int32 fid;
-    int32 swathID;
-    int32 nRegions;
-    int32 StartRegion[MAXNREGIONS];
-    int32 StopRegion[MAXNREGIONS];
-    int32 StartVertical[8];
-    int32 StopVertical[8];
-    int32 StartScan[8];
-    int32 StopScan[8];
+    int32_t fid;
+    int32_t swathID;
+    int32_t nRegions;
+    int32_t StartRegion[MAXNREGIONS];
+    int32_t StopRegion[MAXNREGIONS];
+    int32_t StartVertical[8];
+    int32_t StopVertical[8];
+    int32_t StartScan[8];
+    int32_t StopScan[8];
     char *DimNamePtr[8];
-    intn band8flag;
-    intn  scanflag;
+    int band8flag;
+    int scanflag;
 };
 static struct swathRegion *SWXRegion[NSWATHREGN];
 
@@ -145,17 +146,17 @@ static struct swathRegion *SWXRegion[NSWATHREGN];
 #define UTLSTR_MAX_SIZE 512
 
 /* Swath Prototypes (internal routines) */
-static intn SWchkswid(int32, const char *, int32 *, int32 *, int32 *);
-static int32 SWfinfo(int32, const char *, const char *, int32 *,
-                     int32 [], int32 *, char *, size_t dimlistsize);
-static intn SWwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
-static intn SW1dfldsrch(int32, int32, const char *, const char *, int32 *,
-                        int32 *, int32 *);
-static intn SWSDfldsrch(int32, int32, const char *, int32 *, int32 *,
-                        int32 *, int32 *, int32 [], int32 *);
-static intn SWwrrdfield(int32, const char *, const char *,
-                        int32 [], int32 [], int32 [], VOIDP);
-static int32 SWinqfields(int32, const char *, char *, int32 [], int32 []);
+static int SWchkswid(int32_t, const char *, int32_t *, int32_t *, int32_t *);
+static int32_t SWfinfo(int32_t, const char *, const char *, int32_t *,
+                     int32_t [], int32_t *, char *, size_t dimlistsize);
+static int SWwrrdattr(int32_t, const char *, int32_t, int32_t, const char *, VOIDP);
+static int SW1dfldsrch(int32_t, int32_t, const char *, const char *, int32_t *,
+                        int32_t *, int32_t *);
+static int SWSDfldsrch(int32_t, int32_t, const char *, int32_t *, int32_t *,
+                        int32_t *, int32_t *, int32_t [], int32_t *);
+static int SWwrrdfield(int32_t, const char *, const char *,
+                        int32_t [], int32_t [], int32_t [], VOIDP);
+static int32_t SWinqfields(int32_t, const char *, char *, int32_t [], int32_t []);
 
 /*----------------------------------------------------------------------------|
 |  BEGIN_PROLOG                                                               |
@@ -167,11 +168,11 @@ static int32 SWinqfields(int32, const char *, char *, int32 [], int32 []);
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                Filename                                |
-|  access         intn                HDF access code                         |
+|  access         int                 HDF access code                         |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -186,11 +187,11 @@ static int32 SWinqfields(int32, const char *, char *, int32 [], int32 []);
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWopen(const char *filename, intn i_access)
+int32_t
+SWopen(const char *filename, int i_access)
 
 {
-    int32           fid /* HDF-EOS file ID */ ;
+    int32_t         fid /* HDF-EOS file ID */ ;
 
     /* Call EHopen to perform file access */
     /* ---------------------------------- */
@@ -209,10 +210,10 @@ SWopen(const char *filename, intn i_access)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
+|  fid            int32_t             HDF-EOS file ID                         |
 |  swathname      char                swath structure name                    |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -229,30 +230,30 @@ SWopen(const char *filename, intn i_access)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWattach(int32 fid, const char *swathname)
+int32_t
+SWattach(int32_t fid, const char *swathname)
 
 {
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            nswathopen = 0;	/* # of swath structures open */
-    intn            status;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             j;		/* Loop index */
+    int             nswathopen = 0;	/* # of swath structures open */
+    int             status;	/* routine return status variable */
 
-    uint8           acs;	/* Read/Write file access code */
+    uint8_t         acs;	/* Read/Write file access code */
 
-    int32           HDFfid;	/* HDF file id */
-    int32           vgRef;	/* Vgroup reference number */
-    int32           vgid[4];	/* Vgroup ID array */
-    int32           swathID = -1;	/* HDF-EOS swath ID */
-    int32          *tags;	/* Pnt to Vgroup object tags array */
-    int32          *refs;	/* Pnt to Vgroup object refs array */
-    int32           dum;	/* dummy variable */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           nObjects;	/* # of objects in Vgroup */
-    int32           nSDS;	/* SDS counter */
-    int32           l_index;	/* SDS l_index */
-    int32           sdid;	/* SDS object ID */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         HDFfid;	/* HDF file id */
+    int32_t         vgRef;	/* Vgroup reference number */
+    int32_t         vgid[4];	/* Vgroup ID array */
+    int32_t         swathID = -1;	/* HDF-EOS swath ID */
+    int32_t        *tags;	/* Pnt to Vgroup object tags array */
+    int32_t        *refs;	/* Pnt to Vgroup object refs array */
+    int32_t         dum;	/* dummy variable */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         nObjects;	/* # of objects in Vgroup */
+    int32_t         nSDS;	/* SDS counter */
+    int32_t         l_index;	/* SDS l_index */
+    int32_t         sdid;	/* SDS object ID */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
     char            name[80];	/* Vgroup name */
     char            class[80];	/* Vgroup class */
@@ -320,13 +321,13 @@ SWattach(int32 fid, const char *swathname)
 		{
 		    /* Attach to "Fields" and "Swath Attributes" Vgroups */
 		    /* ------------------------------------------------- */
-		    tags = (int32 *) malloc(sizeof(int32) * 3);
+		    tags = (int32_t *) malloc(sizeof(int32_t) * 3);
 		    if(tags == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			return(-1);
 		    }
-		    refs = (int32 *) malloc(sizeof(int32) * 3);
+		    refs = (int32_t *) malloc(sizeof(int32_t) * 3);
 		    if(refs == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -382,13 +383,13 @@ SWattach(int32 fid, const char *swathname)
 		    {
 			/* Get tag and ref # for Geolocation Vgroup objects */
 			/* ------------------------------------------------ */
-			tags = (int32 *) malloc(sizeof(int32) * nObjects);
+			tags = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(tags == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    return(-1);
 			}
-			refs = (int32 *) malloc(sizeof(int32) * nObjects);
+			refs = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(refs == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -407,7 +408,7 @@ SWattach(int32 fid, const char *swathname)
 				nSDS++;
 			    }
 			}
-			SWXSwath[i].sdsID = (int32 *) calloc(nSDS, 4);
+			SWXSwath[i].sdsID = (int32_t *) calloc(nSDS, sizeof(*SWXSwath[i].sdsID));
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -448,13 +449,13 @@ SWattach(int32 fid, const char *swathname)
 		    {
 			/* Get tag and ref # for Data Vgroup objects */
 			/* ----------------------------------------- */
-			tags = (int32 *) malloc(sizeof(int32) * nObjects);
+			tags = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(tags == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
 			    return(-1);
 			}
-			refs = (int32 *) malloc(sizeof(int32) * nObjects);
+			refs = (int32_t *) malloc(sizeof(int32_t) * nObjects);
 			if(refs == NULL)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -474,9 +475,9 @@ SWattach(int32 fid, const char *swathname)
 				nSDS++;
 			    }
 			}
-			SWXSwath[i].sdsID = (int32 *)
+			SWXSwath[i].sdsID = (int32_t *)
 			    realloc((void *) SWXSwath[i].sdsID,
-				    (SWXSwath[i].nSDS + nSDS) * 4);
+				    (SWXSwath[i].nSDS + nSDS) * sizeof(*SWXSwath[i].sdsID));
 			if(SWXSwath[i].sdsID == NULL && nSDS != 0)
 			{
 			    HEpush(DFE_NOSPACE,"SWattach", __FILE__, __LINE__);
@@ -544,16 +545,16 @@ SWattach(int32 fid, const char *swathname)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  routname       char                Name of routine calling SWchkswid       |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  fid            int32               File ID                                 |
-|  sdInterfaceID  int32               SDS interface ID                        |
-|  swVgrpID       int32               swath Vgroup ID                         |
+|  fid            int32_t             File ID                                 |
+|  sdInterfaceID  int32_t             SDS interface ID                        |
+|  swVgrpID       int32_t             swath Vgroup ID                         |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -564,15 +565,15 @@ SWattach(int32 fid, const char *swathname)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-SWchkswid(int32 swathID, const char *routname,
-	  int32 * fid, int32 * sdInterfaceID, int32 * swVgrpID)
+static int
+SWchkswid(int32_t swathID, const char *routname,
+	  int32_t * fid, int32_t * sdInterfaceID, int32_t * swVgrpID)
 
 {
-    intn            status = 0;	/* routine return status variable */
-    uint8           l_access;	/* Read/Write access code */
+    int             status = 0;	/* routine return status variable */
+    uint8_t         l_access;	/* Read/Write access code */
 
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
     char            message1[] =
     "Invalid swath id: %d in routine \"%s\".  ID must be >= %d and < %d.\n";
@@ -624,10 +625,10 @@ SWchkswid(int32 swathID, const char *routname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  size           int32               Size of dimension                       |
+|  size           int32_t             Size of dimension                       |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure id                      |
+|  swathID        int32_t             swath structure id                      |
 |  dimname        char                Dimension name                          |
 |                                                                             |
 |                                                                             |
@@ -645,17 +646,17 @@ SWchkswid(int32 swathID, const char *routname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWdiminfo(int32 swathID, const char *dimname)
+int32_t
+SWdiminfo(int32_t swathID, const char *dimname)
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
-    int32           size;	/* Dimension size */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         swVgrpID;	/* Swath root Vgroup ID */
+    int32_t         size;	/* Dimension size */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
@@ -748,18 +749,18 @@ SWdiminfo(int32 swathID, const char *dimname)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure id                      |
+|  swathID        int32_t             swath structure id                      |
 |  fieldtype      const char          fieldtype (geo or data)                 |
 |  fieldname      const char          name of field                           |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  rank           int32               rank of field (# of dims)               |
-|  dims           int32               field dimensions                        |
-|  numbertype     int32               field number type                       |
+|  rank           int32_t             rank of field (# of dims)               |
+|  dims           int32_t             field dimensions                        |
+|  numbertype     int32_t             field number type                       |
 |  dimlist        char                field dimension list                    |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -773,26 +774,26 @@ SWdiminfo(int32 swathID, const char *dimname)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static int32
-SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
-        int32 *rank, int32 dims[], int32 *numbertype, char *dimlist, size_t dimlistsize)
+static int32_t
+SWfinfo(int32_t swathID, const char *fieldtype, const char *fieldname,
+        int32_t *rank, int32_t dims[], int32_t *numbertype, char *dimlist, size_t dimlistsize)
 
 {
-    intn            i;		/* Loop index */
-    intn            j;		/* Loop index */
-    intn            status;	/* routine return status variable */
-    intn            statmeta = 0;	/* EHgetmetavalue return status */
+    int             i;		/* Loop index */
+    int             j;		/* Loop index */
+    int             status;	/* routine return status variable */
+    int             statmeta = 0;	/* EHgetmetavalue return status */
 
-    int32           fid = 0;	/* HDF-EOS file ID */
-    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           fsize;	/* field size in bytes */
-    int32           ndims = 0;	/* Number of dimensions */
-    int32           slen[8];	/* Length of each entry in parsed string */
-    int32           dum;	/* Dummy variable */
-    int32           vdataID;	/* 1d field vdata ID */
+    int32_t         fid = 0;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID = 0;	/* HDF SDS interface ID */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         fsize;	/* field size in bytes */
+    int32_t         ndims = 0;	/* Number of dimensions */
+    int32_t         slen[8];	/* Length of each entry in parsed string */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         vdataID;	/* 1d field vdata ID */
 
-    uint8          *buf;	/* One-Dim field buffer */
+    uint8_t        *buf;	/* One-Dim field buffer */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -984,7 +985,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 		{
 		    /* Get record size and read 1st record */
 		    fsize = VSsizeof(vdataID, (char *)fieldname);
-		    buf = (uint8 *) calloc(fsize, 1);
+		    buf = (uint8_t *) calloc(fsize, 1);
 		    if(buf == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWfinfo", __FILE__, __LINE__);
@@ -993,7 +994,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 		    }
 		    VSsetfields(vdataID, fieldname);
 		    VSseek(vdataID, 0);
-		    VSread(vdataID, (uint8 *) buf, 1, FULL_INTERLACE);
+		    VSread(vdataID, (uint8_t *) buf, 1, FULL_INTERLACE);
 
 		    /* Sum up "bytes" in record */
 		    for (i = 0, j = 0; i < fsize; i++)
@@ -1049,17 +1050,17 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure id                      |
+|  swathID        int32_t             swath structure id                      |
 |  fieldname      const char          name of field                           |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  rank           int32               rank of field (# of dims)               |
-|  dims           int32               field dimensions                        |
-|  numbertype     int32               field number type                       |
+|  rank           int32_t             rank of field (# of dims)               |
+|  dims           int32_t             field dimensions                        |
+|  numbertype     int32_t             field number type                       |
 |  dimlist        char                field dimension list                    |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -1071,16 +1072,16 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
-	    int32 * numbertype, char *dimlist, size_t dimlistsize)
+int
+SWfieldinfo(int32_t swathID, const char *fieldname, int32_t * rank, int32_t dims[],
+	    int32_t * numbertype, char *dimlist, size_t dimlistsize)
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         swVgrpID;	/* Swath root Vgroup ID */
 
 
     /* Check for valid swath id */
@@ -1121,13 +1122,13 @@ SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  attrname       char                attribute name                          |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |  wrcode         char                Read/Write Code "w/r"                   |
 |  datbuf         void                I/O buffer                              |
 |                                                                             |
@@ -1144,17 +1145,17 @@ SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
+static int
+SWwrrdattr(int32_t swathID, const char *attrname, int32_t numbertype, int32_t count,
 	   const char *wrcode, VOIDP datbuf)
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Swath attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Swath attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
     /* Check Swath id */
     status = SWchkswid(swathID, "SWwrrdattr", &fid, &dum, &dum);
@@ -1186,10 +1187,10 @@ SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  attrname       char                attribute name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1204,11 +1205,11 @@ SWwrrdattr(int32 swathID, const char *attrname, int32 numbertype, int32 count,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWreadattr(int32 swathID, const char *attrname, VOIDP datbuf)
+int
+SWreadattr(int32_t swathID, const char *attrname, VOIDP datbuf)
 {
-    intn            status = 0;	/* routine return status variable */
-    int32           dum = 0;	/* dummy variable */
+    int             status = 0;	/* routine return status variable */
+    int32_t         dum = 0;	/* dummy variable */
 
     /* Call SWwrrdattr routine to read attribute */
     /* ----------------------------------------- */
@@ -1231,15 +1232,15 @@ SWreadattr(int32 swathID, const char *attrname, VOIDP datbuf)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  attrname       char                attribute name                          |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  numbertype     int32               attribute HDF numbertype                |
-|  count          int32               Number of attribute elements            |
+|  numbertype     int32_t             attribute HDF numbertype                |
+|  count          int32_t             Number of attribute elements            |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -1255,15 +1256,15 @@ SWreadattr(int32 swathID, const char *attrname, VOIDP datbuf)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWattrinfo(int32 swathID, const char *attrname, int32 * numbertype, int32 * count)
+int
+SWattrinfo(int32_t swathID, const char *attrname, int32_t * numbertype, int32_t * count)
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Swath attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Swath attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
     /* Check for valid swath ID */
     /* ------------------------ */
@@ -1301,15 +1302,15 @@ SWattrinfo(int32 swathID, const char *attrname, int32 * numbertype, int32 * coun
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nattr          int32               Number of attributes in swath struct    |
+|  nattr          int32_t             Number of attributes in swath struct    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swath ID       int32               swath structure ID                      |
+|  swath ID       int32_t             swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  attrnames      char                Attribute names in swath struct         |
 |                                     (Comma-separated list)                  |
-|  strbufsize     int32               Attributes name list string length      |
+|  strbufsize     int32_t             Attributes name list string length      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -1325,16 +1326,16 @@ SWattrinfo(int32 swathID, const char *attrname, int32 * numbertype, int32 * coun
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
+int32_t
+SWinqattrs(int32_t swathID, char *attrnames, int32_t * strbufsize)
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           attrVgrpID;	/* Swath attribute ID */
-    int32           dum;	/* dummy variable */
-    int32           nattr = 0;	/* Number of attributes */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         attrVgrpID;	/* Swath attribute ID */
+    int32_t         dum;	/* dummy variable */
+    int32_t         nattr = 0;	/* Number of attributes */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
     /* Check Swath id */
     status = SWchkswid(swathID, "SWinqattrs", &fid, &dum, &dum);
@@ -1376,14 +1377,14 @@ SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nDim           int32               Number of defined dimensions            |
+|  nDim           int32_t             Number of defined dimensions            |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  dimnames       char                Dimension names (comma-separated)       |
-|  dims           int32               Dimension values                        |
+|  dims           int32_t             Dimension values                        |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1396,18 +1397,18 @@ SWinqattrs(int32 swathID, char *attrnames, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqdims(int32 swathID, char *dimnames, int32 dims[])
+int32_t
+SWinqdims(int32_t swathID, char *dimnames, int32_t dims[])
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
-    int32           size;	/* Dimension size */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           nDim = 0;	/* Number of dimensions */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         swVgrpID;	/* Swath root Vgroup ID */
+    int32_t         size;	/* Dimension size */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         nDim = 0;	/* Number of dimensions */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -1545,15 +1546,15 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nMap           int32               Number of dimension mappings            |
+|  nMap           int32_t             Number of dimension mappings            |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  dimmaps        char                dimension mappings (comma-separated)    |
-|  offset         int32               array of offsets                        |
-|  increment      int32               array of increments                     |
+|  offset         int32_t             array of offsets                        |
+|  increment      int32_t             array of increments                     |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1566,19 +1567,19 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
+int32_t
+SWinqmaps(int32_t swathID, char *dimmaps, int32_t offset[], int32_t increment[])
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
-    int32           off;	/* Mapping Offset */
-    int32           incr;	/* Mapping Increment */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           nMap = 0;	/* Number of mappings */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         swVgrpID;	/* Swath root Vgroup ID */
+    int32_t         off;	/* Mapping Offset */
+    int32_t         incr;	/* Mapping Increment */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         nMap = 0;	/* Number of mappings */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -1714,17 +1715,17 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nFld           int32               Number of (geo/data) fields in swath    |
+|  nFld           int32_t             Number of (geo/data) fields in swath    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldtype      char                field type (geo or data)                |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  fieldlist      char                Field names (comma-separated)           |
-|  rank           int32               Array of ranks                          |
-|  numbertype     int32               Array of HDF number types               |
+|  rank           int32_t             Array of ranks                          |
+|  numbertype     int32_t             Array of HDF number types               |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1737,19 +1738,19 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static int32
-SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
-	    int32 numbertype[])
+static int32_t
+SWinqfields(int32_t swathID, const char *fieldtype, char *fieldlist, int32_t rank[],
+	    int32_t numbertype[])
 
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           swVgrpID;	/* Swath root Vgroup ID */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           nFld = 0;	/* Number of mappings */
-    int32           slen[8];	/* String length array */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         swVgrpID;	/* Swath root Vgroup ID */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         nFld = 0;	/* Number of mappings */
+    int32_t         slen[8];	/* String length array */
 
     char           *metabuf;	/* Pointer to structural metadata (SM) */
     char           *metaptrs[2];/* Pointers to begin and end of SM section */
@@ -1937,15 +1938,15 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nflds          int32               Number of geo fields in swath           |
+|  nflds          int32_t             Number of geo fields in swath           |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  fieldlist      char                Field names (comma-separated)           |
-|  rank           int32               Array of ranks                          |
-|  numbertype     int32               Array of HDF number types               |
+|  rank           int32_t             Array of ranks                          |
+|  numbertype     int32_t             Array of HDF number types               |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -1956,12 +1957,12 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqgeofields(int32 swathID, char *fieldlist, int32 rank[],
-	       int32 numbertype[])
+int32_t
+SWinqgeofields(int32_t swathID, char *fieldlist, int32_t rank[],
+	       int32_t numbertype[])
 {
 
-    int32           nflds;	/* Number of Geolocation fields */
+    int32_t         nflds;	/* Number of Geolocation fields */
 
     /* Call "SWinqfields" routine */
     /* -------------------------- */
@@ -1985,15 +1986,15 @@ SWinqgeofields(int32 swathID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nflds          int32               Number of data fields in swath          |
+|  nflds          int32_t             Number of data fields in swath          |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  fieldlist      char                Field names (comma-separated)           |
-|  rank           int32               Array of ranks                          |
-|  numbertype     int32               Array of HDF number types               |
+|  rank           int32_t             Array of ranks                          |
+|  numbertype     int32_t             Array of HDF number types               |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2004,12 +2005,12 @@ SWinqgeofields(int32 swathID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqdatafields(int32 swathID, char *fieldlist, int32 rank[],
-		int32 numbertype[])
+int32_t
+SWinqdatafields(int32_t swathID, char *fieldlist, int32_t rank[],
+		int32_t numbertype[])
 {
 
-    int32           nflds;	/* Number of Data fields */
+    int32_t         nflds;	/* Number of Data fields */
 
     /* Call "SWinqfields" routine */
     /* -------------------------- */
@@ -2033,11 +2034,11 @@ SWinqdatafields(int32 swathID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nEntries       int32               Number of entries                       |
+|  nEntries       int32_t             Number of entries                       |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
-|  entrycode      int32               Entry code                              |
+|  swathID        int32_t             swath structure ID                      |
+|  entrycode      int32_t             Entry code                              |
 |	                              HDFE_NENTDIM  (0)                       |
 |	                              HDFE_NENTMAP  (1)                       |
 |	                              HDFE_NENTIMAP (2)                       |
@@ -2046,7 +2047,7 @@ SWinqdatafields(int32 swathID, char *fieldlist, int32 rank[],
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  strbufsize     int32               Length of comma-separated list          |
+|  strbufsize     int32_t             Length of comma-separated list          |
 |                                     (Does not include null-terminator       |
 |                                                                             |
 |  NOTES:                                                                     |
@@ -2060,20 +2061,20 @@ SWinqdatafields(int32 swathID, char *fieldlist, int32 rank[],
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
+int32_t
+SWnentries(int32_t swathID, int32_t entrycode, int32_t * strbufsize)
 
 {
-    intn            status;	    /* routine return status variable */
-    intn            i;		    /* Loop index */
+    int             status;	    /* routine return status variable */
+    int             i;		    /* Loop index */
 
-    int32           fid;	    /* HDF-EOS file ID */
-    int32           sdInterfaceID;  /* HDF SDS interface ID */
-    int32           swVgrpID;	    /* Swath root Vgroup ID */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           nEntries = 0;   /* Number of entries */
-    int32           metaflag;	    /* Old (0), New (1) metadata flag) */
-    int32           nVal = 0;	    /* Number of strings to search for */
+    int32_t         fid;	    /* HDF-EOS file ID */
+    int32_t         sdInterfaceID;  /* HDF SDS interface ID */
+    int32_t         swVgrpID;	    /* Swath root Vgroup ID */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         nEntries = 0;   /* Number of entries */
+    int32_t         metaflag;	    /* Old (0), New (1) metadata flag) */
+    int32_t         nVal = 0;	    /* Number of strings to search for */
 
     char           *metabuf = NULL; /* Pointer to structural metadata (SM) */
     char           *metaptrs[2];    /* Pointers to begin and end of SM section */
@@ -2226,9 +2227,9 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
                         EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
                         const size_t len = strlen(utlstr);
                         if( len >= 2 && utlstr[0] == '"' && utlstr[len-1] == '"' )
-                            *strbufsize += (int32)len - 2;
+                            *strbufsize += (int32_t)len - 2;
                         else
-                            *strbufsize += (int32)len;
+                            *strbufsize += (int32_t)len;
                     }
                     /* Increment number of entries */
                     nEntries++;
@@ -2280,14 +2281,14 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  nSwath         int32               Number of swath structures in file      |
+|  nSwath         int32_t             Number of swath structures in file      |
 |                                                                             |
 |  INPUTS:                                                                    |
 |  filename       char                HDF-EOS filename                        |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |  swathlist      char                List of swath names (comma-separated)   |
-|  strbufsize     int32               Length of swathlist                     |
+|  strbufsize     int32_t             Length of swathlist                     |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2298,10 +2299,10 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-int32
-SWinqswath(const char *filename, char *swathlist, int32 * strbufsize)
+int32_t
+SWinqswath(const char *filename, char *swathlist, int32_t * strbufsize)
 {
-    int32           nSwath;	/* Number of swath structures in file */
+    int32_t         nSwath;	/* Number of swath structures in file */
 
     /* Call "EHinquire" routine */
     /* ------------------------ */
@@ -2322,19 +2323,19 @@ SWinqswath(const char *filename, char *swathlist, int32 * strbufsize)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               HDF-EOS file ID                         |
-|  swathID        int32               swath structure ID                      |
+|  fid            int32_t             HDF-EOS file ID                         |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldname      const char          field name                              |
 |  access         const char          Access code (w/r)                       |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  vgidout        int32               Field (geo/data) vgroup ID              |
-|  vdataIDout     int32               Field Vdata ID                          |
-|  fldtype        int32               Field type                              |
+|  vgidout        int32_t             Field (geo/data) vgroup ID              |
+|  vdataIDout     int32_t             Field Vdata ID                          |
+|  fldtype        int32_t             Field type                              |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2345,17 +2346,17 @@ SWinqswath(const char *filename, char *swathlist, int32 * strbufsize)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-SW1dfldsrch(int32 fid, int32 swathID, const char *fieldname, const char *i_access,
-	    int32 * vgidout, int32 * vdataIDout, int32 * fldtype)
+static int
+SW1dfldsrch(int32_t fid, int32_t swathID, const char *fieldname, const char *i_access,
+	    int32_t * vgidout, int32_t * vdataIDout, int32_t * fldtype)
 
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
-    int32           sID;	/* SwathID - offset */
-    int32           vgid;	/* Swath Geo or Data Vgroup ID */
-    int32           vdataID;	/* 1d field vdata */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         sID;	/* SwathID - offset */
+    int32_t         vgid;	/* Swath Geo or Data Vgroup ID */
+    int32_t         vdataID;	/* 1d field vdata */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
 
 
     /* Compute "reduced" swath ID */
@@ -2412,21 +2413,21 @@ SW1dfldsrch(int32 fid, int32 swathID, const char *fieldname, const char *i_acces
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
-|  sdInterfaceID  int32               SD interface ID                         |
+|  swathID        int32_t             swath structure ID                      |
+|  sdInterfaceID  int32_t             SD interface ID                         |
 |  fieldname      const char          field name                              |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  sdid           int32               SD element ID                           |
-|  rankSDS        int32               Rank of SDS                             |
-|  rankFld        int32               True rank of field (merging)            |
-|  offset         int32               Offset of field within merged field     |
-|  dims           int32               Dimensions of field                     |
-|  solo           int32               Solo field flag                         |
+|  sdid           int32_t             SD element ID                           |
+|  rankSDS        int32_t             Rank of SDS                             |
+|  rankFld        int32_t             True rank of field (merging)            |
+|  offset         int32_t             Offset of field within merged field     |
+|  dims           int32_t             Dimensions of field                     |
+|  solo           int32_t             Solo field flag                         |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -2438,19 +2439,19 @@ SW1dfldsrch(int32 fid, int32 swathID, const char *fieldname, const char *i_acces
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
-            int32 * sdid, int32 * rankSDS, int32 * rankFld, int32 * offset,
-            int32 dims[], int32 * solo)
+static int
+SWSDfldsrch(int32_t swathID, int32_t sdInterfaceID, const char *fieldname,
+            int32_t * sdid, int32_t * rankSDS, int32_t * rankFld, int32_t * offset,
+            int32_t dims[], int32_t * solo)
 {
-    intn            i;		/* Loop index */
-    intn            status = -1;/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = -1;/* routine return status variable */
 
-    int32           sID;	/* SwathID - offset */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           dum;	/* Dummy variable */
-    int32           dums[128];	/* Dummy array */
-    int32           attrIndex;	/* Attribute l_index */
+    int32_t         sID;	/* SwathID - offset */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         dums[128];	/* Dummy array */
+    int32_t         attrIndex;	/* Attribute l_index */
 
     char            name[2048];	/* Merged-Field Names */
     char            swathname[80];	/* Swath Name */
@@ -2649,15 +2650,15 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldname      const char          fieldname                               |
 |  code           const char          Write/Read code (w/r)                   |
-|  start          int32               start array                             |
-|  stride         int32               stride array                            |
-|  edge           int32               edge array                              |
+|  start          int32_t             start array                             |
+|  stride         int32_t             stride array                            |
+|  edge           int32_t             edge array                              |
 |  datbuf         void                data buffer for read                    |
 |                                                                             |
 |                                                                             |
@@ -2674,37 +2675,37 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-static intn
-SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
-	    int32 start[], int32 stride[], int32 edge[], VOIDP datbuf)
+static int
+SWwrrdfield(int32_t swathID, const char *fieldname, const char *code,
+	    int32_t start[], int32_t stride[], int32_t edge[], VOIDP datbuf)
 
 {
-    intn            i;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
-    int32           vgid;	/* Swath Geo or Data Vgroup ID */
-    int32           sdid;	/* SDS ID */
-    int32           dum;	/* Dummy variable */
-    int32           rankSDS;	/* Rank of SDS */
-    int32           rankFld;	/* Rank of field */
+    int32_t         fid;	/* HDF-EOS file ID */
+    int32_t         sdInterfaceID;	/* HDF SDS interface ID */
+    int32_t         vgid;	/* Swath Geo or Data Vgroup ID */
+    int32_t         sdid;	/* SDS ID */
+    int32_t         dum;	/* Dummy variable */
+    int32_t         rankSDS;	/* Rank of SDS */
+    int32_t         rankFld;	/* Rank of field */
 
-    int32           vdataID;	/* 1d field vdata */
-    int32           recsize;	/* Vdata record size */
-    int32           fldsize;	/* Field size */
-    int32           nrec;	/* Number of records in Vdata */
+    int32_t         vdataID;	/* 1d field vdata */
+    int32_t         recsize;	/* Vdata record size */
+    int32_t         fldsize;	/* Field size */
+    int32_t         nrec;	/* Number of records in Vdata */
 
-    int32           offset[8] = {0};	/* I/O offset (start) */
-    int32           incr[8];	/* I/O increment (stride) */
-    int32           count[8];	/* I/O count (edge) */
-    int32           dims[8];	/* Field/SDS dimensions */
-    int32           mrgOffset = 0;	/* Merged field offset */
-    int32           nflds;	/* Number of fields in Vdata */
-    int32           strideOne;	/* Strides = 1 flag */
+    int32_t         offset[8] = {0};	/* I/O offset (start) */
+    int32_t         incr[8];	/* I/O increment (stride) */
+    int32_t         count[8];	/* I/O count (edge) */
+    int32_t         dims[8];	/* Field/SDS dimensions */
+    int32_t         mrgOffset = 0;	/* Merged field offset */
+    int32_t         nflds;	/* Number of fields in Vdata */
+    int32_t         strideOne;	/* Strides = 1 flag */
 
-    uint8          *buf;	/* I/O (transfer) buffer */
-    uint8          *fillbuf;	/* Fill value buffer */
+    uint8_t        *buf;	/* I/O (transfer) buffer */
+    uint8_t        *fillbuf;	/* Fill value buffer */
 
     char            attrName[80];	/* Name of fill value attribute */
     char           *ptr[64];	/* String pointer array */
@@ -2939,7 +2940,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    /* Get size of field and setup fill buffer */
 		    /* --------------------------------------- */
 		    fldsize = VSsizeof(vdataID, (char *)fieldname);
-		    fillbuf = (uint8 *) calloc(fldsize, 1);
+		    fillbuf = (uint8_t *) calloc(fldsize, 1);
 		    if(fillbuf == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
@@ -2949,7 +2950,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    /* Get size of record in Vdata and setup I/O buffer */
 		    /* ------------------------------------------------ */
 		    VSQueryvsize(vdataID, &recsize);
-		    buf = (uint8 *) calloc(recsize, count[0] * incr[0]);
+		    buf = (uint8_t *) calloc(recsize, count[0] * incr[0]);
 		    if(buf == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
@@ -3019,7 +3020,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 			for (i = 0; i < count[0]; i++)
 			{
 			    memcpy(buf + i * recsize * incr[0] + mrgOffset,
-				   (uint8 *) datbuf + i * fldsize, fldsize);
+				   (uint8_t *) datbuf + i * fldsize, fldsize);
 			}
 		    }
 
@@ -3055,7 +3056,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    /* ------------ */
 		    status = VSsetfields(vdataID, fieldname);
 		    fldsize = VSsizeof(vdataID, (char *)fieldname);
-		    buf = (uint8 *) calloc(fldsize, count[0] * incr[0]);
+		    buf = (uint8_t *) calloc(fldsize, count[0] * incr[0]);
 		    if(buf == NULL)
 		    {
 			HEpush(DFE_NOSPACE,"SWwrrdfield", __FILE__, __LINE__);
@@ -3077,7 +3078,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    {
 			for (i = 0; i < count[0]; i++)
 			{
-			    memcpy((uint8 *) datbuf + i * fldsize,
+			    memcpy((uint8_t *) datbuf + i * fldsize,
 				   buf + i * fldsize * incr[0], fldsize);
 			}
 		    }
@@ -3109,14 +3110,14 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldname      const char          fieldname                               |
-|  start          int32               start array                             |
-|  stride         int32               stride array                            |
-|  edge           int32               edge array                              |
+|  start          int32_t             start array                             |
+|  stride         int32_t             stride array                            |
+|  edge           int32_t             edge array                              |
 |  buffer         void                data buffer for read                    |
 |                                                                             |
 |                                                                             |
@@ -3132,12 +3133,12 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWreadfield(int32 swathID, const char *fieldname,
-	    int32 start[], int32 stride[], int32 edge[], VOIDP buffer)
+int
+SWreadfield(int32_t swathID, const char *fieldname,
+	    int32_t start[], int32_t stride[], int32_t edge[], VOIDP buffer)
 
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
     status = SWwrrdfield(swathID, fieldname, "r", start, stride, edge,
 			 buffer);
@@ -3154,10 +3155,10 @@ SWreadfield(int32 swathID, const char *fieldname,
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldname      char                field name                              |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -3172,14 +3173,14 @@ SWreadfield(int32 swathID, const char *fieldname,
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
+int
+SWgetfillvalue(int32_t swathID, const char *fieldname, VOIDP fillval)
 {
-    intn            status;	/* routine return status variable */
+    int             status;	/* routine return status variable */
 
-    int32           nt;		/* Number type */
-    int32           dims[8];	/* Dimensions array */
-    int32           dum;	/* Dummy variable */
+    int32_t         nt;		/* Number type */
+    int32_t         dims[8];	/* Dimensions array */
+    int32_t         dum;	/* Dummy variable */
 
     char            name[84];	/* Fill value "attribute" name */
 
@@ -3226,10 +3227,10 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
@@ -3249,22 +3250,22 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWdetach(int32 swathID)
+int
+SWdetach(int32_t swathID)
 
 {
-    intn            i;		/* Loop index */
-    intn            k;		/* Loop index */
-    intn            status = 0;	/* routine return status variable */
+    int             i;		/* Loop index */
+    int             k;		/* Loop index */
+    int             status = 0;	/* routine return status variable */
 
-    uint8          *buf;	/* Buffer for blank (initial) 1D records */
+    uint8_t        *buf;	/* Buffer for blank (initial) 1D records */
 
-    int32           vdataID;	/* Vdata ID */
-    int32           dims[3];	/* Dimension array */
-    int32           sdInterfaceID;	/* SDS interface ID */
-    int32           sID;	/* Swath ID - offset */
-    int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
-    int32           dum;	/* Dummy variable */
+    int32_t         vdataID;	/* Vdata ID */
+    int32_t         dims[3];	/* Dimension array */
+    int32_t         sdInterfaceID;	/* SDS interface ID */
+    int32_t         sID;	/* Swath ID - offset */
+    int32_t         idOffset = SWIDOFFSET;	/* Swath ID offset */
+    int32_t         dum;	/* Dummy variable */
 
     char            swathname[VGNAMELENMAX + 1];	/* Swath name */
 
@@ -3318,7 +3319,7 @@ SWdetach(int32 swathID)
 
 		/* Write (blank) records */
 		/* --------------------- */
-		buf = (uint8 *) calloc(VSsizeof(vdataID, nambuf), dims[0]);
+		buf = (uint8_t *) calloc(VSsizeof(vdataID, nambuf), dims[0]);
 		if(buf == NULL)
 		{
 		    HEpush(DFE_NOSPACE,"SWdetach", __FILE__, __LINE__);
@@ -3415,10 +3416,10 @@ SWdetach(int32 swathID)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  fid            int32               File ID                                 |
+|  fid            int32_t             File ID                                 |
 |                                                                             |
 |  OUTPUTS:                                                                   |
 |             None                                                            |
@@ -3432,11 +3433,11 @@ SWdetach(int32 swathID)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWclose(int32 fid)
+int
+SWclose(int32_t fid)
 
 {
-    intn            status = 0;	/* routine return status variable */
+    int             status = 0;	/* routine return status variable */
 
     /* Call EHclose to perform file close */
     /* ---------------------------------- */
@@ -3455,15 +3456,15 @@ SWclose(int32 fid)
 |                                                                             |
 |  Return Value    Type     Units     Description                             |
 |  ============   ======  =========   =====================================   |
-|  status         intn                return status (0) SUCCEED, (-1) FAIL    |
+|  status         int                 return status (0) SUCCEED, (-1) FAIL    |
 |                                                                             |
 |  INPUTS:                                                                    |
-|  swathID        int32               swath structure ID                      |
+|  swathID        int32_t             swath structure ID                      |
 |  fieldname      const char          field name                              |
 |                                                                             |
 |                                                                             |
 |  OUTPUTS:                                                                   |
-|  sdid           int32               SD element ID                           |
+|  sdid           int32_t             SD element ID                           |
 |                                                                             |
 |  NOTES:                                                                     |
 |                                                                             |
@@ -3474,14 +3475,14 @@ SWclose(int32 fid)
 |                                                                             |
 |  END_PROLOG                                                                 |
 -----------------------------------------------------------------------------*/
-intn
-SWsdid(int32 swathID, const char *fieldname, int32 *sdid)
+int
+SWsdid(int32_t swathID, const char *fieldname, int32_t *sdid)
 {
-    intn            status;	        /* routine return status variable */
-    int32           fid;	        /* HDF-EOS file ID */
-    int32           sdInterfaceID;      /* HDF SDS interface ID */
-    int32           dum;	        /* Dummy variable */
-    int32           dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
+    int             status;	        /* routine return status variable */
+    int32_t         fid;	        /* HDF-EOS file ID */
+    int32_t         sdInterfaceID;      /* HDF SDS interface ID */
+    int32_t         dum;	        /* Dummy variable */
+    int32_t         dims[H4_MAX_VAR_DIMS]; /* Field/SDS dimensions */
 
     status = SWchkswid(swathID, "SWsdid", &fid, &sdInterfaceID, &dum);
     if (status != -1)

@@ -1,8 +1,10 @@
+#include <stdint.h>
+
 #include "mfhdf.h"
 #include "HdfEosDef.h"
 #include "hfile.h"
 
-int32 VgetnameSafe(int32 vkey, char *vgname, size_t vgnamesize)
+int32_t VgetnameSafe(int32_t vkey, char *vgname, size_t vgnamesize)
 {
 #if LIBVER_MAJOR == 4 && LIBVER_MINOR >= 4
     size_t len = 0;
@@ -15,7 +17,7 @@ int32 VgetnameSafe(int32 vkey, char *vgname, size_t vgnamesize)
     }
     return SUCCEED;
 #else
-    uint16 name_len = 0;
+    uint16_t name_len = 0;
     if (Vgetnamelen(vkey, &name_len) != SUCCEED)
     {
          vgname[0] = 0;
