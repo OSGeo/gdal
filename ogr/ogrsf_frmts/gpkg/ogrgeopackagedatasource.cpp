@@ -3189,7 +3189,7 @@ CPLErr GDALGeoPackageDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 {
-    OGRErr eErr;
+    OGRErr eErr = OGRERR_NONE;
 
     m_dfTMSMinX = m_gt[0];
     m_dfTMSMaxY = m_gt[3];
@@ -3207,10 +3207,15 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
     double dfPixelXSizeZoomLevel0 = m_gt[1] * (1 << m_nZoomLevel);
     double dfPixelYSizeZoomLevel0 = fabs(m_gt[5]) * (1 << m_nZoomLevel);
-    int nTileXCountZoomLevel0 =
-        std::max(1, DIV_ROUND_UP((nRasterXSize >> m_nZoomLevel), nTileWidth));
-    int nTileYCountZoomLevel0 =
-        std::max(1, DIV_ROUND_UP((nRasterYSize >> m_nZoomLevel), nTileHeight));
+
+    int nTileXCountZoomLevel0{std::max(
+        1, static_cast<int>(std::ceil(
+               (static_cast<double>(nRasterXSize) /
+                (static_cast<double>(nTileWidth) * (1 << m_nZoomLevel))))))};
+    int nTileYCountZoomLevel0{std::max(
+        1, static_cast<int>(std::ceil(
+               (static_cast<double>(nRasterYSize) /
+                (static_cast<double>(nTileHeight) * (1 << m_nZoomLevel))))))};
 
     const auto poTS = GetTilingScheme(m_osTilingScheme);
     if (poTS)
