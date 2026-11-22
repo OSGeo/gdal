@@ -3209,11 +3209,13 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
     double dfPixelYSizeZoomLevel0 = fabs(m_gt[5]) * (1 << m_nZoomLevel);
 
     int nTileXCountZoomLevel0{std::max(
-        1, static_cast<int>(std::ceil((static_cast<double>(nRasterXSize) /
-                                       (nTileWidth * (1 << m_nZoomLevel))))))};
+        1, static_cast<int>(std::ceil(
+               (static_cast<double>(nRasterXSize) /
+                (static_cast<double>(nTileWidth) * (1 << m_nZoomLevel))))))};
     int nTileYCountZoomLevel0{std::max(
-        1, static_cast<int>(std::ceil((static_cast<double>(nRasterYSize) /
-                                       (nTileHeight * (1 << m_nZoomLevel))))))};
+        1, static_cast<int>(std::ceil(
+               (static_cast<double>(nRasterYSize) /
+                (static_cast<double>(nTileHeight) * (1 << m_nZoomLevel))))))};
 
     const auto poTS = GetTilingScheme(m_osTilingScheme);
     if (poTS)
