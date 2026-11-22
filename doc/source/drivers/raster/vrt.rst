@@ -2448,8 +2448,7 @@ The following conventions apply to option values:
   ``srcwin=0,0,256,256`` for ``-srcwin 0 0 256 256``.
 - Options that are flags in :program:`gdal_translate` (``unscale``,
   ``nogcp``, ``epo``, ``eco``) take ``true`` or ``false``. They default to
-  ``false``. A value that is not a recognized boolean is not reported as an
-  error, and enables the option.
+  ``false``. A value that is not a recognized boolean reports an error.
 - An unknown option is an error.
 - Several options are combined with ``&``. On a command line the whole
   string must be quoted to protect the ampersand from the shell:

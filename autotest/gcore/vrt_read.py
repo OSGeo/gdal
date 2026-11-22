@@ -1468,24 +1468,24 @@ def test_vrt_protocol():
 
     files_opened_start = gdaltest.get_opened_files()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="No such file or directory"):
         gdal.Open("vrt://")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="No such file or directory"):
         gdal.Open("vrt://i_do_not_exist")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="No such file or directory"):
         gdal.Open("vrt://i_do_not_exist?")
 
     ds = gdal.Open("vrt://data/byte.tif")
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).Checksum() == 4672
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Unknown option: foo"):
         gdal.Open("vrt://data/byte.tif?foo=bar")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid band number: foo"):
         gdal.Open("vrt://data/byte.tif?bands=foo")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid band number: 0"):
         gdal.Open("vrt://data/byte.tif?bands=0")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid band number: 2"):
         gdal.Open("vrt://data/byte.tif?bands=2")
 
     ds = gdal.Open("vrt://data/byte.tif?bands=1,mask,1")
@@ -1531,7 +1531,7 @@ def test_vrt_protocol():
         gdal.Open("vrt://data/float32.tif?gcp=invalid")
 
     ## not compatible, or no such driver
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="not recognized as being in a supported"):
         gdal.Open("vrt://data/float32.tif?if=AAIGrid,doesnotexist")
 
     ## compatible driver included
@@ -1539,7 +1539,7 @@ def test_vrt_protocol():
     assert ds is not None
 
     ## separated if not allowed
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="use commas to input multiple values"):
         gdal.Open("vrt://data/float32.tif?if=AAIGrid&if=GTiff")
 
     ## check exponent and scale
@@ -1552,7 +1552,9 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?scale_1=0,10")
     assert ds.GetRasterBand(1).Checksum() == 4151
 
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="scale should be specified when .exponent is specified"
+    ):
         gdal.Open("vrt://data/float32.tif?exponent=2.2")
 
     ds = gdal.Open("vrt://data/float32.tif?exponent=2.2&scale=0,100")
@@ -1561,7 +1563,7 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/uint16_3band.vrt?exponent_2=2.2&scale_2=0,10,0,100")
     assert ds.GetRasterBand(2).Checksum() == 4455
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid outsize option"):
         gdal.Open("vrt://data/float32.tif?outsize=10")
 
     ds = gdal.Open("vrt://data/float32.tif?outsize=10,5")
@@ -1572,7 +1574,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).XSize == 10
     assert ds.GetRasterBand(1).YSize == 5
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid projwin option"):
         gdal.Open("vrt://data/float32.tif?projwin=440840,441920,3750120")
 
     ds = gdal.Open("vrt://data/float32.tif?projwin=440840,3751080,441920,3750120")
@@ -1594,7 +1596,7 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).XSize == 19
     assert ds.GetRasterBand(1).YSize == 17
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid tr option"):
         gdal.Open("vrt://data/float32.tif?tr=120")
 
     ds = gdal.Open("vrt://data/float32.tif?tr=120,240")
@@ -1610,7 +1612,7 @@ def test_vrt_protocol():
         128.95408630371094
     )  ## check values changed via bilinear
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid srcwin option"):
         gdal.Open("vrt://data/float32.tif?srcwin=0,0,3")
 
     ds = gdal.Open("vrt://data/float32.tif?srcwin=2,3,8,5")
@@ -1620,7 +1622,7 @@ def test_vrt_protocol():
         123.0
     )  ## check value is correct
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid a_gt option"):
         gdal.Open("vrt://data/float32.tif?a_gt=1,0,0,0,1")
 
     ds = gdal.Open("vrt://data/float32.tif?a_gt=0,1,0,0,0,1")
@@ -1661,6 +1663,9 @@ def test_vrt_protocol():
         0
     ] == pytest.approx(1.0)
 
+    with pytest.raises(Exception, match="Invalid value of scale"):
+        gdal.Open("vrt://data/minfloat.tif?scale=big")
+
     ds = gdal.Open("vrt://data/minfloat.tif?scale_2=true&bands=1,1")
     assert struct.unpack("f", ds.GetRasterBand(2).ReadRaster(2, 0, 1, 1))[
         0
@@ -1670,20 +1675,29 @@ def test_vrt_protocol():
     ] == pytest.approx(5.0)
 
     # test that 'key=value' form is used
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="scale must be in the form 'key=value"):
         gdal.Open("vrt://data/minfloat.tif?scale")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="unscale must be in the form 'key=value"):
         gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
 
     ds = gdal.Open("vrt://data/gcps.vrt?nogcp=true")
     assert ds.GetGCPCount() == 0
 
+    with pytest.raises(Exception, match="Invalid value for nogcp"):
+        gdal.Open("vrt://data/gcps.vrt?nogcp=pasfaux")
+
     assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,20&eco=true&epo=true")
     assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&eco=true")
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="Invalid value for epo"):
+        gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=pasfaux")
+
+    with pytest.raises(Exception, match="Invalid value for eco"):
+        assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&eco=pasfaux")
+
+    with pytest.raises(Exception, match="source window .* falls partially outside"):
         gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="source window .* falls completely outside"):
         gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
 
     ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2")
@@ -1692,11 +1706,15 @@ def test_vrt_protocol():
     ## the component name is "1"
     ds = gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=1")
     assert ds.GetRasterBand(1).Checksum() == 35731
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="sd_name' is mutually exclusive with option 'sd"
+    ):
         gdal.Open("vrt://data/tiff_with_subifds.tif?sd=2&sd_name=1")
-    with pytest.raises(Exception):
+    with pytest.raises(
+        Exception, match="should indicate a valid subdataset component number"
+    ):
         gdal.Open("vrt://data/tiff_with_subifds.tif?sd=3")
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="should be a valid subdataset component name"):
         gdal.Open("vrt://data/tiff_with_subifds.tif?sd_name=sds")
 
     del ds
@@ -1737,6 +1755,9 @@ def test_vrt_protocol_transpose_option():
 
     ds = gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?transpose=/MyDataField:2,1")
     assert ds.RasterXSize == 4
+
+    with pytest.raises(Exception, match="Invalid transpose index"):
+        gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?transpose=/MyDataField:.2,1")
 
     ## check exclusivity with sd_name/sd (transpose gets priority)
     with pytest.raises(
