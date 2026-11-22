@@ -197,6 +197,10 @@ A full-feature build will show:
         COMPRESSORS=blosc,zlib,gzip,lzma,zstd,lz4
         BLOSC_COMPRESSORS=blosclz,lz4,lz4hc,snappy,zlib,zstd
 
+For Zarr V3, the ``numcodecs.zlib`` compressor and ``numcodecs.shuffle`` filter,
+as written by zarr-python, are also supported (GDAL >= 3.14).
+
+
 For specific uses, it is also possible to register at run-time extra compressors
 and decompressors with :cpp:func:`CPLRegisterCompressor` and :cpp:func:`CPLRegisterDecompressor`.
 
