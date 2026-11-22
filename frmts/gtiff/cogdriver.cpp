@@ -1439,6 +1439,16 @@ class COGProxyRasterBand final : public GDALProxyRasterBand
         poUnderlyingRasterBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
     }
 
+    const char *GetDescription() const override
+    {
+        return m_poUnderlyingBand->GetDescription();
+    }
+
+    void SetDescription(const char *pszDescription) override
+    {
+        m_poUnderlyingBand->SetDescription(pszDescription);
+    }
+
   protected:
     GDALRasterBand *RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 

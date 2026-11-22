@@ -2250,6 +2250,21 @@ def test_cog_create(tmp_vsimem):
 ###############################################################################
 
 
+def test_cog_create_band_description(tmp_vsimem):
+
+    with gdal.GetDriverByName("COG").Create(tmp_vsimem / "out.tif", 2, 1, 2) as ds:
+        ds.GetRasterBand(1).SetDescription("red")
+        ds.GetRasterBand(2).SetDescription("nir")
+        assert ds.GetRasterBand(1).GetDescription() == "red"
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).GetDescription() == "red"
+        assert ds.GetRasterBand(2).GetDescription() == "nir"
+
+
+###############################################################################
+
+
 def test_cog_algorithm_driver_cog_validate():
 
     with gdal.alg.driver.cog.validate(
