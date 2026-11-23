@@ -43,7 +43,8 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
         .SetMinCount(2)
         .SetMaxCount(3)
         .SetRepeatedArgAllowed(false);
-    AddArg("height", 'z', _("Observer height"), &m_opts.observer.z);
+    AddArg("height", 'z', _("Observer height"), &m_opts.observer.z)
+        .SetDefault(2);
 
     auto &sdFilenameArg =
         AddArg("sd-filename", 0, _("Filename of standard-deviation raster"),
@@ -191,7 +192,7 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         m_opts.observer.y = m_observerPos[1];
         if (m_observerPos.size() == 3)
             m_opts.observer.z = m_observerPos[2];
-        else
+        else if (!GetArg("height")->IsExplicitlySet())
             m_opts.observer.z = 2;
     }
 
