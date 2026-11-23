@@ -646,7 +646,7 @@ GDALThreadSafeDataset::~GDALThreadSafeDataset()
 CPLErr GDALThreadSafeDataset::Close(GDALProgressFunc, void *)
 {
     CPLErr eErr = CE_None;
-    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    if (nOpenFlags != OPEN_FLAGS_CLOSED && bGlobalCacheValid)
     {
         // Collect TLS datasets in a vector, and free them after releasing
         // g_nInDestructorCounter to limit contention
