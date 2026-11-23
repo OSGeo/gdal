@@ -2,6 +2,12 @@
 include(cmake/helpers/GdalCMakeMinimumRequired.cmake)
 cmake_minimum_required(VERSION ${GDAL_CMAKE_VERSION_MIN}...${GDAL_CMAKE_VERSION_MAX})
 
+# CMake 4.5 added the CMD_NON_TARGET_DIRECTIVE diagnostic, which -Werror=dev
+# turns into errors
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 4.5)
+  cmake_diagnostic(SET CMD_NON_TARGET_DIRECTIVE IGNORE)
+endif()
+
 project(gdal LANGUAGES C CXX)
 
 set(GDAL_LIB_TARGET_NAME GDAL)
