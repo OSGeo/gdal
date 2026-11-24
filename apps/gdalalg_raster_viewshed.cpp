@@ -192,8 +192,6 @@ bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         m_opts.observer.y = m_observerPos[1];
         if (m_observerPos.size() == 3)
             m_opts.observer.z = m_observerPos[2];
-        else if (!GetArg("height")->IsExplicitlySet())
-            m_opts.observer.z = 2;
     }
 
     if (!GetArg("curvature-coefficient")->IsExplicitlySet())
