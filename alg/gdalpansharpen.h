@@ -92,7 +92,7 @@ typedef struct
      * to dfNoData. If set and bHasNoData is FALSE, the pansharpening operation will
      * fail if the spectral bands do not fully cover the panchromatic band.
      * @since GDAL 3.14 */
-    int bNoDataOutsideSpectralExtent;
+    bool bNoDataOutsideSpectralExtent;
 } GDALPansharpenOptions;
 
 GDALPansharpenOptions CPL_DLL *GDALCreatePansharpenOptions(void);
