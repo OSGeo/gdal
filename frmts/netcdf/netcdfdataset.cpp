@@ -51,7 +51,6 @@
 #include "cpl_float.h"
 #include "cpl_json.h"
 #include "cpl_minixml.h"
-#include "cpl_multiproc.h"
 #include "cpl_progress.h"
 #include "cpl_time.h"
 #include "gdal.h"
@@ -129,7 +128,8 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames(int nCdfId,
 // Uncomment this for more debug output.
 // #define NCDF_DEBUG 1
 
-CPLMutex *hNCMutex = nullptr;
+// Serializes netCDF API calls and access to the shared file handle cache.
+std::recursive_mutex hNCMutex;
 
 // Workaround https://github.com/OSGeo/gdal/issues/6253
 // Having 2 netCDF handles on the same file doesn't work in a multi-threaded
@@ -891,6 +891,8 @@ netCDFRasterBand::netCDFRasterBand(
       panBandZPos(nullptr), panBandZLev(nullptr), bSignedData(bSigned),
       bCheckLongitude(false), m_bCreateMetadataFromOtherVarsDone(true)
 {
+    std::lock_guard oLock(hNCMutex);
+
     poDS = poNCDFDS;
     nBand = nBandIn;
 
@@ -1177,6 +1179,7 @@ CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
         }
         else
         {
+            std::lock_guard oLock(hNCMutex);
             cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
             if (!NCDFPutAttr(cdfid, nZId, pszName, pszValue))
@@ -1227,7 +1230,7 @@ double netCDFRasterBand::GetOffset(int *pbSuccess)
 /************************************************************************/
 CPLErr netCDFRasterBand::SetOffset(double dfNewOffset)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // Write value if in update mode.
     if (poDS->GetAccess() == GA_Update)
@@ -1277,7 +1280,7 @@ double netCDFRasterBand::GetScale(int *pbSuccess)
 /************************************************************************/
 CPLErr netCDFRasterBand::SetScale(double dfNewScale)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // Write value if in update mode.
     if (poDS->GetAccess() == GA_Update)
@@ -1331,7 +1334,7 @@ const char *netCDFRasterBand::GetUnitType()
 CPLErr netCDFRasterBand::SetUnitType(const char *pszNewValue)
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     const std::string osUnitType = (pszNewValue != nullptr ? pszNewValue : "");
 
@@ -1445,7 +1448,7 @@ uint64_t netCDFRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
 CPLErr netCDFRasterBand::SetNoDataValue(double dfNoData)
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // If already set to new value, don't do anything.
     if (m_bNoDataSet && CPLIsEqual(dfNoData, m_dfNoDataValue))
@@ -1569,7 +1572,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(double dfNoData)
 CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // If already set to new value, don't do anything.
     if (m_bNoDataSetAsInt64 && nNoData == m_nNodataValueInt64)
@@ -1653,7 +1656,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(int64_t nNoData)
 CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // If already set to new value, don't do anything.
     if (m_bNoDataSetAsUInt64 && nNoData == m_nNodataValueUInt64)
@@ -1738,7 +1741,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(uint64_t nNoData)
 CPLErr netCDFRasterBand::DeleteNoDataValue()
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (!bNoDataSet)
         return CE_None;
@@ -1906,6 +1909,8 @@ static int Get1DVariableIndexedByDimension(int cdfid, int nDimId,
 
 void netCDFRasterBand::CreateMetadataFromAttributes()
 {
+    std::lock_guard oLock(hNCMutex);
+
     char szVarName[NC_MAX_NAME + 1] = {};
     int status = nc_inq_varname(cdfid, nZId, szVarName);
     NCDF_ERR(status);
@@ -1953,6 +1958,8 @@ void netCDFRasterBand::CreateMetadataFromAttributes()
 void netCDFRasterBand::CreateMetadataFromOtherVars()
 
 {
+    std::lock_guard oLock(hNCMutex);
+
     CPLAssert(!m_bCreateMetadataFromOtherVarsDone);
     m_bCreateMetadataFromOtherVarsDone = true;
 
@@ -2522,7 +2529,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                     void *pImage)
 
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // Locate X, Y and Z position in the array.
 
@@ -2640,7 +2647,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                      void *pImage)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
 #ifdef NCDF_DEBUG
     if (nBlockYOff == 0 || (nBlockYOff == nRasterYSize - 1))
@@ -2870,8 +2877,6 @@ CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        CPLMutexHolderD(&hNCMutex);
-
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF",
                  "netCDFDataset::~netCDFDataset(), cdfid=%d filename=%s", cdfid,
@@ -2891,14 +2896,18 @@ CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
             AddProjectionVars(false, nullptr, nullptr);
         }
 
+        // Block-cache writes acquire hNCMutex in IWriteBlock().
         if (netCDFDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
+        std::unique_lock oLock(hNCMutex);
         if (GetAccess() == GA_Update && !SGCommitPendingTransaction())
             eErr = CE_Failure;
 
+        oLock.unlock();
         for (auto *poVectorDS : apoVectorDatasets)
             delete poVectorDS;
+        oLock.lock();
 
         // Make sure projection variable is written to band variable.
         if (GetAccess() == GA_Update && !bAddedGridMappingRef)
@@ -2923,6 +2932,7 @@ CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
                 eErr = CE_Failure;
         }
 
+        oLock.unlock();
         if (fpVSIMEM)
             VSIFCloseL(fpVSIMEM);
 
@@ -2942,6 +2952,8 @@ CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
 /************************************************************************/
 bool netCDFDataset::SetDefineMode(bool bNewDefineMode)
 {
+    std::lock_guard oLock(hNCMutex);
+
     // Do nothing if already in new define mode
     // or if dataset is in read-only mode or if dataset is true NC4 dataset.
     if (bDefineMode == bNewDefineMode || GetAccess() == GA_ReadOnly ||
@@ -3021,6 +3033,7 @@ CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         }
         else
         {
+            std::lock_guard oLock(hNCMutex);
             SetDefineMode(true);
 
             if (!NCDFPutAttr(cdfid, NC_GLOBAL, osName.c_str(), pszValue))
@@ -5045,8 +5058,6 @@ void netCDFDataset::SetSpatialRefNoUpdate(const OGRSpatialReference *poSRS)
 
 CPLErr netCDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
-    CPLMutexHolderD(&hNCMutex);
-
     if (GetAccess() != GA_Update || m_bHasProjection)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5088,8 +5099,6 @@ void netCDFDataset::SetGeoTransformNoUpdate(const GDALGeoTransform &gt)
 
 CPLErr netCDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    CPLMutexHolderD(&hNCMutex);
-
     if (GetAccess() != GA_Update || m_bHasGeoTransform)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -5478,6 +5487,18 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             }
         }
     }
+
+    // GDAL raster I/O may acquire the block-cache or dataset mutex.
+    std::unique_lock oLock(hNCMutex);
+    const auto reportProgress = [&](double dfProgress)
+    {
+        if (pfnProgress)
+        {
+            oLock.unlock();
+            pfnProgress(dfProgress, nullptr, pProgressData);
+            oLock.lock();
+        }
+    };
 
     // Process projection options.
     if (bIsProjected)
@@ -5912,8 +5933,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 NCDF_ERR(status);
             }
 
-            if (pfnProgress)
-                pfnProgress(0.20, nullptr, pProgressData);
+            reportProgress(0.20);
 
             // Write lon/lat arrays (CF coordinates) if requested.
 
@@ -6019,6 +6039,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                     // Get values from geoloc arrays.
                     else
                     {
+                        oLock.unlock();
                         CPLErr eErr = poBand_Y->RasterIO(
                             GF_Read, 0, j, nRasterXSize, 1, padLatVal,
                             nRasterXSize, 1, GDT_Float64, 0, 0, nullptr);
@@ -6028,6 +6049,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                 GF_Read, 0, j, nRasterXSize, 1, padLonVal,
                                 nRasterXSize, 1, GDT_Float64, 0, 0, nullptr);
                         }
+                        oLock.lock();
 
                         if (eErr == CE_None)
                         {
@@ -6056,7 +6078,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                         (j % (nRasterYSize / 10) == 0))
                     {
                         dfProgress += 0.08;
-                        pfnProgress(dfProgress, nullptr, pProgressData);
+                        reportProgress(dfProgress);
                     }
                 }
             }
@@ -6112,8 +6134,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                                         adfYVal.data());
             NCDF_ERR(status);
 
-            if (pfnProgress)
-                pfnProgress(0.20, nullptr, pProgressData);
+            reportProgress(0.20);
 
             size_t start[] = {0, 0};
             size_t count[] = {1, (size_t)nRasterXSize};
@@ -6137,6 +6158,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             {
                 start[0] = j;
 
+                oLock.unlock();
                 CPLErr eErr = poBand_Y->RasterIO(
                     GF_Read, 0, bBottomUp ? nRasterYSize - 1 - j : j,
                     nRasterXSize, 1, padLatVal, nRasterXSize, 1, GDT_Float64, 0,
@@ -6148,6 +6170,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                         nRasterXSize, 1, padLonVal, nRasterXSize, 1,
                         GDT_Float64, 0, 0, nullptr);
                 }
+                oLock.lock();
 
                 if (eErr == CE_None)
                 {
@@ -6175,7 +6198,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                     (j % (nRasterYSize / 10) == 0))
                 {
                     dfProgress += 0.08;
-                    pfnProgress(dfProgress, nullptr, pProgressData);
+                    reportProgress(dfProgress);
                 }
             }
         }
@@ -6280,8 +6303,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
         }  // Not projected.
 
-        if (pfnProgress)
-            pfnProgress(1.00, nullptr, pProgressData);
+        reportProgress(1.00);
     }
 
     return CE_None;
@@ -6292,6 +6314,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 // projection.
 bool netCDFDataset::AddGridMappingRef()
 {
+    std::lock_guard oLock(hNCMutex);
+
     bool bRet = true;
     bool bOldDefineMode = bDefineMode;
 
@@ -6732,6 +6756,7 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
         }
     }
 
+    std::unique_lock oLock(hNCMutex);
     netCDFDataset *poLayerDataset = nullptr;
     if (eMultipleLayerBehavior == SEPARATE_FILES)
     {
@@ -6753,12 +6778,12 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
             aosCreationOptions.FetchNameValue("WRITE_GDAL_TAGS"));
         const CPLString osLayerFilename(
             CPLFormFilenameSafe(osFilename, osNetCDFLayerName, "nc"));
-        CPLAcquireMutex(hNCMutex, 1000.0);
+        oLock.unlock();
         poLayerDataset =
             CreateLL(osLayerFilename, 0, 0, 0, aosDatasetOptions.List());
-        CPLReleaseMutex(hNCMutex);
         if (poLayerDataset == nullptr)
             return nullptr;
+        oLock.lock();
 
         nLayerCDFId = poLayerDataset->cdfid;
         NCDFAddGDALHistory(nLayerCDFId, osLayerFilename, bWriteGDALVersion,
@@ -8103,13 +8128,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         return OpenMultiDim(poOpenInfo);
     }
 
-    CPLMutexHolderD(&hNCMutex);
-
-    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-    // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
-    CPLAcquireMutex(hNCMutex, 1000.0);
 
     poDS->SetDescription(poOpenInfo->pszFilename);
 
@@ -8132,13 +8152,15 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->bFileToDestroyAtClosing = true;
             poDS->osFilename = CPLGenerateTempFilenameSafe("netcdf_tmp");
         }
-        if (!netCDFDatasetCreateTempFile(eTmpFormat, poDS->osFilename,
-                                         poOpenInfo->fpL))
+        bool bCreated;
         {
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            std::lock_guard oLock(hNCMutex);
+            bCreated = netCDFDatasetCreateTempFile(eTmpFormat, poDS->osFilename,
+                                                   poOpenInfo->fpL);
+        }
+        if (!bCreated)
+        {
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
         bTreatAsSubdataset = false;
@@ -8185,10 +8207,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (NCDF_FORMAT_NONE == poDS->eFormat ||
                 NCDF_FORMAT_UNKNOWN == poDS->eFormat)
             {
-                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                // deadlock with GDALDataset own mutex.
                 delete poDS;
-                CPLAcquireMutex(hNCMutex, 1000.0);
                 return nullptr;
             }
         }
@@ -8199,6 +8218,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         bTreatAsSubdataset = false;
         poDS->eFormat = eTmpFormat;
     }
+
+    std::unique_lock oLock(hNCMutex);
 
 // Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
@@ -8324,10 +8345,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "error opening");
 #endif
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 #ifdef NCDF_DEBUG
@@ -8353,10 +8372,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     int status = nc_inq(cdfid, &ndims, &nvars, &ngatts, &unlimdimid);
     if (status != NC_NOERR)
     {
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -8406,10 +8423,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef ENABLE_UFFD
             NETCDF_UFFD_UNMAP(pCtx);
 #endif
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
     }
@@ -8476,8 +8491,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         if (poDS->eAccess == GA_Update)
         {
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
             return nullptr;
         }
@@ -8499,8 +8513,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!bListAllArrays && nRasterVars == 0 && !bTreatAsSubdataset)
     {
         poDS->GDALPamDataset::SetMetadata(poDS->aosMetadata);
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         poDS->TryLoadXML();
         // If the dataset has been opened in raster mode only, exit
         if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -8518,7 +8531,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             delete poDS;
             poDS = nullptr;
         }
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return poDS;
     }
 
@@ -8539,10 +8551,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poDS->CreateSubDatasetList(cdfid);
             poDS->GDALPamDataset::SetMetadata(poDS->aosMetadata);
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             poDS->TryLoadXML();
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return poDS;
         }
     }
@@ -8585,10 +8595,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Variable has %d dimension(s) - not supported.", nd);
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -8775,10 +8783,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid raster dimensions: " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB,
                  static_cast<GUIntBig>(xdim), static_cast<GUIntBig>(ydim));
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -8802,10 +8808,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // X and Y Dimension Ids were not found!
     if ((nd >= 2 && k != 2) || (nd == 1 && k != 1))
     {
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -8847,11 +8851,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 status = nc_inq_dimname(cdfid, j, szTemp);
                 if (status != NC_NOERR)
                 {
-                    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                    // deadlock with GDALDataset own
-                    // mutex.
+                    oLock.unlock();
                     delete poDS;
-                    CPLAcquireMutex(hNCMutex, 1000.0);
                     return nullptr;
                 }
                 poDS->papszDimName.AddString(szTemp);
@@ -9041,10 +9042,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->GetLayerCount() == 0)
         {
             CPLFree(panBandZLev);
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
     }
@@ -9084,16 +9083,14 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->SetSubdatasetName(osSubdatasetName);
     }
 
-    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-    // GDALDataset own mutex.
+    // Loading PAM and initializing overviews can acquire GDAL locks.
+    oLock.unlock();
     poDS->TryLoadXML();
 
     if (bTreatAsSubdataset)
         poDS->oOvManager.Initialize(poDS, ":::VIRTUAL:::");
     else
         poDS->oOvManager.Initialize(poDS, poDS->osFilename);
-
-    CPLAcquireMutex(hNCMutex, 1000.0);
 
     return poDS;
 }
@@ -9246,10 +9243,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-    // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
-    CPLAcquireMutex(hNCMutex, 1000.0);
+    std::unique_lock oLock(hNCMutex);
 
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
@@ -9269,11 +9264,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     poDS->aosCreationOptions = CSLDuplicate(papszOptions);
     if (!poDS->ProcessCreationOptions())
     {
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-        // deadlock with GDALDataset own
-        // mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -9287,11 +9279,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                 CPLError(CE_Failure, CPLE_FileIO,
                          "%s is an existing file, but not a directory",
                          pszFilename);
-                CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                // deadlock with GDALDataset own
-                // mutex.
+                oLock.unlock();
                 delete poDS;
-                CPLAcquireMutex(hNCMutex, 1000.0);
                 return nullptr;
             }
         }
@@ -9299,10 +9288,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s directory",
                      pszFilename);
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
 
@@ -9333,10 +9320,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                      "Unable to create netCDF file %s: non existing output "
                      "directory",
                      pszFilename);
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-            // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
     }
@@ -9353,10 +9338,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Unable to create netCDF file %s (Error code %d): %s .",
                  pszFilename, status, nc_strerror(status));
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-        // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
@@ -9448,8 +9431,6 @@ GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
             return nullptr;
         }
     }
-
-    CPLMutexHolderD(&hNCMutex);
 
     auto poDS = netCDFDataset::CreateLL(pszFilename, nXSize, nYSize, nBandsIn,
                                         aosOptions.List());
@@ -9569,8 +9550,6 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                           CPL_UNUSED int bStrict, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressData)
 {
-    CPLMutexHolderD(&hNCMutex);
-
     CPLDebug("GDAL_netCDF", "\n=====\nnetCDFDataset::CreateCopy(%s, ...)",
              pszFilename);
 
@@ -9748,16 +9727,20 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             panBandZLev[i] = nDimSize;
             panBandDimPos[i + 2] = i;  // Save Position of ZDim.
 
-            // Define dim.
-            int status = nc_def_dim(poDS->cdfid, aosExtraDimNames[i], nDimSize,
-                                    &(panDimIds[i]));
-            NCDF_ERR(status);
+            {
+                std::lock_guard oLock(hNCMutex);
 
-            // Define dim var.
-            int anDim[1] = {panDimIds[i]};
-            status = nc_def_var(poDS->cdfid, aosExtraDimNames[i], nVarType, 1,
-                                anDim, &(panDimVarIds[i]));
-            NCDF_ERR(status);
+                // Define dim.
+                int status = nc_def_dim(poDS->cdfid, aosExtraDimNames[i],
+                                        nDimSize, &panDimIds[i]);
+                NCDF_ERR(status);
+
+                // Define dim var.
+                int anDim[1] = {panDimIds[i]};
+                status = nc_def_var(poDS->cdfid, aosExtraDimNames[i], nVarType,
+                                    1, anDim, &panDimVarIds[i]);
+                NCDF_ERR(status);
+            }
 
             // Add dim metadata, using global var# items.
             snprintf(szTemp, sizeof(szTemp), "%s#", aosExtraDimNames[i]);
@@ -9828,10 +9811,10 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             char szTemp[NC_MAX_NAME + 32 + 1];
             snprintf(szTemp, sizeof(szTemp), "NETCDF_DIM_%s_VALUES",
                      aosExtraDimNames[i]);
-            if (poSrcDS->GetMetadataItem(szTemp) != nullptr)
+            if (const char *pszValues = poSrcDS->GetMetadataItem(szTemp))
             {
-                NCDFPut1DVar(poDS->cdfid, panDimVarIds[i],
-                             poSrcDS->GetMetadataItem(szTemp));
+                std::lock_guard oLock(hNCMutex);
+                NCDFPut1DVar(poDS->cdfid, panDimVarIds[i], pszValues);
             }
         }
     }
@@ -10260,17 +10243,6 @@ int netCDFDataset::DefVarDeflate(int nVarId, bool bChunkingArg) const
 }
 
 /************************************************************************/
-/*                          NCDFUnloadDriver()                          */
-/************************************************************************/
-
-static void NCDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
-{
-    if (hNCMutex != nullptr)
-        CPLDestroyMutex(hNCMutex);
-    hNCMutex = nullptr;
-}
-
-/************************************************************************/
 /*                        GDALRegister_netCDF()                         */
 /************************************************************************/
 
@@ -10334,14 +10306,16 @@ void GDALRegister_netCDF()
 
     poDriver->SetMetadataItem("NETCDF_CONVENTIONS",
                               GDAL_DEFAULT_NCDF_CONVENTIONS);
-    poDriver->SetMetadataItem("NETCDF_VERSION", nc_inq_libvers());
+    {
+        std::lock_guard oLock(hNCMutex);
+        poDriver->SetMetadataItem("NETCDF_VERSION", nc_inq_libvers());
+    }
 
     // Set pfns and register driver.
     poDriver->pfnOpen = netCDFDataset::Open;
     poDriver->pfnCreateCopy = netCDFDataset::CreateCopy;
     poDriver->pfnCreate = netCDFDataset::Create;
     poDriver->pfnCreateMultiDimensional = netCDFDataset::CreateMultiDimensional;
-    poDriver->pfnUnloadDriver = NCDFUnloadDriver;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
@@ -10397,6 +10371,8 @@ static void NCDFAddGDALHistory(int fpImage, const char *pszFilename,
                                const char *pszFunctionName,
                                const char *pszCFVersion)
 {
+    std::lock_guard oLock(hNCMutex);
+
     if (pszCFVersion == nullptr)
     {
         pszCFVersion = GDAL_DEFAULT_NCDF_CONVENTIONS;
@@ -10858,6 +10834,8 @@ CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
 static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
                           const char *pszValue)
 {
+    std::lock_guard oLock(hNCMutex);
+
     int status = 0;
     char *pszTemp = nullptr;
 
