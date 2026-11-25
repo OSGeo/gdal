@@ -815,6 +815,9 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
         if (bSuccess && dfValue != 1.0)
             poDstBand->SetScale(dfValue);
 
+        if (poSrcBand->GetUnitType()[0] != '\0')
+            poDstBand->SetUnitType(poSrcBand->GetUnitType());
+
         GDALCopyNoDataValue(poDstBand, poSrcBand);
 
         if (poSrcBand->GetColorInterpretation() != GCI_Undefined &&

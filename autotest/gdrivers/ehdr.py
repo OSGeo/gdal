@@ -400,3 +400,17 @@ def test_ehdr_read_truncated():
         ds.GetRasterBand(1).Checksum()
     with pytest.raises(Exception, match="Failed to read block at offset"):
         ds.GetRasterBand(1).ReadRaster()
+
+
+###############################################################################
+# Test that CreateCopy() preserves the band unit type
+
+
+def test_ehdr_createcopy_unit_type(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.GetRasterBand(1).SetUnitType("metre")
+    gdal.GetDriverByName("EHdr").CreateCopy(tmp_vsimem / "out.bil", src_ds)
+
+    with gdal.Open(tmp_vsimem / "out.bil") as ds:
+        assert ds.GetRasterBand(1).GetUnitType() == "metre"
