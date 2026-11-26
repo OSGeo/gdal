@@ -335,6 +335,11 @@ GDALDataset *MMRDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
+    // Create the Dataset (with bands or Subdatasets).
+    auto poDS = std::make_unique<MMRDataset>(poOpenInfo);
+    if (!poDS->IsValid())
+        return nullptr;
+
     // Confirm the requested access is supported.
     if (poOpenInfo->eAccess == GA_Update)
     {
@@ -343,11 +348,6 @@ GDALDataset *MMRDataset::Open(GDALOpenInfo *poOpenInfo)
                  "access to existing datasets.");
         return nullptr;
     }
-
-    // Create the Dataset (with bands or Subdatasets).
-    auto poDS = std::make_unique<MMRDataset>(poOpenInfo);
-    if (!poDS->IsValid())
-        return nullptr;
 
     // Set description
     poDS->SetDescription(poOpenInfo->pszFilename);
