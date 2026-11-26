@@ -757,6 +757,30 @@ def test_jpegxl_alpha_distance_zero(tmp_vsimem):
 
 
 ###############################################################################
+# Test that a fully opaque alpha band is not stripped out by libjxl >= 0.13
+# encoder
+
+
+def test_jpegxl_does_not_strip_opaque_alpha(tmp_vsimem):
+    drv = gdal.GetDriverByName("JPEGXL")
+
+    xsize, ysize = 32, 32
+    white = b"\xff" * (xsize * ysize)
+    src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, 4)
+    for i, ci in enumerate(
+        [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand, gdal.GCI_AlphaBand]
+    ):
+        src_ds.GetRasterBand(i + 1).SetColorInterpretation(ci)
+        src_ds.GetRasterBand(i + 1).WriteRaster(0, 0, xsize, ysize, white)
+
+    filename = tmp_vsimem / "test_jpegxl_lossy_opaque_alpha.jxl"
+    drv.CreateCopy(filename, src_ds, options=["LOSSLESS=NO"])
+
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == 4
+
+
+###############################################################################
 # Test identifying a JPEGXL raw codestream (not within a JPEGXL container)
 # that has not a .jxl extension
 # Serves as a way of checking that the simplified identification method in GDAL

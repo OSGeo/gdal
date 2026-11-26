@@ -18,6 +18,7 @@
 #include <jxl/encode.h>
 #include <jxl/decode_cxx.h>
 #include <jxl/encode_cxx.h>
+#include <jxl/version.h>
 #ifdef HAVE_JXL_THREADS
 #include <jxl/resizable_parallel_runner.h>
 #include <jxl/resizable_parallel_runner_cxx.h>

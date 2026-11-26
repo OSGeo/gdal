@@ -2375,6 +2375,19 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
+#if JPEGXL_NUMERIC_VERSION >= JPEGXL_COMPUTE_NUMERIC_VERSION(0, 13, 0)
+    // make sure that libjxl >= 0.13 never strips away a fully opaque
+    // alpha band, as a round-trip would return an image with less
+    // bands than what it was given.
+    if (JxlEncoderFrameSettingsSetOption(
+            opts, JXL_ENC_FRAME_SETTING_STRIP_ALPHA, 0) != JXL_ENC_SUCCESS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "JxlEncoderFrameSettingsSetOption(STRIP_ALPHA) failed");
+        return nullptr;
+    }
+#endif
+
     std::vector<GByte> abyJPEG;
     void *pJPEGContent = nullptr;
     size_t nJPEGContent = 0;
