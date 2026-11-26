@@ -322,13 +322,41 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
         return 0;
     }
 
+    // libjxl >= 0.13 encoder can strip a fully opaque alpha channel
+    // from the resulting codestream.
+    int bAlphaStripped = 0;
+    if (td->td_planarconfig == PLANARCONFIG_CONTIG && info.alpha_bits == 0 &&
+        td->td_extrasamples > 0 &&
+        (td->td_sampleinfo[0] == EXTRASAMPLE_UNASSALPHA ||
+         td->td_sampleinfo[0] == EXTRASAMPLE_ASSOCALPHA) &&
+        info.num_color_channels + info.num_extra_channels + 1 ==
+            td->td_samplesperpixel)
+    {
+        bAlphaStripped = 1;
+    }
+
     if (td->td_planarconfig == PLANARCONFIG_CONTIG)
     {
-        if (info.num_color_channels + info.num_extra_channels !=
+        if (info.num_color_channels + info.num_extra_channels +
+                bAlphaStripped !=
             td->td_samplesperpixel)
         {
+            TIFFErrorExtR(
+                tif, module,
+                "JXL basic info channels = %d, whereas %d was expected",
+                info.num_color_channels + info.num_extra_channels,
+                td->td_samplesperpixel);
+            JxlDecoderReleaseInput(sp->decoder);
+            return 0;
+        }
+        if (bAlphaStripped && info.num_extra_channels > 0)
+        {
+            // cannot happen with GDAL-created tif files, but check anyhow
             TIFFErrorExtR(tif, module,
-                          "JXL basic info invalid number of channels");
+                          "Decoding a JXL codestream with stripped alpha "
+                          "and additional extra channels "
+                          "(JXL_ENC_FRAME_SETTING_STRIP_ALPHA=2) is "
+                          "not (yet) supported");
             JxlDecoderReleaseInput(sp->decoder);
             return 0;
         }
@@ -489,6 +517,8 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
     format.num_channels = info.num_color_channels;
     if (bAlphaEmbedded)
         format.num_channels++;
+    if (bAlphaStripped)
+        main_buffer_size = channel_size * info.num_color_channels;
 
     status = JxlDecoderProcessInput(sp->decoder);
     if (status != JXL_DEC_NEED_IMAGE_OUT_BUFFER)
@@ -521,6 +551,53 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
         JxlDecoderReleaseInput(sp->decoder);
         _TIFFfreeExt(tif, extra_channel_buffer);
         return 0;
+    }
+    if (bAlphaStripped)
+    {
+        // Spread color pixels to their final position, from the end of the
+        // buffer so that source and target never overlap destructively, and
+        // add an opaque alpha value.
+        uint8_t abyOpaque[4] = {0, 0, 0, 0};
+        switch (format.data_type)
+        {
+            case JXL_TYPE_UINT8:
+                abyOpaque[0] = 0xFF;
+                break;
+            case JXL_TYPE_UINT16:
+            {
+                const uint16_t v = 0xFFFF;
+                memcpy(abyOpaque, &v, sizeof(v));
+                break;
+            }
+            case JXL_TYPE_FLOAT16:
+            {
+                const uint16_t v = 0x3C00; /* 1.0 as IEEE half */
+                memcpy(abyOpaque, &v, sizeof(v));
+                break;
+            }
+            case JXL_TYPE_FLOAT:
+            {
+                const float v = 1.0f;
+                memcpy(abyOpaque, &v, sizeof(v));
+                break;
+            }
+            default:
+                break;
+        }
+        const unsigned int nColorSize =
+            info.num_color_channels * (unsigned int)nBytesPerSample;
+        const unsigned int nColorPlusAlphaSize =
+            nColorSize + (unsigned int)nBytesPerSample;
+        const unsigned int nNumPixels = info.xsize * info.ysize;
+        for (unsigned int k = nNumPixels; k > 0;)
+        {
+            --k;
+            uint8_t *pabyDst =
+                sp->uncompressed_buffer + k * nColorPlusAlphaSize;
+            memmove(pabyDst, sp->uncompressed_buffer + k * nColorSize,
+                    nColorSize);
+            memcpy(pabyDst + nColorSize, abyOpaque, nBytesPerSample);
+        }
     }
     if (nFirstExtraChannel < info.num_extra_channels)
     {
