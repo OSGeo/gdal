@@ -1419,276 +1419,267 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
     if (ppszUnits)
         *ppszUnits = nullptr;
 
-    if (ppszGridMappingName || ppapszKeyValues)
+    bool bWriteWkt = true;
+
+    struct Value
     {
-        bool bWriteWkt = true;
+        std::string key{};
+        std::string valueStr{};
+        std::vector<double> doubles{};
+    };
 
-        struct Value
+    std::vector<Value> oParams;
+
+    const auto addParamString = [&oParams](const char *key, const char *value)
+    {
+        Value v;
+        v.key = key;
+        v.valueStr = value;
+        oParams.emplace_back(std::move(v));
+    };
+
+    const auto addParamDouble = [&oParams](const char *key, double value)
+    {
+        Value v;
+        v.key = key;
+        v.doubles.push_back(value);
+        oParams.emplace_back(std::move(v));
+    };
+
+    const auto addParam2Double =
+        [&oParams](const char *key, double value1, double value2)
+    {
+        Value v;
+        v.key = key;
+        v.doubles.push_back(value1);
+        v.doubles.push_back(value2);
+        oParams.emplace_back(std::move(v));
+    };
+
+    std::string osCFProjection;
+    if (IsProjected())
+    {
+        // Write CF-1.5 compliant Projected attributes.
+
+        const OGR_SRSNode *poPROJCS = GetAttrNode("PROJCS");
+        if (poPROJCS == nullptr)
+            return OGRERR_FAILURE;
+        const char *pszProjName = GetAttrValue("PROJECTION");
+        if (pszProjName == nullptr)
+            return OGRERR_FAILURE;
+
+        // Basic Projection info (grid_mapping and datum).
+        for (int i = 0; poNetcdfSRS_PT[i].WKT_SRS != nullptr; i++)
         {
-            std::string key{};
-            std::string valueStr{};
-            std::vector<double> doubles{};
-        };
-
-        std::vector<Value> oParams;
-
-        const auto addParamString =
-            [&oParams](const char *key, const char *value)
-        {
-            Value v;
-            v.key = key;
-            v.valueStr = value;
-            oParams.emplace_back(std::move(v));
-        };
-
-        const auto addParamDouble = [&oParams](const char *key, double value)
-        {
-            Value v;
-            v.key = key;
-            v.doubles.push_back(value);
-            oParams.emplace_back(std::move(v));
-        };
-
-        const auto addParam2Double =
-            [&oParams](const char *key, double value1, double value2)
-        {
-            Value v;
-            v.key = key;
-            v.doubles.push_back(value1);
-            v.doubles.push_back(value2);
-            oParams.emplace_back(std::move(v));
-        };
-
-        std::string osCFProjection;
-        if (IsProjected())
-        {
-            // Write CF-1.5 compliant Projected attributes.
-
-            const OGR_SRSNode *poPROJCS = GetAttrNode("PROJCS");
-            if (poPROJCS == nullptr)
-                return OGRERR_FAILURE;
-            const char *pszProjName = GetAttrValue("PROJECTION");
-            if (pszProjName == nullptr)
-                return OGRERR_FAILURE;
-
-            // Basic Projection info (grid_mapping and datum).
-            for (int i = 0; poNetcdfSRS_PT[i].WKT_SRS != nullptr; i++)
+            if (EQUAL(poNetcdfSRS_PT[i].WKT_SRS, pszProjName))
             {
-                if (EQUAL(poNetcdfSRS_PT[i].WKT_SRS, pszProjName))
-                {
-                    osCFProjection = poNetcdfSRS_PT[i].CF_SRS;
-                    break;
-                }
-            }
-            if (osCFProjection.empty())
-                return OGRERR_FAILURE;
-
-            addParamString(CF_GRD_MAPPING_NAME, osCFProjection.c_str());
-
-            // Various projection attributes.
-            // PDS: keep in sync with SetProjection function
-            auto oOutList = NCDFGetProjAttribs(poPROJCS, pszProjName);
-
-            /* Write all the values that were found */
-            double dfStdP[2] = {0, 0};
-            bool bFoundStdP1 = false;
-            bool bFoundStdP2 = false;
-            for (const auto &it : oOutList)
-            {
-                const char *pszParamVal = it.first.c_str();
-                double dfValue = it.second;
-                /* Handle the STD_PARALLEL attrib */
-                if (EQUAL(pszParamVal, CF_PP_STD_PARALLEL_1))
-                {
-                    bFoundStdP1 = true;
-                    dfStdP[0] = dfValue;
-                }
-                else if (EQUAL(pszParamVal, CF_PP_STD_PARALLEL_2))
-                {
-                    bFoundStdP2 = true;
-                    dfStdP[1] = dfValue;
-                }
-                else
-                {
-                    addParamDouble(pszParamVal, dfValue);
-                }
-            }
-            /* Now write the STD_PARALLEL attrib */
-            if (bFoundStdP1)
-            {
-                /* one value  */
-                if (!bFoundStdP2)
-                {
-                    addParamDouble(CF_PP_STD_PARALLEL, dfStdP[0]);
-                }
-                else
-                {
-                    // Two values.
-                    addParam2Double(CF_PP_STD_PARALLEL, dfStdP[0], dfStdP[1]);
-                }
-            }
-
-            if (EQUAL(pszProjName, SRS_PT_GEOSTATIONARY_SATELLITE))
-            {
-                const char *pszPredefProj4 =
-                    GetExtension(GetRoot()->GetValue(), "PROJ4", nullptr);
-                const char *pszSweepAxisAngle =
-                    (pszPredefProj4 != nullptr &&
-                     strstr(pszPredefProj4, "+sweep=x"))
-                        ? "x"
-                        : "y";
-                addParamString(CF_PP_SWEEP_ANGLE_AXIS, pszSweepAxisAngle);
+                osCFProjection = poNetcdfSRS_PT[i].CF_SRS;
+                break;
             }
         }
-        else if (IsDerivedGeographic())
+        if (osCFProjection.empty())
+            return OGRERR_FAILURE;
+
+        addParamString(CF_GRD_MAPPING_NAME, osCFProjection.c_str());
+
+        // Various projection attributes.
+        // PDS: keep in sync with SetProjection function
+        auto oOutList = NCDFGetProjAttribs(poPROJCS, pszProjName);
+
+        /* Write all the values that were found */
+        double dfStdP[2] = {0, 0};
+        bool bFoundStdP1 = false;
+        bool bFoundStdP2 = false;
+        for (const auto &it : oOutList)
         {
-            const OGR_SRSNode *poConversion = GetAttrNode("DERIVINGCONVERSION");
-            if (poConversion == nullptr)
-                return OGRERR_FAILURE;
-            const char *pszMethod = GetAttrValue("METHOD");
-            if (pszMethod == nullptr)
-                return OGRERR_FAILURE;
-
-            std::map<std::string, double> oValMap;
-            for (int iChild = 0; iChild < poConversion->GetChildCount();
-                 iChild++)
+            const char *pszParamVal = it.first.c_str();
+            double dfValue = it.second;
+            /* Handle the STD_PARALLEL attrib */
+            if (EQUAL(pszParamVal, CF_PP_STD_PARALLEL_1))
             {
-                const OGR_SRSNode *poNode = poConversion->GetChild(iChild);
-                if (!EQUAL(poNode->GetValue(), "PARAMETER") ||
-                    poNode->GetChildCount() <= 2)
-                    continue;
-                const char *pszParamStr = poNode->GetChild(0)->GetValue();
-                const char *pszParamVal = poNode->GetChild(1)->GetValue();
-                oValMap[pszParamStr] = CPLAtof(pszParamVal);
+                bFoundStdP1 = true;
+                dfStdP[0] = dfValue;
             }
-
-            constexpr const char *ROTATED_POLE_VAR_NAME = "rotated_pole";
-            if (EQUAL(pszMethod, "PROJ ob_tran o_proj=longlat"))
+            else if (EQUAL(pszParamVal, CF_PP_STD_PARALLEL_2))
             {
-                // Not enough interoperable to be written as WKT
-                bWriteWkt = false;
-
-                const double dfLon0 = oValMap["lon_0"];
-                const double dfLonp = oValMap["o_lon_p"];
-                const double dfLatp = oValMap["o_lat_p"];
-
-                osCFProjection = ROTATED_POLE_VAR_NAME;
-                addParamString(CF_GRD_MAPPING_NAME,
-                               CF_PT_ROTATED_LATITUDE_LONGITUDE);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
-                addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
-            }
-            else if (EQUAL(pszMethod, "Pole rotation (netCDF CF convention)"))
-            {
-                // Not enough interoperable to be written as WKT
-                bWriteWkt = false;
-
-                const double dfGridNorthPoleLat =
-                    oValMap["Grid north pole latitude (netCDF CF convention)"];
-                const double dfGridNorthPoleLong =
-                    oValMap["Grid north pole longitude (netCDF CF convention)"];
-                const double dfNorthPoleGridLong =
-                    oValMap["North pole grid longitude (netCDF CF convention)"];
-
-                osCFProjection = ROTATED_POLE_VAR_NAME;
-                addParamString(CF_GRD_MAPPING_NAME,
-                               CF_PT_ROTATED_LATITUDE_LONGITUDE);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE,
-                               dfGridNorthPoleLong);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE,
-                               dfGridNorthPoleLat);
-                addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE,
-                               dfNorthPoleGridLong);
-            }
-            else if (EQUAL(pszMethod, "Pole rotation (GRIB convention)"))
-            {
-                // Not enough interoperable to be written as WKT
-                bWriteWkt = false;
-
-                const double dfLatSouthernPole =
-                    oValMap["Latitude of the southern pole (GRIB convention)"];
-                const double dfLonSouthernPole =
-                    oValMap["Longitude of the southern pole (GRIB convention)"];
-                const double dfAxisRotation =
-                    oValMap["Axis rotation (GRIB convention)"];
-
-                const double dfLon0 = dfLonSouthernPole;
-                const double dfLonp = dfAxisRotation == 0 ? 0 : -dfAxisRotation;
-                const double dfLatp =
-                    dfLatSouthernPole == 0 ? 0 : -dfLatSouthernPole;
-
-                osCFProjection = ROTATED_POLE_VAR_NAME;
-                addParamString(CF_GRD_MAPPING_NAME,
-                               CF_PT_ROTATED_LATITUDE_LONGITUDE);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
-                addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
-                addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
+                bFoundStdP2 = true;
+                dfStdP[1] = dfValue;
             }
             else
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "Unsupported method for DerivedGeographicCRS: %s",
-                         pszMethod);
-                return OGRERR_FAILURE;
+                addParamDouble(pszParamVal, dfValue);
             }
+        }
+        /* Now write the STD_PARALLEL attrib */
+        if (bFoundStdP1)
+        {
+            /* one value  */
+            if (!bFoundStdP2)
+            {
+                addParamDouble(CF_PP_STD_PARALLEL, dfStdP[0]);
+            }
+            else
+            {
+                // Two values.
+                addParam2Double(CF_PP_STD_PARALLEL, dfStdP[0], dfStdP[1]);
+            }
+        }
+
+        if (EQUAL(pszProjName, SRS_PT_GEOSTATIONARY_SATELLITE))
+        {
+            const char *pszPredefProj4 =
+                GetExtension(GetRoot()->GetValue(), "PROJ4", nullptr);
+            const char *pszSweepAxisAngle = (pszPredefProj4 != nullptr &&
+                                             strstr(pszPredefProj4, "+sweep=x"))
+                                                ? "x"
+                                                : "y";
+            addParamString(CF_PP_SWEEP_ANGLE_AXIS, pszSweepAxisAngle);
+        }
+    }
+    else if (IsDerivedGeographic())
+    {
+        const OGR_SRSNode *poConversion = GetAttrNode("DERIVINGCONVERSION");
+        if (poConversion == nullptr)
+            return OGRERR_FAILURE;
+        const char *pszMethod = GetAttrValue("METHOD");
+        if (pszMethod == nullptr)
+            return OGRERR_FAILURE;
+
+        std::map<std::string, double> oValMap;
+        for (int iChild = 0; iChild < poConversion->GetChildCount(); iChild++)
+        {
+            const OGR_SRSNode *poNode = poConversion->GetChild(iChild);
+            if (!EQUAL(poNode->GetValue(), "PARAMETER") ||
+                poNode->GetChildCount() <= 2)
+                continue;
+            const char *pszParamStr = poNode->GetChild(0)->GetValue();
+            const char *pszParamVal = poNode->GetChild(1)->GetValue();
+            oValMap[pszParamStr] = CPLAtof(pszParamVal);
+        }
+
+        constexpr const char *ROTATED_POLE_VAR_NAME = "rotated_pole";
+        if (EQUAL(pszMethod, "PROJ ob_tran o_proj=longlat"))
+        {
+            // Not enough interoperable to be written as WKT
+            bWriteWkt = false;
+
+            const double dfLon0 = oValMap["lon_0"];
+            const double dfLonp = oValMap["o_lon_p"];
+            const double dfLatp = oValMap["o_lat_p"];
+
+            osCFProjection = ROTATED_POLE_VAR_NAME;
+            addParamString(CF_GRD_MAPPING_NAME,
+                           CF_PT_ROTATED_LATITUDE_LONGITUDE);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
+            addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
+        }
+        else if (EQUAL(pszMethod, "Pole rotation (netCDF CF convention)"))
+        {
+            // Not enough interoperable to be written as WKT
+            bWriteWkt = false;
+
+            const double dfGridNorthPoleLat =
+                oValMap["Grid north pole latitude (netCDF CF convention)"];
+            const double dfGridNorthPoleLong =
+                oValMap["Grid north pole longitude (netCDF CF convention)"];
+            const double dfNorthPoleGridLong =
+                oValMap["North pole grid longitude (netCDF CF convention)"];
+
+            osCFProjection = ROTATED_POLE_VAR_NAME;
+            addParamString(CF_GRD_MAPPING_NAME,
+                           CF_PT_ROTATED_LATITUDE_LONGITUDE);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE,
+                           dfGridNorthPoleLong);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfGridNorthPoleLat);
+            addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE,
+                           dfNorthPoleGridLong);
+        }
+        else if (EQUAL(pszMethod, "Pole rotation (GRIB convention)"))
+        {
+            // Not enough interoperable to be written as WKT
+            bWriteWkt = false;
+
+            const double dfLatSouthernPole =
+                oValMap["Latitude of the southern pole (GRIB convention)"];
+            const double dfLonSouthernPole =
+                oValMap["Longitude of the southern pole (GRIB convention)"];
+            const double dfAxisRotation =
+                oValMap["Axis rotation (GRIB convention)"];
+
+            const double dfLon0 = dfLonSouthernPole;
+            const double dfLonp = dfAxisRotation == 0 ? 0 : -dfAxisRotation;
+            const double dfLatp =
+                dfLatSouthernPole == 0 ? 0 : -dfLatSouthernPole;
+
+            osCFProjection = ROTATED_POLE_VAR_NAME;
+            addParamString(CF_GRD_MAPPING_NAME,
+                           CF_PT_ROTATED_LATITUDE_LONGITUDE);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LONGITUDE, dfLon0 - 180);
+            addParamDouble(CF_PP_GRID_NORTH_POLE_LATITUDE, dfLatp);
+            addParamDouble(CF_PP_NORTH_POLE_GRID_LONGITUDE, dfLonp);
         }
         else
         {
-            // Write CF-1.5 compliant Geographics attributes.
-            // Note: WKT information will not be preserved (e.g. WGS84).
-            osCFProjection = "crs";
-            addParamString(CF_GRD_MAPPING_NAME, CF_PT_LATITUDE_LONGITUDE);
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Unsupported method for DerivedGeographicCRS: %s",
+                     pszMethod);
+            return OGRERR_FAILURE;
         }
+    }
+    else
+    {
+        // Write CF-1.5 compliant Geographics attributes.
+        // Note: WKT information will not be preserved (e.g. WGS84).
+        osCFProjection = "crs";
+        addParamString(CF_GRD_MAPPING_NAME, CF_PT_LATITUDE_LONGITUDE);
+    }
 
-        constexpr const char *CF_LNG_NAME = "long_name";
-        addParamString(CF_LNG_NAME, "CRS definition");
+    constexpr const char *CF_LNG_NAME = "long_name";
+    addParamString(CF_LNG_NAME, "CRS definition");
 
-        // Write CF-1.5 compliant common attributes.
+    // Write CF-1.5 compliant common attributes.
 
-        // DATUM information.
-        addParamDouble(CF_PP_LONG_PRIME_MERIDIAN, GetPrimeMeridian());
-        addParamDouble(CF_PP_SEMI_MAJOR_AXIS, GetSemiMajor());
-        addParamDouble(CF_PP_INVERSE_FLATTENING, GetInvFlattening());
+    // DATUM information.
+    addParamDouble(CF_PP_LONG_PRIME_MERIDIAN, GetPrimeMeridian());
+    addParamDouble(CF_PP_SEMI_MAJOR_AXIS, GetSemiMajor());
+    addParamDouble(CF_PP_INVERSE_FLATTENING, GetInvFlattening());
 
-        if (bWriteWkt)
+    if (bWriteWkt)
+    {
+        const std::string osWkt = exportToWkt();
+        if (!osWkt.empty())
         {
-            char *pszSpatialRef = nullptr;
-            exportToWkt(&pszSpatialRef);
-            if (pszSpatialRef && pszSpatialRef[0])
-            {
-                addParamString(NCDF_CRS_WKT, pszSpatialRef);
-            }
-            CPLFree(pszSpatialRef);
+            addParamString(NCDF_CRS_WKT, osWkt.c_str());
         }
+    }
 
-        if (ppszGridMappingName)
-            *ppszGridMappingName = CPLStrdup(osCFProjection.c_str());
+    if (ppszGridMappingName)
+        *ppszGridMappingName = CPLStrdup(osCFProjection.c_str());
 
-        if (ppapszKeyValues)
+    if (ppapszKeyValues)
+    {
+        CPLStringList aosKeyValues;
+        for (const auto &param : oParams)
         {
-            CPLStringList aosKeyValues;
-            for (const auto &param : oParams)
+            if (!param.valueStr.empty())
             {
-                if (!param.valueStr.empty())
-                {
-                    aosKeyValues.AddNameValue(param.key.c_str(),
-                                              param.valueStr.c_str());
-                }
-                else
-                {
-                    std::string osVal;
-                    for (const double dfVal : param.doubles)
-                    {
-                        if (!osVal.empty())
-                            osVal += ',';
-                        osVal += CPLSPrintf("%.17g", dfVal);
-                    }
-                    aosKeyValues.AddNameValue(param.key.c_str(), osVal.c_str());
-                }
+                aosKeyValues.AddNameValue(param.key.c_str(),
+                                          param.valueStr.c_str());
             }
-            *ppapszKeyValues = aosKeyValues.StealList();
+            else
+            {
+                std::string osVal;
+                for (const double dfVal : param.doubles)
+                {
+                    if (!osVal.empty())
+                        osVal += ',';
+                    osVal += CPLSPrintf("%.17g", dfVal);
+                }
+                aosKeyValues.AddNameValue(param.key.c_str(), osVal.c_str());
+            }
         }
+        *ppapszKeyValues = aosKeyValues.StealList();
     }
 
     if (ppszUnits)
