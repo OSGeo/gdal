@@ -66,6 +66,20 @@ def test_gdalalg_raster_viewshed(viewshed_input):
     assert ds.GetRasterBand(1).Checksum() == VIEWSHED_NOMINAL_CHECKSUM
 
 
+def test_gdalalg_raster_separate_position_height(viewshed_input, tmp_vsimem):
+
+    alg = get_alg()
+    alg["input"] = viewshed_input
+    alg["output-format"] = "MEM"
+    alg["position"] = [621528, 4817617]
+    alg["height"] = 100
+
+    assert alg.Run()
+    ds = alg.Output()
+
+    assert ds.GetRasterBand(1).Checksum() == VIEWSHED_NOMINAL_CHECKSUM
+
+
 def test_gdalalg_raster_viewshed_overwrite_and_creation_option(
     viewshed_input, tmp_vsimem
 ):
