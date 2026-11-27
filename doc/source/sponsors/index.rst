@@ -54,7 +54,7 @@ Silver
 
     .. container:: horizontal-logo
 
-        .. image:: ../../images/sponsors/noaa-coast-survey.png
+        .. image:: ../../images/sponsors/logo-noaa.png
            :class: img-logos
            :width: 240 px
            :target: https://nauticalcharts.noaa.gov/
