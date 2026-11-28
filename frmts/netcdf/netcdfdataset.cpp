@@ -5127,9 +5127,23 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
 {
     char *pszCFProjection = nullptr;
     char **papszKeyValues = nullptr;
-    poSRS->exportToCF1(&pszCFProjection, &papszKeyValues, nullptr, nullptr);
 
-    if (bWriteGDALTags)
+    // If the CRS cannot be written in a CF-1 format, fall back to writing the WKT to a "crs"
+    // variable.
+    if (poSRS->exportToCF1(&pszCFProjection, &papszKeyValues, nullptr,
+                           nullptr) != OGRERR_NONE)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Cannot represent CRS in netCDF CF-compliant format.");
+        pszCFProjection = CPLStrdup("crs");
+        if (bWriteGDALTags)
+        {
+            const std::string osWKT = poSRS->exportToWkt();
+            papszKeyValues = CSLSetNameValue(papszKeyValues, NCDF_SPATIAL_REF,
+                                             osWKT.c_str());
+        }
+    }
+    else if (bWriteGDALTags)
     {
         const char *pszWKT = CSLFetchNameValue(papszKeyValues, NCDF_CRS_WKT);
         if (pszWKT)
@@ -5143,7 +5157,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
     const int nValues = CSLCount(papszKeyValues);
 
     int NCDFVarID;
-    std::string varNameRadix(pszCFProjection);
+    const std::string varNameRadix(pszCFProjection ? pszCFProjection : "");
     int nCounter = 2;
     while (true)
     {

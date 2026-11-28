@@ -3353,8 +3353,6 @@ def test_netcdf_write_rotated_pole_from_method_grib(tmp_path):
     wkt = ds.GetProjectionRef()
     ds = None
 
-    gdal.Unlink(ofile)
-
     # Before PROJ 7.0.1
     deprecated_expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unnamed",SPHEROID["Spheroid",6367470,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]]],PROJECTION["Rotated_pole"],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=-15 +o_lon_p=0 +o_lat_p=30 +a=6367470 +b=6367470 +to_meter=0.0174532925199433 +wktext"]]"""
 
@@ -7125,3 +7123,23 @@ def test_netcdf_auto_nc4_via_extra_dim(tmp_path):
         gdal.MultiDimInfo(tmp_path / "out.nc")["structural_info"]["NC_FORMAT"]
         == "NETCDF4"
     )
+
+
+###############################################################################
+# Cf https://github.com/osgeo/gdal/issues/15568
+
+
+def test_netcdf_crs_not_supported_by_cf(tmp_path):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
+    src_ds.SetGeoTransform((-6378137, 10000, 0, 6378137, 0, -10000))
+    src_ds.SetProjection(
+        'PROJCS["unknown",GEOGCS["unknown",DATUM["Unknown based on WGS 84 ellipsoid",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],PROJECTION["Quadrilateralized_Spherical_Cube"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    )
+    src_ds.GetRasterBand(1).Fill(1)
+
+    with gdaltest.error_raised(gdal.CE_Warning, "Cannot represent CRS"):
+        dst_ds = gdal.Translate(tmp_path / "out.nc", src_ds)
+
+    assert dst_ds.GetGeoTransform() == src_ds.GetGeoTransform()
+    assert dst_ds.GetProjection() == src_ds.GetProjection()
