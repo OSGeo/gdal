@@ -590,6 +590,7 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
                     (adfSource.size() % 2) == 0)
                 {
                     std::vector<gdal::GCP> asGCPs;
+                    asGCPs.reserve(adfSource.size() / 2);
                     for (size_t i = 0; i + 1 < adfSource.size(); i += 2)
                     {
                         asGCPs.emplace_back("", "",

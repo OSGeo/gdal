@@ -293,6 +293,7 @@ static void KEACopyRAT(GDALRasterBand *pBand, kealib::KEAImageIO *pImageIO,
                             ->ValuesIO(GF_Read, nj, ni, nLength, papszColData);
 
                         std::vector<std::string> aStringBuffer;
+                        aStringBuffer.reserve(nLength);
                         for (int i = 0; i < nLength; i++)
                         {
                             aStringBuffer.push_back(papszColData[i]);
@@ -474,6 +475,7 @@ static void KEACopyGCPs(GDALDataset *pDataset, kealib::KEAImageIO *pImageIO)
     if (nGCPs > 0)
     {
         std::vector<kealib::KEAImageGCP *> KEAGCPs;
+        KEAGCPs.reserve(nGCPs);
         const GDAL_GCP *pGDALGCPs = pDataset->GetGCPs();
 
         for (int n = 0; n < nGCPs; n++)

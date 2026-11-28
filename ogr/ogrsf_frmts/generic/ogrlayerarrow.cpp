@@ -4248,6 +4248,8 @@ inline static void FillFieldFixedSizeList(
     const int nItems, const struct ArrowArray *childArray, OGRFeature &oFeature)
 {
     std::vector<OGRType> aValues;
+    if (nItems > 0)
+        aValues.reserve(nItems);
     const auto *paValues =
         static_cast<const ArrowType *>(childArray->buffers[1]) +
         childArray->offset + nOffsettedIndex * nItems;
@@ -4846,6 +4848,8 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
         if (IsBoolean(childFormat))
         {
             std::vector<int> aValues;
+            if (nItems > 0)
+                aValues.reserve(nItems);
             const auto *paValues =
                 static_cast<const uint8_t *>(childArray->buffers[1]);
             for (int i = 0; i < nItems; ++i)
@@ -4911,6 +4915,8 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
         else if (IsFloat16(childFormat))
         {
             std::vector<double> aValues;
+            if (nItems > 0)
+                aValues.reserve(nItems);
             for (int i = 0; i < nItems; ++i)
             {
                 aValues.push_back(static_cast<double>(
@@ -7994,6 +8000,8 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
             const int nVals = GetFixedSizeList(format);
             const auto childArray = array->children[0];
             std::vector<double> aValues;
+            if (nVals > 0)
+                aValues.reserve(nVals);
             for (int i = 0; i < nVals; ++i)
             {
                 aValues.push_back(GetValueDecimal(childArray, nWidthIn64BitWord,

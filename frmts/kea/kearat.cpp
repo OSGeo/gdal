@@ -1136,6 +1136,8 @@ CPLErr KEARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                 {
                     // need to convert to a vector first
                     std::vector<std::string> aStrings;
+                    if (iLength > 0)
+                        aStrings.reserve(iLength);
                     for (int i = 0; i < iLength; i++)
                     {
                         aStrings.push_back(papszStrList[i]);
