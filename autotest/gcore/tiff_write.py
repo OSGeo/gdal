@@ -12604,3 +12604,40 @@ def test_tiff_write_10bit_roundtrip(tmp_vsimem, width):
     with gdal.Open(fname) as ds:
         read = ds.GetRasterBand(1).ReadAsArray().flatten()
     assert np.array_equal(data, read)
+
+
+@pytest.mark.parametrize("width", [1, 2, 3, 4, 5, 7, 8, 100, 101, 103, 256])
+def test_tiff_write_12bit_roundtrip(tmp_vsimem, width):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    fname = tmp_vsimem / f"test_12bit_{width}.tif"
+    ds = gdaltest.tiff_drv.Create(
+        fname, width, 3, 1, gdal.GDT_UInt16, options=["NBITS=12"]
+    )
+    data = (np.arange(width * 3, dtype=np.uint32) * 4093 % 4096).astype(np.uint16)
+    ds.GetRasterBand(1).WriteArray(data.reshape(3, width))
+    ds = None  # flush to disk before re-opening
+
+    with gdal.Open(fname) as ds:
+        read = ds.GetRasterBand(1).ReadAsArray().flatten()
+    assert np.array_equal(data, read)
+
+
+def test_tiff_write_12bit_clip_last_pixel_of_odd_width(tmp_vsimem):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    fname = tmp_vsimem / "test_12bit_clip.tif"
+    with gdaltest.error_raised(gdal.CE_Warning, "clipped to fit 12 bit domain"):
+        ds = gdaltest.tiff_drv.Create(
+            fname, 3, 1, 1, gdal.GDT_UInt16, options=["NBITS=12"]
+        )
+        ds.GetRasterBand(1).WriteArray(np.array([[0, 1, 4096]], dtype=np.uint16))
+        ds = None
+
+    with gdal.Open(fname) as ds:
+        read = ds.GetRasterBand(1).ReadAsArray().flatten()
+    assert list(read) == [0, 1, 4095]
