@@ -131,6 +131,8 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
     psNewOptions->bHasNoData = psOptions->bHasNoData;
     psNewOptions->dfNoData = psOptions->dfNoData;
     psNewOptions->nThreads = psOptions->nThreads;
+    psNewOptions->bNoDataOutsideSpectralExtent =
+        psOptions->bNoDataOutsideSpectralExtent;
     return psNewOptions;
 }
 
@@ -157,6 +159,29 @@ GDALPansharpenOperation::~GDALPansharpenOperation()
     for (size_t i = 0; i < aVDS.size(); i++)
         delete aVDS[i];
     delete poThreadPool;
+}
+
+/************************************************************************/
+/*                          GetCoveredRange()                           */
+/************************************************************************/
+
+// In 1D, sets [nPanCovOff, nPanCovEnd) to the pan pixels of
+// [nPanOff, nPanOff + nPanSize) overlapping spectral pixels [0, nMSSize].
+// ( Pan pixel i spans dfPanToMSOff + [i, i + 1] * dfPanToMSRes )
+static void GetCoveredRange(double dfPanToMSOff, double dfPanToMSRes,
+                            int nMSSize, int nPanOff, int nPanSize,
+                            int &nPanCovOff, int &nPanCovEnd)
+{
+    CPLAssert(dfPanToMSRes > 0);
+    constexpr double EPS = 1e-8;
+    const double dfPanFirst = std::floor(-dfPanToMSOff / dfPanToMSRes + EPS);
+    const double dfPanEnd =
+        std::ceil((nMSSize - dfPanToMSOff) / dfPanToMSRes - EPS);
+    const double dfPanOff = nPanOff;
+    const double dfPanOffEnd = static_cast<double>(nPanOff) + nPanSize;
+    nPanCovOff =
+        static_cast<int>(std::clamp(dfPanFirst, dfPanOff, dfPanOffEnd));
+    nPanCovEnd = static_cast<int>(std::clamp(dfPanEnd, dfPanOff, dfPanOffEnd));
 }
 
 /************************************************************************/
@@ -272,6 +297,15 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
                  "has rotational terms");
         return CE_Failure;
     }
+    if (psOptionsIn->bNoDataOutsideSpectralExtent &&
+        !(m_panToMSGT[1] > 0 && m_panToMSGT[5] > 0))
+    {
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "Axis directions of panchromatic and multispectral geotransforms "
+            "must be equal when using ofbNoDataOutsideSpectralExtent.");
+        return CE_Failure;
+    }
 
     bool bSameDataset = psOptionsIn->nInputSpectralBands > 1;
     if (bSameDataset)
@@ -372,6 +406,33 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     }
 
     psOptions = GDALClonePansharpenOptions(psOptionsIn);
+    if (psOptions->bNoDataOutsideSpectralExtent)
+    {
+        const int nPanXSize = GDALGetRasterBandXSize(poPanchroBand);
+        const int nPanYSize = GDALGetRasterBandYSize(poPanchroBand);
+        int nCovXOff = 0, nCovXEnd = 0, nCovYOff = 0, nCovYEnd = 0;
+        GetCoveredRange(m_panToMSGT[0], m_panToMSGT[1],
+                        GDALGetRasterBandXSize(hRefBand), 0, nPanXSize,
+                        nCovXOff, nCovXEnd);
+        GetCoveredRange(m_panToMSGT[3], m_panToMSGT[5],
+                        GDALGetRasterBandYSize(hRefBand), 0, nPanYSize,
+                        nCovYOff, nCovYEnd);
+        if (nCovXOff == 0 && nCovXEnd == nPanXSize && nCovYOff == 0 &&
+            nCovYEnd == nPanYSize)
+        {
+            // nodata masking can be disabled as the spectral band fully covers the pan band
+            psOptions->bNoDataOutsideSpectralExtent = false;
+        }
+        else if (!psOptions->bHasNoData)
+        {
+            // nodata masking is actually needed, but no nodata value has been set
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Spectral bands do not fully cover the panchromatic "
+                     "band, and output nodata has been explicitly set to "
+                     "None");
+            return CE_Failure;
+        }
+    }
     if (psOptions->nBitDepth == GDALGetDataTypeSizeBits(eWorkDataType))
         psOptions->nBitDepth = 0;
     if (psOptions->nBitDepth &&
@@ -1159,6 +1220,68 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 {
     if (psOptions == nullptr)
         return CE_Failure;
+
+    if (psOptions->bNoDataOutsideSpectralExtent)
+    {
+        int nCovXOff = 0, nCovXEnd = 0, nCovYOff = 0, nCovYEnd = 0;
+        GetCoveredRange(m_panToMSGT[0], m_panToMSGT[1],
+                        GDALGetRasterBandXSize(aMSBands[0]), nXOff, nXSize,
+                        nCovXOff, nCovXEnd);
+        GetCoveredRange(m_panToMSGT[3], m_panToMSGT[5],
+                        GDALGetRasterBandYSize(aMSBands[0]), nYOff, nYSize,
+                        nCovYOff, nCovYEnd);
+        if (nCovXOff != nXOff || nCovXEnd != nXOff + nXSize ||
+            nCovYOff != nYOff || nCovYEnd != nYOff + nYSize)
+        {
+            // Restrict the computation to the pan pixels that spectral pixels
+            // cover, even partially, and set the other ones to nodata.
+            const int nBufDTSize = GDALGetDataTypeSizeBytes(eBufDataType);
+            const int nBands = psOptions->nOutPansharpenedBands;
+            GDALCopyWords64(&psOptions->dfNoData, GDT_Float64, 0, pDataBuf,
+                            eBufDataType, nBufDTSize,
+                            static_cast<GPtrDiff_t>(nXSize) * nYSize * nBands);
+            if (nCovXOff >= nCovXEnd || nCovYOff >= nCovYEnd)
+                return CE_None;
+
+            const int nCovXSize = nCovXEnd - nCovXOff;
+            const int nCovYSize = nCovYEnd - nCovYOff;
+
+            // Note: we could avoid allocating a new buffer here as the new region is guaranteed
+            // to be smaller than the original one.
+            // This would require some non-trivial bit-moving and resetting of nodata values as
+            // a post-processing step on the original buffer, so we are leaving this out for now.
+            GByte *pabyCovBuf = static_cast<GByte *>(VSI_MALLOC3_VERBOSE(
+                nCovXSize, nCovYSize, cpl::fits_on<int>(nBands * nBufDTSize)));
+            if (pabyCovBuf == nullptr)
+                return CE_Failure;
+            const CPLErr eErr =
+                ProcessRegion(nCovXOff, nCovYOff, nCovXSize, nCovYSize,
+                              pabyCovBuf, eBufDataType);
+            if (eErr == CE_None)
+            {
+                GByte *pabyDst = static_cast<GByte *>(pDataBuf);
+                for (int iBand = 0; iBand < nBands; iBand++)
+                {
+                    for (int iY = 0; iY < nCovYSize; iY++)
+                    {
+                        memcpy(
+                            pabyDst +
+                                ((static_cast<size_t>(iBand) * nYSize +
+                                  static_cast<size_t>(nCovYOff - nYOff) + iY) *
+                                     nXSize +
+                                 static_cast<size_t>(nCovXOff - nXOff)) *
+                                    nBufDTSize,
+                            pabyCovBuf +
+                                (static_cast<size_t>(iBand) * nCovYSize + iY) *
+                                    nCovXSize * nBufDTSize,
+                            static_cast<size_t>(nCovXSize) * nBufDTSize);
+                    }
+                }
+            }
+            VSIFree(pabyCovBuf);
+            return eErr;
+        }
+    }
 
     // TODO: Avoid allocating buffers each time.
     GDALRasterBand *poPanchroBand =
