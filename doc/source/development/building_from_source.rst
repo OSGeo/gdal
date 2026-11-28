@@ -824,7 +824,7 @@ The `GTA <https://marlam.de/gta/>`_ library is required for the :ref:`raster.gta
 Grok
 ****
 
-The `Grok <https://github.com/GrokImageCompression/grok>`_ (>= 20.2) library is an
+The `Grok <https://github.com/GrokImageCompression/grok>`_ (>= 20.4.24) library is an
 open-source JPEG-2000 codec. It is required for the :ref:`raster.jp2grok` driver.
 It can be detected with pkg-config.
 
