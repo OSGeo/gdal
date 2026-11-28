@@ -80,6 +80,39 @@ TEST_F(test_alg, GDAL_CG_FeedLine_dummy)
     GDAL_CG_Destroy(hCG);
 }
 
+static CPLErr failingWriteCbk(double /* dfLevel */, int /* nPoints */,
+                              double * /* padfX */, double * /* padfY */,
+                              void *userData)
+{
+    ++(*static_cast<int *>(userData));
+    return CE_Failure;
+}
+
+// GDAL_CG_FeedLine() must report a failure of the contour writer
+TEST_F(test_alg, GDAL_CG_FeedLine_writer_failure)
+{
+    // A single peak: the contour around it is a closed ring, written out
+    // while lines are still being fed.
+    constexpr int SIZE = 5;
+    double adfLines[SIZE][SIZE] = {{0, 0, 0, 0, 0},
+                                   {0, 0, 0, 0, 0},
+                                   {0, 0, 10, 0, 0},
+                                   {0, 0, 0, 0, 0},
+                                   {0, 0, 0, 0, 0}};
+    int nCalls = 0;
+    CPLErr eErr = CE_None;
+    {
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        GDALContourGeneratorH hCG = GDAL_CG_Create(SIZE, SIZE, FALSE, 0, 5, 0,
+                                                   failingWriteCbk, &nCalls);
+        for (int i = 0; i < SIZE && eErr == CE_None; ++i)
+            eErr = GDAL_CG_FeedLine(hCG, adfLines[i]);
+        GDAL_CG_Destroy(hCG);
+    }
+    EXPECT_GT(nCalls, 0);
+    EXPECT_EQ(eErr, CE_Failure);
+}
+
 // GDALWarpResolveWorkingDataType: default type
 TEST_F(test_alg, GDALWarpResolveWorkingDataType_default_type)
 {

@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import os
 import struct
 import sys
 
@@ -1034,3 +1035,26 @@ def test_gdal_grid_tr(gdal_grid_path, tmp_path):
     )
     ds_ref = None
     ds = None
+
+
+###############################################################################
+# Test that a failure when closing the output dataset is reflected in the exit
+# code
+
+
+@pytest.mark.require_driver("ESRI Shapefile")
+@pytest.mark.skipif(not os.path.exists("/dev/full"), reason="requires /dev/full")
+def test_gdal_grid_close_error(gdal_grid_path, tmp_path):
+
+    points_shp = str(tmp_path / "points.shp")
+    with ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(points_shp) as ds:
+        lyr = ds.CreateLayer("points", geom_type=ogr.wkbPoint25D)
+        for x, y, z in [(0, 0, 1), (10, 10, 2), (0, 10, 3), (10, 0, 4)]:
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT Z ({x} {y} {z})"))
+            lyr.CreateFeature(f)
+
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_grid_path} -of GTiff -outsize 20 20 -a nearest {points_shp} /dev/full"
+    )
+    assert "ERROR ret code" in err
