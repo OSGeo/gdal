@@ -820,3 +820,18 @@ def test_pcidsk_tiled_type_mismatch(tmp_path):
         match=r"Tiled channel .* data type .* does not match image header pixel type",
     ):
         gdal.Open(filename)
+
+
+def test_pcidsk_tiled_write_after_flush(tmp_path):
+
+    filename = str(tmp_path / "test.pix")
+    ds = gdal.GetDriverByName("PCIDSK").Create(
+        filename, 32, 16, 1, options=["INTERLEAVING=TILED", "TILESIZE=16"]
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 16, 16, bytes(range(256)))
+    ds.FlushCache()
+    ds.GetRasterBand(1).WriteRaster(16, 0, 16, 16, bytes(range(256))[::-1])
+    ds.Close()
+
+    with gdal.Open(filename) as ds:
+        assert ds.GetRasterBand(1).ReadRaster(16, 0, 16, 16) == bytes(range(256))[::-1]

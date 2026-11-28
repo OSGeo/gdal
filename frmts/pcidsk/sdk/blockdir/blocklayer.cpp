@@ -420,6 +420,9 @@ void BlockLayer::Resize(uint64 nLayerSize)
     }
 
     _SetLayerSize(nLayerSize);
+
+    // The layer size is stored in the block directory
+    mpoBlockDir->mbModified = true;
 }
 
 /************************************************************************/
