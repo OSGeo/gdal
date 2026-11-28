@@ -52,6 +52,13 @@ Silver
            :width: 240 px
            :target: https://google.com
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-noaa.png
+           :class: img-logos
+           :width: 240 px
+           :target: https://nauticalcharts.noaa.gov/
+
 Bronze
 --------------------------------------------------------------------------------
 
