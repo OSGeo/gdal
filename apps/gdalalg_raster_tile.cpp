@@ -28,6 +28,7 @@
 #include "memdataset.h"
 #include "tilematrixset.hpp"
 #include "ogr_p.h"
+#include "commonutils.h"
 
 #include <algorithm>
 #include <array>
@@ -2152,22 +2153,6 @@ CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
 }
 
 }  // namespace
-
-/************************************************************************/
-/*                         ApplySubstitutions()                         */
-/************************************************************************/
-
-static void ApplySubstitutions(CPLString &s,
-                               const std::map<std::string, std::string> &substs)
-{
-    for (const auto &[key, value] : substs)
-    {
-        s.replaceAll("%(" + key + ")s", value);
-        s.replaceAll("%(" + key + ")d", value);
-        s.replaceAll("%(" + key + ")f", value);
-        s.replaceAll("${" + key + "}", value);
-    }
-}
 
 /************************************************************************/
 /*                          GenerateLeaflet()                           */

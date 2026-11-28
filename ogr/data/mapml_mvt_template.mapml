@@ -1,0 +1,16 @@
+<mapml- xmlns="http://www.w3.org/1999/xhtml">
+    <map-head>
+        <map-title>${xml_escaped_title}</map-title>
+        <map-meta charset="utf-8" ></map-meta>
+    </map-head>
+    <map-body>
+        <!-- OSMTILE: standard Web Mercator (EPSG:3857) tiling scheme -->
+        <map-extent units="OSMTILE" checked="checked">
+            <map-input name="z" type="zoom" value="${beginzoom}" min="${minzoom}" max="${maxzoom}" ></map-input>
+            <!-- Tile column / row ranges covering the data extent, at zoom level ${maxzoom} -->
+            <map-input name="x" type="location" axis="column" units="tilematrix" min="${mintilex}" max="${maxtilex}" ></map-input>
+            <map-input name="y" type="location" axis="row" units="tilematrix" min="${mintiley}" max="${maxtiley}" ></map-input>
+            <map-link tref="./{z}/{x}/{y}.${tileformat}" rel="tile" type="application/vnd.mapbox-vector-tile" ></map-link>
+        </map-extent>
+    </map-body>
+</mapml->

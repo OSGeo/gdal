@@ -3393,6 +3393,15 @@ class OGRMVTWriterDataset final : public GDALDataset
         std::set<CPLString> m_oSetFields;
     };
 
+    class WebTilesProperties
+    {
+      public:
+        CPLString m_webViewer;
+        CPLString m_title;
+        CPLString m_copyright;
+    };
+
+    WebTilesProperties m_webTilesProperties;
     std::vector<std::unique_ptr<OGRMVTWriterLayer>> m_apoLayers;
     CPLString m_osTempDB;
     mutable std::mutex m_oDBMutex;
@@ -3504,6 +3513,11 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     bool GenerateMetadata(size_t nLayers,
                           const std::map<CPLString, MVTLayerProperties> &oMap);
+
+    void GenerateWebPage();
+
+    void GenerateFile(const char *pszTemplate, const char *pszOutputFilename,
+                      const std::map<std::string, std::string> &substs) const;
 
   public:
     OGRMVTWriterDataset();
@@ -5500,6 +5514,9 @@ bool OGRMVTWriterDataset::CreateOutput()
 
     bRet &= GenerateMetadata(oSetLayers.size(), oMapLayerProps);
 
+    if (!m_hDBMBTILES)
+        GenerateWebPage();
+
     return bRet;
 }
 
@@ -5575,6 +5592,188 @@ static bool WriteMetadataItem(const char *pszKey, double dfValue,
 }
 
 /************************************************************************/
+/*                            GenerateFile()                            */
+/************************************************************************/
+
+// Write pszOutputFilename in the output directory from the pszTemplate file,
+// after substitution of the ${key} / %(key)s variables.
+void OGRMVTWriterDataset::GenerateFile(
+    const char *pszTemplate, const char *pszOutputFilename,
+    const std::map<std::string, std::string> &substs) const
+{
+    if (!pszTemplate)
+    {
+        CPLDebug("MVT", "Cannot find template for %s", pszOutputFilename);
+        return;
+    }
+
+    GByte *pabyRet = nullptr;
+    if (!VSIIngestFile(nullptr, pszTemplate, &pabyRet, nullptr, 20 * 1024))
+    {
+        return;
+    }
+    CPLString osContent(reinterpret_cast<char *>(pabyRet));
+    CPLFree(pabyRet);
+
+    ApplySubstitutions(osContent, substs);
+
+    const std::string osFilename =
+        CPLFormFilenameSafe(GetDescription(), pszOutputFilename, nullptr);
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
+    bool bOK = fp != nullptr;
+    if (fp)
+    {
+        bOK = VSIFWriteL(osContent.data(), 1, osContent.size(), fp) ==
+              osContent.size();
+        bOK &= VSIFCloseL(fp) == 0;
+    }
+    if (!bOK)
+    {
+        CPLError(CE_Warning, CPLE_FileIO, "Cannot write %s",
+                 osFilename.c_str());
+    }
+}
+
+/************************************************************************/
+/*                          GenerateWebPage()                           */
+/************************************************************************/
+
+void OGRMVTWriterDataset::GenerateWebPage()
+{
+    const bool bExplicitViewers = !m_webTilesProperties.m_webViewer.empty();
+    const CPLStringList aosViewers(CSLTokenizeString2(
+        bExplicitViewers ? m_webTilesProperties.m_webViewer.c_str() : "all",
+        ",", 0));
+    bool bLeaflet = false;
+    bool bOpenLayers = false;
+    bool bMapML = false;
+    for (const char *pszViewer : aosViewers)
+    {
+        if (EQUAL(pszViewer, "all"))
+        {
+            bLeaflet = true;
+            bOpenLayers = true;
+            bMapML = true;
+        }
+        else if (EQUAL(pszViewer, "leaflet"))
+        {
+            bLeaflet = true;
+        }
+        else if (EQUAL(pszViewer, "openlayers"))
+        {
+            bOpenLayers = true;
+        }
+        else if (EQUAL(pszViewer, "mapml"))
+        {
+            bMapML = true;
+        }
+        else if (!EQUAL(pszViewer, "none"))
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported value for WEBVIEWER: %s", pszViewer);
+        }
+    }
+    if (!bLeaflet && !bOpenLayers && !bMapML)
+    {
+        return;
+    }
+
+    // The web viewers assume the standard Web Mercator tiling scheme
+    OGRSpatialReference oSRS_EPSG3857;
+    double dfTopXWebMercator;
+    double dfTopYWebMercator;
+    double dfTileDim0WebMercator;
+    InitWebMercatorTilingScheme(&oSRS_EPSG3857, dfTopXWebMercator,
+                                dfTopYWebMercator, dfTileDim0WebMercator);
+    const bool bIsStandardTilingScheme =
+        m_poSRS->IsSame(&oSRS_EPSG3857) && m_dfTopX == dfTopXWebMercator &&
+        m_dfTopY == dfTopYWebMercator && m_dfTileDim0 == dfTileDim0WebMercator;
+    if (!bIsStandardTilingScheme)
+    {
+        if (bExplicitViewers)
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Web viewers can only be generated for the default "
+                     "(EPSG:3857) tiling scheme");
+        }
+        return;
+    }
+
+    // At that point, m_oEnvelope is in WGS84 (see GenerateMetadata())
+    const std::string osTitle = m_webTilesProperties.m_title.empty()
+                                    ? CPLGetBasenameSafe(GetDescription())
+                                    : std::string(m_webTilesProperties.m_title);
+
+    const double dfCenterX = (m_oEnvelope.MinX + m_oEnvelope.MaxX) / 2;
+    const double dfCenterY = (m_oEnvelope.MinY + m_oEnvelope.MaxY) / 2;
+
+    // For tests
+    const char *pszFmt =
+        atoi(CPLGetConfigOption("MVT_RASTER_TILE_HTML_PREC", "17")) == 10
+            ? "%.10g"
+            : "%.17g";
+
+    // Range of tiles intersecting the extent at the maximum zoom level
+    double dfMinX = m_oEnvelope.MinX;
+    double dfMinY = m_oEnvelope.MinY;
+    double dfMaxX = m_oEnvelope.MaxX;
+    double dfMaxY = m_oEnvelope.MaxY;
+    LongLatToSphericalMercator(&dfMinX, &dfMinY);
+    LongLatToSphericalMercator(&dfMaxX, &dfMaxY);
+    const double dfTileCount = std::pow(2.0, m_nMaxZoom);
+    const double dfTileDim = m_dfTileDim0 / dfTileCount;
+    const int nMaxTileIdx = static_cast<int>(dfTileCount) - 1;
+    const auto TileIdx = [nMaxTileIdx](double dfVal)
+    {
+        return static_cast<int>(std::clamp(std::floor(dfVal), 0.0,
+                                           static_cast<double>(nMaxTileIdx)));
+    };
+    const int nMinTileX = TileIdx((dfMinX - m_dfTopX) / dfTileDim);
+    const int nMaxTileX = TileIdx((dfMaxX - m_dfTopX) / dfTileDim);
+    const int nMinTileY = TileIdx((m_dfTopY - dfMaxY) / dfTileDim);
+    const int nMaxTileY = TileIdx((m_dfTopY - dfMinY) / dfTileDim);
+
+    std::map<std::string, std::string> substs;
+    substs["double_quote_escaped_title"] =
+        CPLString(osTitle).replaceAll('"', "\\\"");
+    char *pszStr = CPLEscapeString(osTitle.c_str(), -1, CPLES_XML);
+    substs["xml_escaped_title"] = pszStr;
+    CPLFree(pszStr);
+    substs["tileformat"] = m_osExtension;
+    substs["copyright"] =
+        CPLString(m_webTilesProperties.m_copyright).replaceAll('"', "\\\"");
+    substs["south"] = CPLSPrintf(pszFmt, m_oEnvelope.MinY);
+    substs["west"] = CPLSPrintf(pszFmt, m_oEnvelope.MinX);
+    substs["north"] = CPLSPrintf(pszFmt, m_oEnvelope.MaxY);
+    substs["east"] = CPLSPrintf(pszFmt, m_oEnvelope.MaxX);
+    substs["centerlon"] = CPLSPrintf(pszFmt, dfCenterX);
+    substs["centerlat"] = CPLSPrintf(pszFmt, dfCenterY);
+    substs["minzoom"] = CPLSPrintf("%d", m_nMinZoom);
+    substs["maxzoom"] = CPLSPrintf("%d", m_nMaxZoom);
+    substs["beginzoom"] = CPLSPrintf("%d", m_nMaxZoom);
+    substs["mintilex"] = CPLSPrintf("%d", nMinTileX);
+    substs["mintiley"] = CPLSPrintf("%d", nMinTileY);
+    substs["maxtilex"] = CPLSPrintf("%d", nMaxTileX);
+    substs["maxtiley"] = CPLSPrintf("%d", nMaxTileY);
+
+    if (bLeaflet)
+    {
+        GenerateFile(CPLFindFile("gdal", "leaflet_mvt_template.html"),
+                     "leaflet.html", substs);
+    }
+    if (bOpenLayers)
+    {
+        GenerateFile(CPLFindFile("gdal", "openlayers_mvt_template.html"),
+                     "openlayers.html", substs);
+    }
+    if (bMapML)
+    {
+        GenerateFile(CPLFindFile("gdal", "mapml_mvt_template.mapml"),
+                     "mapml.mapml", substs);
+    }
+}
+
+/************************************************************************/
 /*                          GenerateMetadata()                          */
 /************************************************************************/
 
@@ -5632,6 +5831,7 @@ bool OGRMVTWriterDataset::GenerateMetadata(
             delete poCT;
         }
     }
+
     const double dfCenterX = (m_oEnvelope.MinX + m_oEnvelope.MaxX) / 2;
     const double dfCenterY = (m_oEnvelope.MinY + m_oEnvelope.MaxY) / 2;
     CPLString osCenter(
@@ -6403,6 +6603,13 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
+    poDS->m_webTilesProperties.m_webViewer = CSLFetchNameValueDef(
+        papszOptions, "WEBVIEWER", poDS->m_webTilesProperties.m_webViewer);
+    poDS->m_webTilesProperties.m_title = CSLFetchNameValueDef(
+        papszOptions, "TITLE", poDS->m_webTilesProperties.m_title);
+    poDS->m_webTilesProperties.m_copyright = CSLFetchNameValueDef(
+        papszOptions, "COPYRIGHT", poDS->m_webTilesProperties.m_copyright);
+
     const int nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                                            /* bDefaultToAllCPUs = */ true);
     if (nThreads > 1)
@@ -6527,6 +6734,13 @@ void RegisterOGRMVT()
         "\"EPSG:XXXX,tile_origin_upper_left_x,tile_origin_upper_left_y,"
         "tile_dimension_zoom_0[,tile_matrix_width_zoom_0,tile_matrix_height_"
         "zoom_0]\"'/>"
+        "  <Option name='WEBVIEWER' type='string' "
+        "description='Web viewer to generate. WEBVIEWER=none|all|"
+        "leaflet|openlayers|mapml (default: all)'/>"
+        "  <Option name='TITLE' type='string' "
+        "description='Title of the map'/>"
+        "  <Option name='COPYRIGHT' type='string' "
+        "description='Copyright for the map'/>"
         "</CreationOptionList>");
 #endif  // HAVE_MVT_WRITE_SUPPORT
 
