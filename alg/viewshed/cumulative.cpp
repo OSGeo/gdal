@@ -97,7 +97,11 @@ bool Cumulative::run(const std::string &srcFilename,
     // When the combiner jobs are done, all the data is in the rollup queue.
     combinerPool.WaitCompletion();
     if (m_datasetQueue.isStopped())
+    {
+        m_rollupQueue.stop();
+        sum.join();
         return false;
+    }
     m_rollupQueue.done();
 
     // Wait for finalBuf to be fully filled.
@@ -222,10 +226,11 @@ bool Cumulative::writeOutput(DatasetPtr pDstDS)
         return false;
 
     GDALRasterBand *pDstBand = pDstDS->GetRasterBand(1);
-    return (pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(),
-                               m_extent.ySize(), m_finalBuf.data(),
-                               m_extent.xSize(), m_extent.ySize(), GDT_UInt32,
-                               0, 0, nullptr) == 0);
+    return pDstBand->RasterIO(GF_Write, 0, 0, m_extent.xSize(),
+                              m_extent.ySize(), m_finalBuf.data(),
+                              m_extent.xSize(), m_extent.ySize(), GDT_UInt32, 0,
+                              0, nullptr) == CE_None &&
+           pDstDS->Close() == CE_None;
 }
 
 }  // namespace viewshed
