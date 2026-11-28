@@ -4795,6 +4795,33 @@ def test_tiff_read_jxl_dng_1_7_52546():
     assert ds.GetRasterBand(1).Checksum() == 4672
 
 
+################################################################################
+# Test reading when opaque alpha may have been removed by libjxl>=0.13 encoder
+@pytest.mark.require_creation_option("GTiff", "JXL")
+def test_tiff_read_jxl_with_opaque_alpha(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_tiff_read_jxl_with_opaque_alpha.tif")
+    xsize, ysize = 32, 32
+    white = b"\xff" * (xsize * ysize)
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        xsize,
+        ysize,
+        4,
+        options=["COMPRESS=JXL", "JXL_LOSSLESS=NO", "ALPHA=YES"],
+    )
+    for i in range(4):
+        ds.GetRasterBand(i + 1).WriteRaster(0, 0, xsize, ysize, white)
+    ds.Close()
+
+    ds = gdal.Open(filename)
+    assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "JXL"
+    assert ds.GetRasterBand(4).GetColorInterpretation() == gdal.GCI_AlphaBand
+    for i in range(4):
+        assert ds.GetRasterBand(i + 1).ReadRaster() == white, i
+
+
 ###############################################################################
 # Test multi-threaded decoding
 
