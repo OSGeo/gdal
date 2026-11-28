@@ -171,6 +171,52 @@ class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
 };
 
 /************************************************************************/
+/*                       ZarrV3CodecNumcodecsZlib                       */
+/************************************************************************/
+
+// numcodecs zlib compressor, Zarr v3 name "numcodecs.zlib"
+class ZarrV3CodecNumcodecsZlib final : public ZarrV3CodecAbstractCompressor
+{
+  public:
+    static constexpr const char *NAME = "numcodecs.zlib";
+
+    ZarrV3CodecNumcodecsZlib();
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+};
+
+/************************************************************************/
+/*                     ZarrV3CodecNumcodecsShuffle                      */
+/************************************************************************/
+
+// numcodecs byte shuffle filter, Zarr v3 name "numcodecs.shuffle"
+class ZarrV3CodecNumcodecsShuffle final : public ZarrV3CodecAbstractCompressor
+{
+  public:
+    static constexpr const char *NAME = "numcodecs.shuffle";
+
+    ZarrV3CodecNumcodecsShuffle();
+
+    bool InitFromConfiguration(const std::string &osArrayName,
+                               const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    // unlike compressors, unshuffling needs its options (ELEMENTSIZE)
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+};
+
+/************************************************************************/
 /*                           ZarrV3CodecBlosc                           */
 /************************************************************************/
 

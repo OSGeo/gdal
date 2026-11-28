@@ -94,6 +94,10 @@ bool ZarrV3CodecSequence::InitFromJson(const std::string &osArrayName,
             poCodec = std::make_unique<ZarrV3CodecBlosc>();
         else if (osName == ZarrV3CodecZstd::NAME)
             poCodec = std::make_unique<ZarrV3CodecZstd>();
+        else if (osName == ZarrV3CodecNumcodecsZlib::NAME)
+            poCodec = std::make_unique<ZarrV3CodecNumcodecsZlib>();
+        else if (osName == ZarrV3CodecNumcodecsShuffle::NAME)
+            poCodec = std::make_unique<ZarrV3CodecNumcodecsShuffle>();
         else if (osName == ZarrV3CodecBytes::NAME ||
                  osName == "endian" /* endian is the old name */)
             poCodec = std::make_unique<ZarrV3CodecBytes>();

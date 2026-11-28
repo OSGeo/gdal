@@ -1,0 +1,44 @@
+{
+  "shape": [
+    2,
+    3
+  ],
+  "data_type": "uint8",
+  "chunk_grid": {
+    "name": "regular",
+    "configuration": {
+      "chunk_shape": [
+        2,
+        3
+      ]
+    }
+  },
+  "chunk_key_encoding": {
+    "name": "default",
+    "configuration": {
+      "separator": "/"
+    }
+  },
+  "fill_value": 0,
+  "codecs": [
+    {
+      "name": "bytes"
+    },
+    {
+      "name": "numcodecs.shuffle",
+      "configuration": {
+        "elementsize": 3
+      }
+    },
+    {
+      "name": "numcodecs.zlib",
+      "configuration": {
+        "level": 1
+      }
+    }
+  ],
+  "attributes": {},
+  "zarr_format": 3,
+  "node_type": "array",
+  "storage_transformers": []
+}
