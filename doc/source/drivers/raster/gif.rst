@@ -18,7 +18,8 @@ returned as the NoData value for the band.
 
 If an ESRI :ref:`world file <raster.wld>` exists with the .gfw, .gifw
 or .wld extension, it will be read and used to establish the geotransform
-for the image.
+for the image. If available a MapInfo .tab file will also be used for
+georeferencing.
 
 XMP metadata can be extracted from the file,
 and will be stored as XML raw content in the xml:XMP metadata domain.

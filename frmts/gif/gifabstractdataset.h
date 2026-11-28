@@ -41,7 +41,8 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
     GDALGeoTransform m_gt{};
 
     int nGCPCount;
-    GDAL_GCP *pasGCPList;
+    GDAL_GCP *pasGCPList = nullptr;
+    mutable OGRSpatialReference m_oSRS{};
 
     int bHasReadXMPMetadata;
     void CollectXMPMetadata();
@@ -56,7 +57,9 @@ class GIFAbstractDataset CPL_NON_FINAL : public GDALPamDataset
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
     const GDAL_GCP *GetGCPs() override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
     char **GetMetadataDomainList() override;
     CSLConstList GetMetadata(const char *pszDomain = "") override;
