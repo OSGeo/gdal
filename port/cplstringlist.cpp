@@ -20,11 +20,16 @@
 #include <cstring>
 
 #include <algorithm>
+#include <initializer_list>
 #include <limits>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_vsi.h"
 
 static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb);
 

@@ -14,8 +14,6 @@
 
 #include "cpl_list.h"
 
-#include <cstddef>
-
 #include "cpl_conv.h"
 
 /*=====================================================================
