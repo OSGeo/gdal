@@ -132,7 +132,7 @@ class NUMPYDataset : public GDALDataset
 static void GDALRegister_NUMPY(void)
 
 {
-    GDALDriver	*poDriver;
+    GDALDriver *poDriver;
     if (! GDAL_CHECK_VERSION("NUMPY driver"))
         return;
     if( GDALGetDriverByName( "NUMPY" ) == NULL )

@@ -45,7 +45,7 @@ typedef const char StringAsByteArray;
 %include swig_csharp_extensions.i
 #endif
 
-#ifndef SWIGJAVA
+#if !defined(SWIGJAVA) && !defined(SWIGCSHARP)
 %feature("compactdefaultargs");
 #endif
 
@@ -971,10 +971,10 @@ public:
               OGRwkbGeometryType geom_type=wkbUnknown,
               char** options=0) {
     OGRLayerShadow* layer = (OGRLayerShadow*) OGR_DS_CreateLayer( self,
-								  name,
-								  srs,
-								  geom_type,
-								  options);
+                                  name,
+                                  srs,
+                                  geom_type,
+                                  options);
     return layer;
   }
 
@@ -1334,15 +1334,9 @@ public:
     return (OGRGeometryShadow *) OGR_L_GetSpatialFilter(self);
   }
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (char* filter_string) };
-#endif
   OGRErr SetAttributeFilter(char* filter_string) {
     return OGR_L_SetAttributeFilter((OGRLayerShadow*)self, filter_string);
   }
-#ifdef SWIGCSHARP
-  %clear (char* filter_string);
-#endif
 
   const char * GetAttributeFilter() {
     return OGR_L_GetAttributeFilter(self);
@@ -1413,13 +1407,8 @@ public:
     return OGR_L_UpsertFeature(self, feature);
   }
 
-#if defined(SWIGCSHARP)
-%apply int PINNED[] {int *panUpdatedFieldsIdx};
-%apply int PINNED[] {int *panUpdatedGeomFieldsIdx};
-#else
 %apply (int nList, int *pList ) { (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx ) };
 %apply (int nList, int *pList ) { (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx ) };
-#endif
   OGRErr UpdateFeature(OGRFeatureShadow *feature,
                        int nUpdatedFieldsCount,
                        const int *panUpdatedFieldsIdx,
@@ -1433,13 +1422,8 @@ public:
                                panUpdatedGeomFieldsIdx,
                                bUpdateStyleString);
   }
-#if defined(SWIGCSHARP)
-%clear int *panUpdatedFieldsIdx;
-%clear int *panUpdatedGeomFieldsIdx;
-#else
 %clear (int nUpdatedFieldsCount, int *panUpdatedFieldsIdx );
 %clear (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx );
-#endif
 %clear OGRFeatureShadow *feature;
 
   OGRErr DeleteFeature(GIntBig fid) {
@@ -1466,9 +1450,14 @@ public:
   }
 
 #if defined(SWIGCSHARP)
-  %feature( "kwargs" ) GetExtent;
   OGRErr GetExtent(OGREnvelope* extent, int force=1) {
     return OGR_L_GetExtent(self, extent, force);
+  }
+  OGRErr GetExtent(int geom_field, OGREnvelope* extent, int force=1) {
+    return OGR_L_GetExtentEx(self, geom_field, extent, force);
+  }
+  OGRErr GetExtent3D(int geom_field, OGREnvelope3D* extent, int force=1) {
+    return OGR_L_GetExtent3D(self, geom_field, extent, force);
   }
 #elif defined(SWIGPYTHON)
   %feature( "kwargs" ) GetExtent;
@@ -2111,9 +2100,9 @@ public:
   int GetFieldAsInteger(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return OGR_F_GetFieldAsInteger(self, i);
+      return OGR_F_GetFieldAsInteger(self, i);
       return 0;
   }
   /* ------------------------------------------- */
@@ -2155,23 +2144,23 @@ public:
   %apply (int *OUTPUT) {(int *)};
   %apply (float *OUTPUT) {(float *)};
   void GetFieldAsDateTime(int id, int *pnYear, int *pnMonth, int *pnDay,
-			  int *pnHour, int *pnMinute, float *pfSecond,
-			  int *pnTZFlag) {
+              int *pnHour, int *pnMinute, float *pfSecond,
+              int *pnTZFlag) {
       OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pfSecond,
-			       pnTZFlag);
+                   pnHour, pnMinute, pfSecond,
+                   pnTZFlag);
   }
 
   void GetFieldAsDateTime(const char* field_name, int *pnYear, int *pnMonth, int *pnDay,
-			  int *pnHour, int *pnMinute, float *pfSecond,
-			  int *pnTZFlag) {
+              int *pnHour, int *pnMinute, float *pfSecond,
+              int *pnTZFlag) {
       int id = OGR_F_GetFieldIndex(self, field_name);
       if (id == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
-			       pnHour, pnMinute, pfSecond,
-			       pnTZFlag);
+      OGR_F_GetFieldAsDateTimeEx(self, id, pnYear, pnMonth, pnDay,
+                   pnHour, pnMinute, pfSecond,
+                   pnTZFlag);
   }
 
   %clear (int *);
@@ -2187,6 +2176,15 @@ public:
   %apply (int *hasval) {int *count};
   const int *GetFieldAsIntegerList(int id, int *count) {
       return OGR_F_GetFieldAsIntegerList(self, id, count);
+  }
+  const int *GetFieldAsIntegerList(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsIntegerList(self, id, count);
   }
   %clear (const int *);
   %clear (int *count);
@@ -2208,6 +2206,23 @@ public:
   void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
+#elif defined(SWIGCSHARP)
+  %apply (GIntBig *longList) {const GIntBig *};
+  %apply (int *hasval) {int *count};
+  const GIntBig *GetFieldAsInteger64List(int id, int *count) {
+      return OGR_F_GetFieldAsInteger64List(self, id, count);
+  }
+  const GIntBig *GetFieldAsInteger64List(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsInteger64List(self, id, count);
+  }
+  %clear (const GIntBig *);
+  %clear (int *count);
 #endif
 
 #if defined(SWIGJAVA)
@@ -2220,6 +2235,15 @@ public:
   %apply (int *hasval) {int *count};
   const double *GetFieldAsDoubleList(int id, int *count) {
       return OGR_F_GetFieldAsDoubleList(self, id, count);
+  }
+  const double *GetFieldAsDoubleList(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsDoubleList(self, id, count);
   }
   %clear (const double *);
   %clear (int *count);
@@ -2248,6 +2272,16 @@ public:
   char **GetFieldAsStringList(int id) {
       return OGR_F_GetFieldAsStringList(self, id);
   }
+
+  char **GetFieldAsStringList(const char* field_name) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsStringList(self, id);
+  }
   %clear (char **);
 #else
   void GetFieldAsStringList(int id, char ***pList) {
@@ -2263,7 +2297,6 @@ public:
   }
 #endif
 
-#ifndef SWIGCSHARP
 #ifdef SWIGJAVA
 %apply (GByte* outBytes) {GByte*};
   GByte* GetFieldAsBinary(int id, int *nLen, char **pBuf) {
@@ -2289,7 +2322,7 @@ public:
       }
   }
 %clear GByte*;
-#else
+#elif defined(SWIGPYTHON)
   OGRErr GetFieldAsBinary( int id, int *nLen, char **pBuf) {
     GByte* pabyBlob = OGR_F_GetFieldAsBinary(self, id, nLen);
     *pBuf = (char*)VSIMalloc(*nLen);
@@ -2312,9 +2345,24 @@ public:
         return OGRERR_NONE;
       }
   }
-#endif /* SWIGJAVA */
-
-#endif /* SWIGCSHARP */
+#elif defined(SWIGCSHARP)
+  %apply (GByte *byteList) {const GByte *};
+  %apply (int *hasval) {int *count};
+  const GByte *GetFieldAsBinary(int id, int *count) {
+    return OGR_F_GetFieldAsBinary(self, id, count);
+  }
+  const GByte *GetFieldAsBinary(const char* field_name, int *count) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1) {
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+          return NULL;
+      }
+      else
+          return OGR_F_GetFieldAsBinary(self, id, count);
+  }
+  %clear (const GByte *);
+  %clear (int *count);
+#endif
 
   /* ---- IsFieldSet --------------------------- */
   bool IsFieldSet(int id) {
@@ -2324,9 +2372,9 @@ public:
   bool IsFieldSet(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldSet(self, i) > 0);
+      return (OGR_F_IsFieldSet(self, i) > 0);
       return false;
   }
 
@@ -2340,9 +2388,9 @@ public:
   bool IsFieldNull(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldNull(self, i) > 0);
+      return (OGR_F_IsFieldNull(self, i) > 0);
       return false;
   }
 
@@ -2356,9 +2404,9 @@ public:
   bool IsFieldSetAndNotNull(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  return (OGR_F_IsFieldSetAndNotNull(self, i) > 0);
+      return (OGR_F_IsFieldSetAndNotNull(self, i) > 0);
       return false;
   }
 
@@ -2415,11 +2463,7 @@ public:
   }
 
   /* ---- SetField ----------------------------- */
-#ifndef SWIGCSHARP
   %apply ( tostring argin ) { (const char* value) };
-#else
-  %apply ( const char *utf8_string ) { (const char* value) };
-#endif
   void SetField(int id, const char* value) {
     OGR_F_SetFieldString(self, id, value);
   }
@@ -2446,9 +2490,9 @@ public:
   void SetField(const char* field_name, int value) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldInteger(self, i, value);
+      OGR_F_SetFieldInteger(self, i, value);
   }
 #endif /* SWIGPYTHON */
 
@@ -2459,9 +2503,9 @@ public:
   void SetField(const char* field_name, double value) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldDouble(self, i, value);
+      OGR_F_SetFieldDouble(self, i, value);
   }
 
   void SetField( int id, int year, int month, int day,
@@ -2477,18 +2521,18 @@ public:
                              int tzflag ) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
-	  CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
       else
-	  OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
-				 hour, minute, second,
-				 tzflag);
+      OGR_F_SetFieldDateTimeEx(self, i, year, month, day,
+                 hour, minute, second,
+                 tzflag);
   }
 
   void SetFieldIntegerList(int id, int nList, int *pList) {
       OGR_F_SetFieldIntegerList(self, id, nList, pList);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
   void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
@@ -2503,12 +2547,64 @@ public:
   void SetFieldStringList(int id, char **pList) {
       OGR_F_SetFieldStringList(self, id, pList);
   }
+
+#if defined(SWIGCSHARP)
+  void SetFieldInteger64(const char* field_name, GIntBig value) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+          OGR_F_SetFieldInteger64(self, id, value);
+  }
+  void SetFieldStringList(const char* field_name, char **pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldStringList(self, id, pList);
+  }
+  void SetFieldIntegerList(const char* field_name, int nList, int *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldIntegerList(self, id, nList, pList);
+  }
+  void SetFieldInteger64List(const char* field_name, int nList, GIntBig *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldInteger64List(self, id, nList, pList);
+  }
+  void SetFieldDoubleList(const char* field_name, int nList, double *pList) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldDoubleList(self, id, nList, pList);
+  }
+#endif
+
 %clear char**pList;
 
 #if defined(SWIGPYTHON)
   void _SetFieldBinary(int id, int nLen, char *pBuf) {
       OGR_F_SetFieldBinary(self, id, nLen, pBuf);
   }
+#elif defined(SWIGCSHARP)
+  %apply (int nList, char *pList) {(int bytes, char *pBuf)};
+  void SetFieldBinary(int id, int bytes, char *pBuf) {
+      OGR_F_SetFieldBinary(self, id, bytes, pBuf);
+  }
+  void SetFieldBinary(const char* field_name, int bytes, char *pBuf) {
+      int id = OGR_F_GetFieldIndex(self, field_name);
+      if (id == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+        OGR_F_SetFieldBinary(self, id, bytes, pBuf);
+  }
+  %clear (int bytes, char *pBuf);
 #endif
 
   void SetFieldBinaryFromHexString(int id, const char* pszValue)
@@ -2891,9 +2987,6 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") OGRFieldDefnShadow;
 #endif
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (const char* name_null_ok) };
-#endif
   OGRFieldDefnShadow( const char* name_null_ok="unnamed",
                       OGRFieldType field_type=OFTString) {
     if (ValidateOGRFieldType(field_type))
@@ -2901,19 +2994,10 @@ public:
     else
         return NULL;
   }
-#ifdef SWIGCSHARP
-  %clear (const char* name_null_ok );
-#endif
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { const char * GetName };
-#endif
   const char * GetName() {
     return OGR_Fld_GetNameRef(self);
   }
-#ifdef SWIGCSHARP
-  %clear (const char * GetName );
-#endif
 
 #ifdef SWIGJAVA
   StringAsByteArray* GetNameAsByteArray() {
@@ -2925,17 +3009,9 @@ public:
     return OGR_Fld_GetNameRef(self);
   }
 
-#ifdef SWIGCSHARP
-  %apply ( const char *utf8_string ) { (const char* name) };
-#endif
-
   void SetName( const char* name) {
     OGR_Fld_SetName(self, name);
   }
-
-#ifdef SWIGCSHARP
-  %clear (const char* name );
-#endif
 
   const char * GetAlternativeName() {
     return OGR_Fld_GetAlternativeNameRef(self);
@@ -3211,7 +3287,8 @@ public:
 #ifndef SWIGCSHARP
 %apply (size_t nLen, char *pBuf ) { (size_t len, char *bin_string)};
 #else
-%apply (void *buffer_ptr) {char *bin_string};
+%apply (size_t native_size) {(size_t len)};
+%apply (void *buffer_ptr)   {(char * bin_string)};
 #endif
 %inline %{
   OGRGeometryShadow* CreateGeometryFromWkb( size_t len, char *bin_string,
@@ -3229,11 +3306,11 @@ public:
   }
 
 %}
-#endif
 #ifndef SWIGCSHARP
 %clear (size_t len, char *bin_string);
 #else
-%clear (char *bin_string);
+%clear (size_t len), (char * bin_string);
+#endif
 #endif
 
 #ifdef SWIGJAVA
@@ -3301,7 +3378,6 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 
 %}
 
-#ifndef SWIGCSHARP
 %newobject CreateGeometryFromEnvelope;
 %inline %{
   OGRGeometryShadow *CreateGeometryFromEnvelope(double xmin,
@@ -3313,7 +3389,6 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
     return geom;
   }
 %}
-#endif
 
 %newobject BuildPolygonFromEdges;
 #ifndef SWIGJAVA
@@ -3348,7 +3423,7 @@ OGRGeometryShadow* CreateGeometryFromWkb(int nLen, unsigned char *pBuf,
 %inline %{
   OGRGeometryShadow* ApproximateArcAngles(
         double dfCenterX, double dfCenterY, double dfZ,
-  	double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
+        double dfPrimaryRadius, double dfSecondaryAxis, double dfRotation,
         double dfStartAngle, double dfEndAngle,
         double dfMaxAngleStepSizeDegrees ) {
 
@@ -3429,6 +3504,10 @@ OGRGeometryShadow* ForceTo( OGRGeometryShadow *geom_in, OGRwkbGeometryType eTarg
 /*                             OGRGeometry                              */
 /************************************************************************/
 
+#ifdef SWIGCSHARP
+/* ignore overload which splits multi-argument typemap */
+%ignore OGRGeometryShadow::OGRGeometryShadow(OGRwkbGeometryType,char *,int wkb);
+#endif
 %rename (Geometry) OGRGeometryShadow;
 class OGRGeometryShadow {
   OGRGeometryShadow();
@@ -3441,7 +3520,7 @@ public:
 
 #ifndef SWIGJAVA
 #ifdef SWIGCSHARP
-%apply (void *buffer_ptr) {char *wkb_buf};
+%apply (int nList, char *pList) {(int wkb, char *wkb_buf)};
 #else
 %apply (int nLen, char *pBuf) {(int wkb, char *wkb_buf)};
 #endif
@@ -3453,7 +3532,7 @@ public:
     else if ( wkt != 0 ) {
       return CreateGeometryFromWkt( &wkt );
     }
-    else if ( wkb != 0 ) {
+    else if ( wkb != 0 && wkb_buf) {
       return CreateGeometryFromWkb( wkb, wkb_buf );
     }
     else if ( gml != 0 ) {
@@ -3465,12 +3544,8 @@ public:
         return NULL;}
 
   }
-#ifdef SWIGCSHARP
-%clear (char *wkb_buf);
-#else
 %clear (int wkb, char *wkb_buf);
-#endif
-#endif
+#endif //SWIGJAVA
 
   OGRErr ExportToWkt( char** argout ) {
     return OGR_G_ExportToWkt(self, argout);
@@ -3769,7 +3844,7 @@ public:
     return OGR_G_GetM(self, point);
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPoint(int iPoint, double argout[3]) {
 #else
   void GetPoint(int iPoint = 0, double argout[3] = NULL) {
@@ -3777,7 +3852,7 @@ public:
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, argout+2 );
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPointZM(int iPoint, double argout[4]) {
 #else
   void GetPointZM(int iPoint = 0, double argout[4] = NULL) {
@@ -3785,13 +3860,27 @@ public:
       OGR_G_GetPointZM( self, iPoint, argout+0, argout+1, argout+2, argout+3 );
   }
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
   void GetPoint_2D(int iPoint, double argout[2]) {
 #else
   void GetPoint_2D(int iPoint = 0, double argout[2] = NULL) {
 #endif
     OGR_G_GetPoint( self, iPoint, argout+0, argout+1, NULL );
   }
+
+#if defined(SWIGCSHARP)
+%apply (double *OUTPUT) {double *x, double *y, double *z, double *m};
+  void GetPoint(int iPoint, double *x, double *y) {
+    OGR_G_GetPoint( self, iPoint, x, y, NULL );
+  }
+  void GetPoint(int iPoint, double *x, double *y, double *z) {
+    OGR_G_GetPoint( self, iPoint, x, y, z );
+  }
+  void GetPoint(int iPoint, double *x, double *y, double *z, double *m) {
+    OGR_G_GetPointZM( self, iPoint, x, y, z, m );
+  }
+%clear double *x, double *y, double *z, double *m;
+#endif
 
   int GetGeometryCount() {
     return OGR_G_GetGeometryCount(self);
@@ -4314,11 +4403,9 @@ public:
     OGR_FldDomain_SetMergePolicy(self, policy);
   }
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
   const OGRCodedValue* GetEnumeration() {
     return OGR_CodedFldDomain_GetEnumeration(self);
   }
-#endif
 
   double GetMinAsDouble() {
       const OGRField* psVal = OGR_RangeFldDomain_GetMin(self, NULL);
@@ -4418,7 +4505,6 @@ public:
 
 }; /* class OGRFieldDomainShadow */
 
-#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %newobject CreateCodedFieldDomain;
 %apply Pointer NONNULL {const char* name};
 %inline %{
@@ -4436,7 +4522,6 @@ OGRFieldDomainShadow* CreateCodedFieldDomain( const char *name,
 }
 %}
 %clear const char* name;
-#endif
 
 %newobject CreateRangeFieldDomain;
 %apply Pointer NONNULL {const char* name};
@@ -4764,7 +4849,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
   }
 %}
 
-#if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON)))
+#if !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP)))
 
 #ifdef SWIGPYTHON
 %thread;
@@ -4789,8 +4874,8 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         CPLDebug( "SWIG",
-		  "OGROpen() succeeded, but an error is posted, so we destroy"
-		  " the datasource and fail at swig level." );
+          "OGROpen() succeeded, but an error is posted, so we destroy"
+          " the datasource and fail at swig level." );
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
@@ -4804,11 +4889,9 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 
 #ifdef SWIGPYTHON
 %thread;
-#endif
-%newobject OpenShared;
-#ifndef SWIGJAVA
 %feature( "kwargs" ) OpenShared;
 #endif
+%newobject OpenShared;
 %inline %{
   OGRDataSourceShadow* OpenShared( const char *utf8_string, int update =0 ) {
     CPLErrorReset();
@@ -4835,7 +4918,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
 %nothread;
 #endif
 
-#endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON))) */
+#endif /* !(defined(FROM_GDAL_I) && (defined(SWIGJAVA) || defined(SWIGPYTHON) || defined(SWIGCSHARP))) */
 
 #ifndef FROM_GDAL_I
 
