@@ -1222,3 +1222,14 @@ def test_miramon_rat_or_ct(option, expect_rat, expect_ct):
         assert ct is not None, "Expected a Color Table (CT) but none was found"
     else:
         assert ct is None, "Did not expect a Color Table (CT) but one was found"
+
+
+def test_miramon_open_update(tmp_path):
+
+    with pytest.raises(Exception, match="does not support update"):
+        gdal.Open("data/miramon/normal/byte_2x3_6_categsI.rel", gdal.GA_Update)
+
+    filename = str(tmp_path / "test.img")
+    gdal.GetDriverByName("ENVI").Create(filename, 1, 1)
+    with pytest.raises(Exception, match="not recognized"):
+        gdal.OpenEx(filename, gdal.OF_UPDATE, allowed_drivers=["MiraMonRaster"])
