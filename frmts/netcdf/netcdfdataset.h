@@ -20,6 +20,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -816,7 +817,7 @@ std::string NCDFReadMetadataAsJson(int cdfid);
 
 char **NCDFTokenizeCoordinatesAttribute(const char *pszCoordinates);
 
-extern CPLMutex *hNCMutex;
+extern std::recursive_mutex hNCMutex;
 
 #ifdef ENABLE_NCDUMP
 bool netCDFDatasetCreateTempFile(NetCDFFormatEnum eFormat,

@@ -269,6 +269,8 @@ bool Sentinel3_SRAL_MWR_Layer::TestCapability(const char *pszCap) const
 
 OGRFeature *Sentinel3_SRAL_MWR_Layer::TranslateFeature(size_t nIndex)
 {
+    std::lock_guard oLock(hNCMutex);
+
     OGRFeature *poFeat = new OGRFeature(m_poFDefn);
     poFeat->SetFID(nIndex + 1);
     if (m_iLongitude >= 0 && m_iLatitude >= 0)

@@ -870,6 +870,7 @@ double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
 {
+    std::lock_guard oLock(hNCMutex);
 
     if (m_simpleGeometryReader.get() != nullptr)
     {
@@ -1357,6 +1358,8 @@ const OGRFeatureDefn *netCDFLayer::GetLayerDefn() const
 
 OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
 {
+    std::lock_guard oLock(hNCMutex);
+
     m_poDS->SetDefineMode(false);
 
     size_t nFeatureIdx = 0;
@@ -2371,6 +2374,8 @@ bool netCDFLayer::AddField(int nVarID)
 OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
                                 int /* bApproxOK */)
 {
+    std::lock_guard oLock(hNCMutex);
+
     int nSecDimId = -1;
     int nVarID = -1;
     int status;
@@ -2774,6 +2779,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
+        std::lock_guard oLock(hNCMutex);
         if (!m_bLegacyCreateMode)
         {
             return m_simpleGeometryReader->get_geometry_count();

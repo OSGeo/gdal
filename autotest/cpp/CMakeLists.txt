@@ -419,6 +419,16 @@ gdal_gtest_target(test_driver_metadata_multithread test-driver-metadata-multithr
     FILES
         test_driver_metadata_multithread.cpp)
 
+if (GDAL_ENABLE_DRIVER_NETCDF)
+    gdal_gtest_target(test_netcdf_multithread test-netcdf-multithread
+        FILES
+            test_netcdf_multithread.cpp)
+    if (TARGET Threads::Threads)
+        target_link_libraries(test_netcdf_multithread PRIVATE Threads::Threads)
+    endif()
+    set_tests_properties(test-netcdf-multithread PROPERTIES TIMEOUT 120)
+endif()
+
 if (GDAL_ENABLE_DRIVER_JPEG_PLUGIN)
     target_compile_definitions(test_deferred_plugin PRIVATE -DJPEG_PLUGIN)
 endif()

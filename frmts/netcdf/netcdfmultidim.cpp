@@ -14,7 +14,6 @@
 #include <limits>
 #include <map>
 
-#include "cpl_multiproc.h"
 #include "gdal_pam_multidim.h"
 #include "gdal_rat.h"
 #include "memdataset.h"
@@ -238,7 +237,7 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
     static std::string retrieveName(int gid)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         char szName[NC_MAX_NAME + 1] = {};
         NCDF_ERR(nc_inq_grpname(gid, szName));
         return szName;
@@ -385,7 +384,7 @@ class netCDFDimension final : public GDALDimension
 
     static std::string retrieveName(int cfid, int dimid)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         char szName[NC_MAX_NAME + 1] = {};
         NCDF_ERR(nc_inq_dimname(cfid, dimid, szName));
         return szName;
@@ -393,7 +392,7 @@ class netCDFDimension final : public GDALDimension
 
     static GUInt64 retrieveSize(int cfid, int dimid)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         size_t nDimLen = 0;
         NCDF_ERR(nc_inq_dimlen(cfid, dimid, &nDimLen));
         return nDimLen;
@@ -694,7 +693,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
     static std::string retrieveName(int gid, int varid)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         char szName[NC_MAX_NAME + 1] = {};
         NCDF_ERR(nc_inq_varname(gid, varid, szName));
         return szName;
@@ -717,7 +716,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
 netCDFSharedResources::~netCDFSharedResources()
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (m_cdfid > 0)
     {
@@ -765,8 +764,6 @@ netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
     : GDALGroup(NCDFGetParentGroupName(gid), retrieveName(gid)),
       m_poShared(poShared), m_gid(gid)
 {
-    CPLMutexHolderD(&hNCMutex);
-
     if (m_gid == m_poShared->GetCDFId())
     {
         int nFormat = 0;
@@ -843,6 +840,8 @@ std::shared_ptr<netCDFGroup>
 netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
                     int cdfid)
 {
+    std::lock_guard oLock(hNCMutex);
+
     auto poGroup =
         std::shared_ptr<netCDFGroup>(new netCDFGroup(poShared, cdfid));
     poGroup->SetSelf(poGroup);
@@ -880,7 +879,7 @@ netCDFGroup::CreateGroup(const std::string &osName,
                  "Empty group name not supported");
         return nullptr;
     }
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
     int nSubGroupId = -1;
     int ret = nc_def_grp(m_gid, osName.c_str(), &nSubGroupId);
@@ -908,7 +907,7 @@ netCDFGroup::CreateDimension(const std::string &osName,
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid size");
         return nullptr;
     }
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
     int nDimId = -1;
     NCDF_ERR(nc_def_dim(m_gid, osName.c_str(),
@@ -1078,7 +1077,7 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
                  "Empty array name not supported");
         return nullptr;
     }
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
     int nVarId = -1;
     std::vector<int> anDimIds;
@@ -1270,7 +1269,7 @@ std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
 bool netCDFGroup::DeleteAttribute(const std::string &osName,
                                   CSLConstList /*papszOptions*/)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret = nc_del_att(m_gid, NC_GLOBAL, osName.c_str());
@@ -1295,7 +1294,7 @@ bool netCDFGroup::DeleteAttribute(const std::string &osName,
 std::vector<std::string>
 netCDFGroup::GetGroupNames(CSLConstList papszOptions) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nSubGroups = 0;
     NCDF_ERR(nc_inq_grps(m_gid, &nSubGroups, nullptr));
     if (nSubGroups == 0)
@@ -1350,7 +1349,7 @@ std::shared_ptr<GDALGroup>
 netCDFGroup::OpenGroup(const std::string &osName,
                        CSLConstList papszOptions) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nSubGroups = 0;
     // This is weird but nc_inq_grp_ncid() succeeds on a single group file.
     NCDF_ERR(nc_inq_grps(m_gid, &nSubGroups, nullptr));
@@ -1388,7 +1387,7 @@ netCDFGroup::OpenGroup(const std::string &osName,
 std::vector<std::string>
 netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nVars = 0;
     NCDF_ERR(nc_inq_nvars(m_gid, &nVars));
     if (nVars == 0)
@@ -1516,7 +1515,7 @@ bool netCDFGroup::Rename(const std::string &osNewName)
         return false;
     }
 
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret = nc_rename_grp(m_gid, osNewName.c_str());
@@ -1556,7 +1555,7 @@ std::shared_ptr<GDALMDArray>
 netCDFGroup::OpenMDArray(const std::string &osName,
                          CSLConstList papszOptions) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nVarId = 0;
     if (nc_inq_varid(m_gid, osName.c_str(), &nVarId) != NC_NOERR)
         return nullptr;
@@ -1580,7 +1579,7 @@ netCDFGroup::OpenMDArray(const std::string &osName,
 std::vector<std::shared_ptr<GDALDimension>>
 netCDFGroup::GetDimensions(CSLConstList) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nbDims = 0;
     NCDF_ERR(nc_inq_ndims(m_gid, &nbDims));
     if (nbDims == 0)
@@ -1615,7 +1614,7 @@ static const char *const apszJSONMDKeys[] = {
 std::shared_ptr<GDALAttribute>
 netCDFGroup::GetAttribute(const std::string &osName) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nAttId = -1;
     if (nc_inq_attid(m_gid, NC_GLOBAL, osName.c_str(), &nAttId) != NC_NOERR)
     {
@@ -1657,7 +1656,7 @@ netCDFGroup::GetAttribute(const std::string &osName) const
 std::vector<std::shared_ptr<GDALAttribute>>
 netCDFGroup::GetAttributes(CSLConstList) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     std::vector<std::shared_ptr<GDALAttribute>> res;
     int nbAttr = 0;
     NCDF_ERR(nc_inq_varnatts(m_gid, NC_GLOBAL, &nbAttr));
@@ -1923,7 +1922,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 
     SetIsInGetIndexingVariable setterIsInGetIndexingVariable(m_poShared.get());
 
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     // First try to find a variable in this group with the same name as the
     // dimension
@@ -2086,7 +2085,7 @@ bool netCDFDimension::Rename(const std::string &osNewName)
         CPLError(CE_Failure, CPLE_NotSupported, "Empty name not supported");
         return false;
     }
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret = nc_rename_dim(m_gid, m_dimid, osNewName.c_str());
@@ -2273,7 +2272,7 @@ netCDFVariable::GetDimensions() const
 {
     if (m_nDims == 0 || !m_dims.empty())
         return m_dims;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     std::vector<int> anDimIds(m_nDims);
     NCDF_ERR(nc_inq_vardimid(m_gid, m_varid, &anDimIds[0]));
     if (m_nDims == 2 && m_nVarType == NC_CHAR && m_nTextLength > 0)
@@ -2641,7 +2640,7 @@ const GDALExtendedDataType &netCDFVariable::GetDataType() const
 {
     if (m_dt)
         return *m_dt;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (m_nDims == 2 && m_nVarType == NC_CHAR && m_nTextLength > 0)
     {
@@ -2666,6 +2665,8 @@ const GDALExtendedDataType &netCDFVariable::GetDataType() const
 
 bool netCDFVariable::SetUnit(const std::string &osUnit)
 {
+    std::lock_guard oLock(hNCMutex);
+
     if (osUnit.empty())
     {
         nc_del_att(m_gid, m_varid, CF_UNITS);
@@ -2691,8 +2692,9 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
     if (m_bSRSRead)
         return m_poSRS;
 
-    m_bSRSRead = true;
     netCDFDataset poDS;
+    std::lock_guard oLock(hNCMutex);
+    m_bSRSRead = true;
     poDS.ReadAttributes(m_gid, m_varid);
     int iDimX = 0;
     int iDimY = 0;
@@ -2782,7 +2784,7 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_bSRSRead = false;
     m_poSRS.reset();
 
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     if (poSRS == nullptr)
@@ -3275,7 +3277,7 @@ bool netCDFVariable::IReadWrite(
     NCGetPutVarmFuncType NCGetPutVarmFunc,
     ReadOrWriteOneElementType ReadOrWriteOneElement) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(false);
 
     const auto &eDT = GetDataType();
@@ -3561,7 +3563,7 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 {
     if (m_nDims == 2 && m_nVarType == NC_CHAR && GetDimensions().size() == 1)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         m_poShared->SetDefineMode(false);
 
         if (bufferDataType.GetClass() != GEDTC_STRING)
@@ -3756,7 +3758,7 @@ bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
     if (m_nDims == 2 && m_nVarType == NC_CHAR && GetDimensions().size() == 1)
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         m_poShared->SetDefineMode(false);
 
         if (bufferDataType.GetClass() != GEDTC_STRING)
@@ -3797,6 +3799,8 @@ bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
 const void *netCDFVariable::GetRawNoDataValue() const
 {
+    std::lock_guard oLock(hNCMutex);
+
     const auto &dt = GetDataType();
     if (dt.GetClass() != GEDTC_NUMERIC)
         return nullptr;
@@ -3925,7 +3929,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
         return false;
 
     m_bGetRawNoDataValueHasRun = false;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
     int ret;
     if (pNoData == nullptr)
@@ -4086,7 +4090,7 @@ std::vector<GUInt64> netCDFVariable::GetBlockSize() const
     // We add 1 to the dimension count, for 2D char variables that we
     // expose as a 1D variable.
     std::vector<size_t> anTemp(1 + nDimCount);
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     nc_inq_var_chunking(m_gid, m_varid, &nStorageType, &anTemp[0]);
     if (nStorageType == NC_CHUNKED)
     {
@@ -4103,7 +4107,7 @@ std::vector<GUInt64> netCDFVariable::GetBlockSize() const
 std::shared_ptr<GDALAttribute>
 netCDFVariable::GetAttribute(const std::string &osName) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     int nAttId = -1;
     if (nc_inq_attid(m_gid, m_varid, osName.c_str(), &nAttId) != NC_NOERR)
         return nullptr;
@@ -4119,7 +4123,7 @@ netCDFVariable::GetAttribute(const std::string &osName) const
 std::vector<std::shared_ptr<GDALAttribute>>
 netCDFVariable::GetAttributes(CSLConstList papszOptions) const
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     std::vector<std::shared_ptr<GDALAttribute>> res;
     int nbAttr = 0;
     NCDF_ERR(nc_inq_varnatts(m_gid, m_varid, &nbAttr));
@@ -4169,7 +4173,7 @@ std::shared_ptr<GDALAttribute> netCDFVariable::CreateAttribute(
 bool netCDFVariable::DeleteAttribute(const std::string &osName,
                                      CSLConstList /*papszOptions*/)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret = nc_del_att(m_gid, m_varid, osName.c_str());
@@ -4206,7 +4210,7 @@ netCDFVariable::GetCoordinateVariables() const
         {
             const CPLStringList aosNames(
                 NCDFTokenizeCoordinatesAttribute(pszCoordinates));
-            CPLMutexHolderD(&hNCMutex);
+            std::lock_guard oLock(hNCMutex);
             for (int i = 0; i < aosNames.size(); i++)
             {
                 int nVarId = 0;
@@ -4310,7 +4314,7 @@ bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
 
     if (!anGrownDimIdx.empty())
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         // Query which netCDF dimensions have unlimited size
         int nUnlimitedDimIds = 0;
         nc_inq_unlimdims(m_gid, &nUnlimitedDimIds, nullptr);
@@ -4378,7 +4382,7 @@ bool netCDFVariable::Rename(const std::string &osNewName)
         return false;
     }
 
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret = nc_rename_var(m_gid, m_varid, osNewName.c_str());
@@ -4417,7 +4421,7 @@ bool netCDFVariable::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     }
     else
     {
-        CPLMutexHolderD(&hNCMutex);
+        std::lock_guard oLock(hNCMutex);
         NCDF_ERR(nc_inq_format(m_poShared->GetCDFId(), &nFormat));
     }
     if (nFormat == NC_FORMAT_NETCDF4 || nFormat == NC_FORMAT_NETCDF4_CLASSIC)
@@ -4481,7 +4485,7 @@ netCDFAttribute::netCDFAttribute(
       GDALAttribute(retrieveAttributeParentName(gid, varid), name),
       m_poShared(poShared), m_gid(gid), m_varid(varid)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     size_t nLen = 0;
     NCDF_ERR(nc_inq_atttype(m_gid, m_varid, GetName().c_str(), &m_nAttType));
     NCDF_ERR(nc_inq_attlen(m_gid, m_varid, GetName().c_str(), &nLen));
@@ -4508,7 +4512,7 @@ netCDFAttribute::netCDFAttribute(
       GDALAttribute(retrieveAttributeParentName(gid, varid), osName),
       m_poShared(poShared), m_gid(gid), m_varid(varid)
 {
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_bPerfectDataTypeMatch = true;
     m_nAttType = CreateOrGetType(gid, oDataType);
     m_dt.reset(new GDALExtendedDataType(oDataType));
@@ -4632,7 +4636,7 @@ const GDALExtendedDataType &netCDFAttribute::GetDataType() const
 {
     if (m_dt)
         return *m_dt;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (m_nAttType == NC_CHAR)
     {
@@ -4662,7 +4666,7 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 {
     if (!CheckValidAndErrorOutIfNot())
         return false;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (m_nAttType == NC_STRING)
     {
@@ -4831,7 +4835,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 {
     if (!CheckValidAndErrorOutIfNot())
         return false;
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
 
     if (m_dims.size() == 1 &&
         (arrayStartIdx[0] != 0 || count[0] != m_dims[0]->GetSize() ||
@@ -5028,7 +5032,7 @@ bool netCDFAttribute::Rename(const std::string &osNewName)
         CPLError(CE_Failure, CPLE_NotSupported, "Empty name not supported");
         return false;
     }
-    CPLMutexHolderD(&hNCMutex);
+    std::lock_guard oLock(hNCMutex);
     m_poShared->SetDefineMode(true);
 
     int ret =
@@ -5049,12 +5053,8 @@ bool netCDFAttribute::Rename(const std::string &osNewName)
 GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 {
 
-    CPLMutexHolderD(&hNCMutex);
-
-    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-                                // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
-    CPLAcquireMutex(hNCMutex, 1000.0);
+    std::unique_lock oLock(hNCMutex);
 
     std::string osFilename;
 
@@ -5097,10 +5097,8 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         if (!netCDFDatasetCreateTempFile(NCDF_FORMAT_NC4, osFilename.c_str(),
                                          poOpenInfo->fpL))
         {
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+            oLock.unlock();
             delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
         }
         poDS->eFormat = NCDF_FORMAT_NC4;
@@ -5183,10 +5181,8 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "error opening");
 #endif
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 #ifdef NCDF_DEBUG
@@ -5218,15 +5214,14 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     int status = nc_inq(cdfid, &ndims, &nvars, &ngatts, &unlimdimid);
     if (status != NC_NOERR)
     {
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
     poDS->m_poRootGroup = netCDFGroup::Create(poSharedResources, cdfid);
 
+    oLock.unlock();
     poDS->TryLoadXML();
 
     return poDS;
@@ -5250,12 +5245,8 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
                                       CSLConstList /* papszRootGroupOptions */,
                                       CSLConstList papszOptions)
 {
-    CPLMutexHolderD(&hNCMutex);
-
-    CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-                                // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
-    CPLAcquireMutex(hNCMutex, 1000.0);
+    std::unique_lock oLock(hNCMutex);
     poDS->eAccess = GA_Update;
     poDS->osFilename = pszFilename;
 
@@ -5285,10 +5276,8 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Unable to create netCDF file %s (Error code %d): %s .",
                  pszFilename, status, nc_strerror(status));
-        CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+        oLock.unlock();
         delete poDS;
-        CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
     }
 
