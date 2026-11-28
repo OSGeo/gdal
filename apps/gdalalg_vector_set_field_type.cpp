@@ -197,9 +197,8 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
         {
             auto poDstFeature =
                 std::make_unique<OGRFeature>(m_poFeatureDefn.get());
-            const auto result{poDstFeature->SetFrom(
-                poSrcFeature.get(), m_identityMap.data(), false, true)};
-            if (result != OGRERR_NONE)
+            if (poDstFeature->SetFrom(poSrcFeature.get(), m_identityMap.data(),
+                                      false, true) != OGRERR_NONE)
             {
                 if (m_fieldIndex >= 0)
                 {
@@ -209,13 +208,20 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
                              m_poFeatureDefn->GetFieldDefn(m_fieldIndex)
                                  ->GetNameRef());
                 }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Cannot convert field to new type, setting it "
+                             "to NULL");
+                }
+                poDstFeature =
+                    std::make_unique<OGRFeature>(m_poFeatureDefn.get());
+                poDstFeature->SetFrom(poSrcFeature.get(), m_identityMap.data(),
+                                      true, true);
             }
-            else
-            {
-                poDstFeature->SetFID(poSrcFeature->GetFID());
-                if (PassesFilters(poDstFeature.get()))
-                    apoOutFeatures.push_back(std::move(poDstFeature));
-            }
+            poDstFeature->SetFID(poSrcFeature->GetFID());
+            if (PassesFilters(poDstFeature.get()))
+                apoOutFeatures.push_back(std::move(poDstFeature));
         }
 
         return true;
